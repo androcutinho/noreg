@@ -12,248 +12,202 @@ $mysqli = require 'database.php';
 
 // Check if product_id is provided
 if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
-    die("ID продукта не предоставлен.");
+    die("ID документа не предоставлен.");
 }
 
-$product_id = intval($_GET['product_id']);
+$document_id = intval($_GET['product_id']);
 
-// Fetch product details
-$sql = "SELECT * FROM product WHERE product_id = ?";
+// Fetch document header
+$sql = "SELECT 
+    pt.id,
+    pt.data_dokumenta,
+    org.naimenovanie as organization,
+    ps.naimenovanie as vendor,
+    u.user_name as responsible
+FROM postupleniya_tovarov pt
+LEFT JOIN organizacii org ON pt.id_organizacii = org.id
+LEFT JOIN postavshchiki ps ON pt.id_postavshchika = ps.id
+LEFT JOIN users u ON pt.id_otvetstvennyj = u.user_id
+WHERE pt.id = ?";
+
 $stmt = $mysqli->stmt_init();
-
 if (!$stmt->prepare($sql)) {
     die("SQL error: " . $mysqli->error);
 }
 
-$stmt->bind_param("i", $product_id);
+$stmt->bind_param("i", $document_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$product = $result->fetch_assoc();
+$document = $result->fetch_assoc();
 
-if (!$product) {
-    die("Продукт не найден.");
+if (!$document) {
+    die("Документ не найден.");
 }
+
+// Fetch line items
+$sql = "SELECT 
+    sd.id,
+    ti.naimenovanie as product_name,
+    sd.kolichestvo_postupleniya as quantity,
+    sd.cena_postupleniya as unit_price,
+    sn.stavka_nds as vat_rate,
+    (sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_amount
+FROM stroki_dokumentov sd
+LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+WHERE sd.id_dokumenta = ?
+ORDER BY sd.id ASC";
+
+$stmt = $mysqli->stmt_init();
+if (!$stmt->prepare($sql)) {
+    die("SQL error: " . $mysqli->error);
+}
+
+$stmt->bind_param("i", $document_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$line_items = array();
+$subtotal = 0;
+$vat_total = 0;
+
+while ($row = $result->fetch_assoc()) {
+    $line_items[] = $row;
+    $subtotal += $row['total_amount'];
+}
+
+// Calculate VAT if items exist
+if (!empty($line_items)) {
+    $first_item = $line_items[0];
+    $vat_rate = floatval($first_item['vat_rate']);
+    $vat_total = ($subtotal * $vat_rate) / 100;
+}
+
+$total_due = $subtotal + $vat_total;
 
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Детали продукта</title>
+        <title>Деталы документа поступлення</title>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css">
+        <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
         <style>
             body {
-                max-width: 900px;
-                margin: 0 auto;
                 padding: 20px;
-            }
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 30px;
-                border-bottom: 2px solid #ccc;
-                padding-bottom: 15px;
-            }
-            .header h1 {
-                margin: 0;
-                font-size: 24px;
-            }
-            .back-btn {
-                background-color: #6c757d;
-                color: white;
-                padding: 8px 16px;
-                text-decoration: none;
-                border-radius: 4px;
-                border: none;
-                cursor: pointer;
-            }
-            .back-btn:hover {
-                background-color: #5a6268;
-            }
-            .btn {
-                background-color: #0066cc;
-                color: white;
-                padding: 8px 16px;
-                text-decoration: none;
-                border-radius: 4px;
-                border: none;
-                cursor: pointer;
-                margin-right: 10px;
-                display: inline-block;
-            }
-            .btn:hover {
-                background-color: #0052a3;
-            }
-            .btn-edit {
-                background-color: #28a745;
-            }
-            .btn-edit:hover {
-                background-color: #218838;
-            }
-            .btn-delete {
-                background-color: #dc3545;
-            }
-            .btn-delete:hover {
-                background-color: #c82333;
-            }
-            .product-info {
-                margin-bottom: 30px;
-            }
-            .info-row {
-                display: grid;
-                grid-template-columns: 200px 1fr;
-                gap: 20px;
-                margin-bottom: 15px;
-                padding: 10px 0;
-                border-bottom: 1px solid #eee;
-            }
-            .info-label {
-                font-weight: bold;
-                color: #333;
-            }
-            .info-value {
-                color: #666;
-                word-break: break-word;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
-            table th, table td {
-                border: 1px solid #ccc;
-                padding: 10px;
-                text-align: left;
-            }
-            table th {
-                background-color: #f5f5f5;
-                font-weight: bold;
-            }
-            .summary-section {
-                background-color: #f9f9f9;
-                padding: 15px;
-                border-radius: 4px;
-                margin-top: 20px;
-            }
-            .summary-row {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                gap: 20px;
-                margin-bottom: 10px;
-                text-align: right;
-            }
-            .summary-label {
-                text-align: left;
-                font-weight: bold;
-            }
-            .summary-value {
-                text-align: right;
             }
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>Продукт № <?= htmlspecialchars($product['product_id']) ?> - <?= htmlspecialchars($product['product_date']) ?></h1>
-            <div>
-                <a href="edit_product.php?product_id=<?= htmlspecialchars($product['product_id']) ?>" class="btn btn-edit">✎ </a>
-                <button onclick="deleteProduct(<?= htmlspecialchars($product['product_id']) ?>)" class="btn btn-delete">🗑 </button>
-                <a href="admin_page.php" class="back-btn">← Назад</a>
-            </div>
-        </div>
-
-        <div class="product-info">
-            <div class="info-row">
-                <div class="info-label">Поставщик:</div>
-                <div class="info-value"><?= htmlspecialchars($product['vendor']) ?></div>
-            </div>
-
-            <div class="info-row">
-                <div class="info-label">Организация:</div>
-                <div class="info-value"><?= htmlspecialchars($product['organization']) ?></div>
-            </div>
-
-            <div class="info-row">
-                <div class="info-label">Склад:</div>
-                <div class="info-value"><?= htmlspecialchars($product['warehouse']) ?></div>
-            </div>
-
-            <div class="info-row">
-                <div class="info-label">Ответственный:</div>
-                <div class="info-value"><?= htmlspecialchars($product['product_responsible']) ?></div>
-            </div>
-        </div>
-
-        <h3>Продукты</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>№</th>
-                    <th>Описание продукта</th>
-                    <th>Количество</th>
-                    <th>Единица</th>
-                    <th>НДС</th>
-                    <th>Цена</th>
-                    <th>Сумма</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td><?= htmlspecialchars($product['product_name']) ?></td>
-                    <td><?= htmlspecialchars($product['product_amount']) ?></td>
-                    <td>шт</td>
-                    <td><?= htmlspecialchars($product['product_ndc']) ?></td>
-                    <td><?= htmlspecialchars(number_format($product['product_price'], 2, '.', '')) ?></td>
-                    <td><?= htmlspecialchars(number_format($product['product_price'] * $product['product_amount'], 2, '.', '')) ?></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="summary-section">
-            <div class="summary-row">
-                <div class="summary-label">Всего товаров: 1, сумма:</div>
-                <div class="summary-value"><?= htmlspecialchars(number_format($product['product_price'] * $product['product_amount'], 2, '.', '')) ?> руб.</div>
-            </div>
-
-            <div class="summary-row">
-                <div class="summary-label">Сумма:</div>
-                <div class="summary-value"><?= htmlspecialchars(number_format($product['product_price'] * $product['product_amount'], 2, '.', '')) ?></div>
-            </div>
-
-            <div class="summary-row">
-                <div class="summary-label">НДС:</div>
-                <div class="summary-value">0.00</div>
-            </div>
-
-            <div class="summary-row">
-                <div class="summary-label"><strong>Итого:</strong></div>
-                <div class="summary-value"><strong><?= htmlspecialchars(number_format($product['product_price'] * $product['product_amount'], 2, '.', '')) ?></strong></div>
-            </div>
-        </div>
-
-        <div style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-                <div>
-                    <p>Поставщик ___________________</p>
-                    <p style="margin-top: 5px;">м.п.</p>
+                     <div class="row mb-3 d-print-none">
+                    <div class="col-auto ms-auto">
+                        <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
+                                <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"></path>
+                                <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"></path>
+                                <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"></path>
+                            </svg>
+                            Печать
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='edit_product.php?product_id=<?= $document_id ?>';">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                                <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"></path>
+                                <path d="M16 5l3 3"></path>
+                            </svg>
+                            Редактировать
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='delete_product.php?product_id=<?= $document_id ?>';">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M4 7l16 0"></path>
+                                <path d="M10 11l0 6"></path>
+                                <path d="M14 11l0 6"></path>
+                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                            </svg>
+                            Удалить
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <p>Организация ___________________</p>
-                    <p style="margin-top: 5px;">м.п.</p>
+        <div class="card card-lg">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <p class="h3">Организация</p>
+                        <address>
+                            <?= htmlspecialchars($document['organization'] ?? 'N/A') ?><br>
+                        </address>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p class="h3">Дата</p>
+                        <address>
+                            <?= htmlspecialchars($document['data_dokumenta']) ?><br>
+                        </address>
+                    </div>
+                    <div class="col-4 text-end">
+                        <p class="h3">Поставщик</p>
+                        <address>
+                            <?= htmlspecialchars($document['vendor'] ?? 'N/A') ?><br>
+                        </address>
+                    </div>
+                    <div class="col-12 my-5">
+                        <h1>Документ поступлення №<?= htmlspecialchars($document['id']) ?></h1>
+                    </div>
                 </div>
+                <table class="table table-transparent table-responsive">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 5%"></th>
+                            <th style="width: 60%">Товар</th>
+                            <th class="text-center" style="width: 5%">Кол-во</th>
+                            <th class="text-end" style="width: 15%">Цена</th>
+                            <th class="text-end" style="width: 15%">Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $item_num = 1;
+                        foreach ($line_items as $item): 
+                        ?>
+                            <tr>
+                                <td class="text-center"><?= $item_num ?></td>
+                                <td>
+                                    <p class="strong mb-1"><?= htmlspecialchars($item['product_name']) ?></p>
+                                </td>
+                                <td class="text-center"><?= htmlspecialchars($item['quantity']) ?></td>
+                                <td class="text-end"><?= number_format($item['unit_price'], 2, ',', ' ') ?></td>
+                                <td class="text-end"><?= number_format($item['total_amount'], 2, ',', ' ') ?></td>
+                            </tr>
+                        <?php 
+                        $item_num++;
+                        endforeach; 
+                        ?>
+                        <tr style="height: 50px;"><td colspan="5"></td></tr>
+                        <tr style="height: 50px;"><td colspan="5"></td></tr>
+                        <tr>
+                            <td colspan="4" class="strong text-end">Промежуточный итог</td>
+                            <td class="text-end"><?= number_format($subtotal, 2, ',', ' ') ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="strong text-end">Ставка НДС</td>
+                            <td class="text-end"><?= htmlspecialchars(!empty($line_items) ? $line_items[0]['vat_rate'] : 0) ?>%</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="strong text-end">НДС к оплате</td>
+                            <td class="text-end"><?= number_format($vat_total, 2, ',', ' ') ?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="font-weight-bold text-uppercase text-end">Итого к оплате</td>
+                            <td class="font-weight-bold text-end"><?= number_format($total_due, 2, ',', ' ') ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-secondary text-center mt-5">Благодарим вас за сотрудничество. Мы надеемся на продолжение работы с вами!</p>
             </div>
         </div>
-
-        <script>
-            function deleteProduct(productId) {
-                if (confirm('Вы уверены, что хотите удалить этот продукт? Это действие нельзя отменить.')) {
-                    window.location.href = 'delete_product.php?product_id=' + productId;
-                }
-            }
-        </script>
-
     </body>
 </html>
+
