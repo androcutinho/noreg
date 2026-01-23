@@ -14,6 +14,7 @@ if (isset($_SESSION["user_id"])) {
     $user = $result->fetch_assoc();
 }
 
+include 'header.php';
 ?>
 <!DOCTYPE html>
 <html>
@@ -44,3 +45,4 @@ if (isset($_SESSION["user_id"])) {
 </script>
 </body>
 </html>
+<?php include 'footer.php'; ?>

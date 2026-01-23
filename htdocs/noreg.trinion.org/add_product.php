@@ -2,124 +2,13 @@
 
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: log_in.php');
-    exit;
-}
+$page_title = 'Новое поступление товара';
 
 $mysqli = require 'database.php';
+require 'config/database_config.php';
+require 'queries/database_queries.php';
 
-//функция для получения данных таблицы
-function fetchTableData($mysqli, $table, $idCol, $nameCol, $orderBy = null, $extraCondition = null) {
-    $sql = "SELECT {$idCol}, {$nameCol} FROM {$table}";
-    if ($extraCondition) {
-        $sql .= " WHERE {$extraCondition}";
-    }
-    if ($orderBy) {
-        $sql .= " ORDER BY {$orderBy}";
-    }
-    
-    $result = $mysqli->query($sql);
-    $data = array();
-    
-    if ($result) {
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
-    } else {
-        error_log("Query error for {$table}: " . $mysqli->error);
-    }
-    
-    return $data;
-}
-
-
-function handleSearch($mysqli, $table, $searchCol, $returnCols, $limit = 10) {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        return;
-    }
-    
-    $searchKey = 'search_' . str_replace('_', '', strtolower($table));
-    if (!isset($_GET[$searchKey])) {
-        return;
-    }
-    
-    header('Content-Type: application/json');
-    $search_term = $_GET[$searchKey];
-    
-    $sql = "SELECT {$returnCols} FROM {$table} WHERE {$searchCol} LIKE ? ORDER BY {$searchCol} LIMIT {$limit}";
-    $stmt = $mysqli->stmt_init();
-    
-    if ($stmt->prepare($sql)) {
-        $search_param = "%" . $search_term . "%";
-        $stmt->bind_param("s", $search_param);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $data = array();
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
-        
-        echo json_encode($data);
-    } else {
-        echo json_encode([]);
-    }
-    exit;
-}
-
-
-handleSearch($mysqli, 'tovary_i_uslugi', 'naimenovanie', 'id, naimenovanie', 20);
-
-// Handle series search - only show series not associated with any product
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['searchserii'])) {
-    header('Content-Type: application/json');
-    $search_term = $_GET['searchserii'];
-    
-    $sql = "SELECT id, nomer FROM serii WHERE nomer LIKE ? AND (id_tovary_i_uslugi IS NULL OR id_tovary_i_uslugi = 0) ORDER BY nomer LIMIT 20";
-    $stmt = $mysqli->stmt_init();
-    
-    if ($stmt->prepare($sql)) {
-        $search_param = "%" . $search_term . "%";
-        $stmt->bind_param("s", $search_param);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $data = array();
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
-        
-        echo json_encode($data);
-    } else {
-        echo json_encode([]);
-    }
-    exit;
-}
-
-
-$warehouses = fetchTableData($mysqli, 'sklady', 'id', 'naimenovanie', 'naimenovanie');
-$organizations = fetchTableData($mysqli, 'organizacii', 'id', 'naimenovanie', 'naimenovanie');
-$nds_rates = fetchTableData($mysqli, 'stavki_nds', 'id', 'stavka_nds', 'stavka_nds');
-$vendors = fetchTableData($mysqli, 'postavshchiki', 'id', 'naimenovanie', 'naimenovanie');
-$products_list = fetchTableData($mysqli, 'tovary_i_uslugi', 'id', 'naimenovanie', 'naimenovanie');
-$series_list = fetchTableData($mysqli, 'serii', 'id', 'nomer', 'nomer');
-
-// Получить пользователей 
-$users_list = array();
-$users_sql = "SELECT user_id, user_name FROM users WHERE user_id != ? ORDER BY user_name";
-$users_stmt = $mysqli->stmt_init();
-if ($users_stmt->prepare($users_sql)) {
-    $users_stmt->bind_param("i", $_SESSION['user_id']);
-    $users_stmt->execute();
-    $users_result = $users_stmt->get_result();
-    while ($row = $users_result->fetch_assoc()) {
-        $users_list[] = $row;
-    }
-} else {
-    error_log("Users query error: " . $mysqli->error);
-}
+$nds_rates = fetchTableData($mysqli, TABLE_NDS_RATES, COL_NDS_ID, COL_NDS_RATE, COL_NDS_RATE);
 
 $error = '';
 $success = false;
@@ -150,20 +39,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     if (!$error) {
         
-        $sql = "SELECT user_role FROM users WHERE user_id = ?";
-        $stmt = $mysqli->stmt_init();
+        $user_role = getUserRole($mysqli, $_SESSION['user_id']);
         
-        if (!$stmt->prepare($sql)) {
-            die("Ошибка SQL: " . $mysqli->error);
-        }
-        
-        $stmt->bind_param("i", $_SESSION['user_id']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $logged_in_user = $result->fetch_assoc();
-        
-
-        if (!$logged_in_user || !$logged_in_user['user_role']) {
+        if (!$user_role) {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
             $mysqli->begin_transaction();
@@ -180,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $datetime = str_replace('T', ' ', $datetime) . ':00';
             
             
-            $arrival_sql = "INSERT INTO postupleniya_tovarov(id_postavshchika, id_organizacii, id_sklada, id_otvetstvennyj, data_dokumenta) VALUES (?, ?, ?, ?, ?)";
+            $arrival_sql = "INSERT INTO " . TABLE_ARRIVALS . "(" . COL_ARRIVAL_VENDOR_ID . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_WAREHOUSE_ID . ", " . COL_ARRIVAL_RESPONSIBLE_ID . ", " . COL_ARRIVAL_DATE . ") VALUES (?, ?, ?, ?, ?)";
             $arrival_stmt = $mysqli->stmt_init();
             
             if (!$arrival_stmt->prepare($arrival_sql)) {
@@ -217,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 
                 
                 if ($seria_id > 0) {
-                    $update_seria_sql = "UPDATE serii SET id_tovary_i_uslugi = ? WHERE id = ?";
+                    $update_seria_sql = "UPDATE " . TABLE_SERIES . " SET " . COL_SERIES_PRODUCT_ID . " = ? WHERE " . COL_SERIES_ID . " = ?";
                     $update_seria_stmt = $mysqli->stmt_init();
                     
                     if (!$update_seria_stmt->prepare($update_seria_sql)) {
@@ -232,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
                 
                 
-                $line_sql = "INSERT INTO stroki_dokumentov(id_dokumenta, id_tovary_i_uslugi, id_stavka_nds, cena_postupleniya, kolichestvo_postupleniya) VALUES (?, ?, ?, ?, ?)";
+                $line_sql = "INSERT INTO " . TABLE_DOCUMENT_LINES . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ") VALUES (?, ?, ?, ?, ?)";
                 $line_stmt = $mysqli->stmt_init();
                 
                 if (!$line_stmt->prepare($line_sql)) {
@@ -267,110 +145,51 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
+include 'header.php';
 ?>
+<link rel="stylesheet" href="css/add_product.css">
 
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Добавить продукт</title>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-        <style>
-            .products-table-wrapper {
-                max-width: 90%;
-                margin: 20px auto;
-                overflow-x: auto;
-            }
-            .products-table-wrapper table {
-                width: 100%;
-                border-collapse: collapse;
-                border: 1px solid #ddd;
-            }
-            .products-table-wrapper table thead th,
-            .products-table-wrapper table tbody td {
-                border: 1px solid #ddd;
-                padding: 8px;
-            }
-            .products-table-wrapper table thead th {
-                background-color: #f5f5f5;
-                font-weight: 600;
-            }
-            .search-container {
-                position: relative;
-            }
-            .form-container {
-                max-width: 90%;
-                margin: 20px auto;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Новое поступление товара</h1>
-        
-        <?php if ($error): ?>
-            <div class="<?php echo $success ? 'success' : 'error'; ?>">
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
+<?php if ($error): ?>
+    <div class="<?php echo $success ? 'success' : 'error'; ?>">
+        <?= htmlspecialchars($error) ?>
+    </div>
+<?php endif; ?>
 
-        <?php if (empty($warehouses) || empty($organizations) || empty($users_list) || empty($nds_rates) || empty($vendors) || empty($products_list)): ?>
-            <div class="error">
-                <strong>Внимание:</strong> 
-                <?php if (empty($warehouses)): ?>
-                    В таблице "Склады" нет данных.<br>
-                <?php endif; ?>
-                <?php if (empty($organizations)): ?>
-                    В таблице "Организации" нет данных.<br>
-                <?php endif; ?>
-                <?php if (empty($nds_rates)): ?>
-                    В таблице "Ставки НДС" нет данных.<br>
-                <?php endif; ?>
-                <?php if (empty($vendors)): ?>
-                    В таблице "Поставщики" нет данных.<br>
-                <?php endif; ?>
-                <?php if (empty($products_list)): ?>
-                    В таблице "Товары" нет данных.<br>
-                <?php endif; ?>
-                <?php if (empty($users_list)): ?>
-                    Нет доступных пользователей.<br>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="form-container">
+<div class="form-container">
+    <h2>Новое поступление товара</h2>
             <form method="POST" id="documentForm">   
                 <div class="form-row">
-                    <div>
-                        <label for="product_date">Дата и время документа:</label>
-                        <input type="datetime-local" id="product_date" name="product_date" required
+                    <div class="mb-3">
+                        <label class="form-label" for="product_date">Дата поступления документа</label>
+                        <input class="form-control" type="datetime-local" id="product_date" name="product_date" required
                         value="<?= htmlspecialchars($_POST['product_date'] ?? date('Y-m-d\TH:i')) ?>">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="warehouse_id">Склад:</label>
-                        <input type="text" list="warehouses-list" id="warehouse_id" name="warehouse_name" placeholder="Выберите склад" required>
+                    <div class="mb-3" style="position: relative;">
+                        <label class="form-label" for="warehouse_id">Склад</label>
+                        <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off" required>
                         <input type="hidden" name="warehouse_id" class="warehouse-id">
-                    </div> 
+                    </div>
                 </div>
 
                 <div class="form-row">
-                    <div class="mb-3">
-                        <label class="form-label" for="organization_id">Организация:</label>
-                        <input type="text" list="organizations-list" id="organization_id" name="organization_name" placeholder="Выберите организацию" required>
-                        <input type="hidden" name="organization_id" class="organization-id">
+                    <div class="mb-3" style="position: relative;">
+                        <label class="form-label" for="vendor_id">Поставщик</label>
+                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required>
+                        <input type="hidden" name="vendor_id" class="vendor-id">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="vendor_id">Поставщик:</label>
-                        <input type="text" list="vendors-list" id="vendor_id" name="vendor_name" placeholder="Выберите поставщика" required>
-                        <input type="hidden" name="vendor_id" class="vendor-id">
+                    <div class="mb-3" style="position: relative;">
+                        <label class="form-label" for="organization_id">Организация</label>
+                        <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off" required>
+                        <input type="hidden" name="organization_id" class="organization-id">
                     </div>
                 </div>
 
-                <div class="form-row full">
-                    <div class="mb-3">
-                        <label class="form-label" for="responsible_id">Ответственный:</label>
-                        <input type="text" list="users-list" id="responsible_id" name="responsible_name" placeholder="Выберите ответственного" required>
+                <div class="form-row">
+                    <div class="mb-3" style="position: relative;">
+                        <label class="form-label" for="responsible_id">Ответственный</label>
+                        <input type="text" class="form-control" id="responsible_id" name="responsible_name" placeholder="- Выберите ответственного -" autocomplete="off" required>
                         <input type="hidden" name="responsible_id" class="responsible-id">
                     </div>
                 </div>
@@ -386,7 +205,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <th>СЕРИЯ</th>
                             <th>ЦЕНА</th>
                             <th>КОЛ-ВО</th>
-                            <th>UNIT</th>
+                            <th>ЕД</th>
                             <th>НДС</th>
                             <th></th>
                         </tr>
@@ -395,20 +214,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <tr class="product-row">
                             <td>1</td>
                             <td>
-                                <div class="search-container">
-                                    <input type="text" list="products-list" name="products[0][product_name]" placeholder="Введите товар...">
+                                <div class="search-container" style="position: relative;">
+                                    <input type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
                                 </div>
                             </td>
                             <td>
-                                <div class="search-container">
-                                    <input type="text" list="series-list" name="products[0][seria_name]" placeholder="Введите серию...">
+                                <div class="search-container" style="position: relative;">
+                                    <input type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
                                     <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td><input type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
                             <td><input type="text" name="products[0][quantity]" placeholder="0" autocomplete="off"></td>
-                            <td>pcs</td>
+                            <td>шт</td>
                             <td>
                                 <select name="products[0][nds_id]">
                                     <option value="">--</option>
@@ -417,152 +236,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><button type="button" class="delete-row" onclick="deleteRow(this)">🗑</button></td>
+                            <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                     </tbody>
                 </table>
                 </div>
 
-                <button type="button" class="add-row-btn" onclick="addRow()">+ row</button>
+                <button type="button" class="btn" onclick="addRow()">+ строка</button>
 
                 <div style="margin-top: 20px;">
-                    <button type="submit">Создать документ</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
                     <a href="admin_page.php" class="btn">Отмена</a>
                 </div>
             </form>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
-        <datalist id="warehouses-list">
-            <?php foreach ($warehouses as $warehouse): ?>
-                <option value="<?= htmlspecialchars($warehouse['naimenovanie']) ?>" data-id="<?= $warehouse['id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
-        <datalist id="organizations-list">
-            <?php foreach ($organizations as $org): ?>
-                <option value="<?= htmlspecialchars($org['naimenovanie']) ?>" data-id="<?= $org['id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
-        <datalist id="vendors-list">
-            <?php foreach ($vendors as $vendor): ?>
-                <option value="<?= htmlspecialchars($vendor['naimenovanie']) ?>" data-id="<?= $vendor['id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
-        <datalist id="users-list">
-            <?php foreach ($users_list as $user): ?>
-                <option value="<?= htmlspecialchars($user['user_name']) ?>" data-id="<?= $user['user_id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
-        <datalist id="products-list">
-            <?php foreach ($products_list as $prod): ?>
-                <option value="<?= htmlspecialchars($prod['naimenovanie']) ?>" data-id="<?= $prod['id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
-        <datalist id="series-list">
-            <?php foreach ($series_list as $seria): ?>
-                <option value="<?= htmlspecialchars($seria['nomer']) ?>" data-id="<?= $seria['id'] ?>">
-            <?php endforeach; ?>
-        </datalist>
         
         <script>
-            const fieldMappings = {
-                'warehouse_name': 'warehouse_id',
-                'organization_name': 'organization_id',
-                'vendor_name': 'vendor_id',
-                'responsible_name': 'responsible_id'
-            };
-            
-            // Шаблон опций НДС
             let ndsOptionsTemplate = '<option value="">--</option>';
             <?php foreach ($nds_rates as $nds): ?>
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
-            
-            
-            document.addEventListener('change', function(e) {
-                if (!e.target.list) return;
-                
-                const selectedOption = Array.from(e.target.list.options).find(opt => opt.value === e.target.value);
-                if (!selectedOption || !selectedOption.dataset.id) {
-                    // Validar si es un campo de serie y el valor no está vacío
-                    if (e.target.name.includes('[seria_name]') && e.target.value.trim() !== '') {
-                        alert('Выберите другой номер серии. "Введенный код уже связан с продуктом"');
-                        e.target.value = '';
-                        e.target.closest('.search-container').querySelector('.seria-id').value = '';
-                    }
-                    return;
-                }
-                
-                const id = selectedOption.dataset.id;
-                
-                // Обработать основные поля формы
-                if (fieldMappings[e.target.name]) {
-                    document.querySelector(`input[name="${fieldMappings[e.target.name]}"]`).value = id;
-                }
-                // Обработать поля строки товара
-                else if (e.target.name.includes('[product_name]')) {
-                    e.target.closest('.search-container').querySelector('.product-id').value = id;
-                }
-                else if (e.target.name.includes('[seria_name]')) {
-                    e.target.closest('.search-container').querySelector('.seria-id').value = id;
-                }
-            });
-
-            function createRowTemplate(rowIndex) {
-                return `
-                    <td>${rowIndex + 1}</td>
-                    <td>
-                        <div class="search-container">
-                            <input type="text" list="products-list" name="products[${rowIndex}][product_name]" placeholder="Введите товар...">
-                            <input type="hidden" name="products[${rowIndex}][product_id]" class="product-id">
-                        </div>
-                    </td>
-                    <td>
-                        <div class="search-container">
-                            <input type="text" list="series-list" name="products[${rowIndex}][seria_name]" placeholder="Введите серию...">
-                            <input type="hidden" name="products[${rowIndex}][seria_id]" class="seria-id">
-                        </div>
-                    </td>
-                    <td><input type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
-                    <td><input type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
-                    <td>pcs</td>
-                    <td><select name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
-                    <td><button type="button" class="delete-row" onclick="deleteRow(this)">🗑</button></td>
-                `;
-            }
-
-            function addRow() {
-                const tbody = document.getElementById('productsBody');
-                const rowCount = tbody.rows.length;
-                const newRow = document.createElement('tr');
-                newRow.className = 'product-row';
-                newRow.innerHTML = createRowTemplate(rowCount);
-                tbody.appendChild(newRow);
-                updateRowNumbers();
-            }
-
-            function deleteRow(button) {
-                const tbody = document.getElementById('productsBody');
-                if (tbody.rows.length > 1) {
-                    button.closest('tr').remove();
-                    updateRowNumbers();
-                } else {
-                    alert('Должна остаться хотя бы одна строка!');
-                }
-            }
-
-            function updateRowNumbers() {
-                const tbody = document.getElementById('productsBody');
-                const rows = tbody.querySelectorAll('tr');
-                rows.forEach((row, index) => {
-                    row.querySelector('td:first-child').textContent = index + 1;
-                    row.querySelectorAll('input, select').forEach(input => {
-                        if (input.name) {
-                            input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
-                        }
-                    });
-                });
-            }
         </script>
-    </body>
-</html>
+        <script src="js/add_product.js"></script>
+
+<?php include 'footer.php'; ?>
