@@ -110,7 +110,7 @@ include 'header.php';
                         value="<?= htmlspecialchars($_POST['product_date'] ?? $document['data_dokumenta']) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="warehouse_id">Склад</label>
                         <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['warehouse_name'] ?? ($document['warehouse_name'] ?? '')) ?>">
@@ -119,14 +119,14 @@ include 'header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="vendor_id">Поставщик</label>
                         <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['vendor_name'] ?? ($document['vendor_name'] ?? '')) ?>">
                         <input type="hidden" name="vendor_id" class="vendor-id" value="<?= htmlspecialchars($_POST['vendor_id'] ?? ($document['vendor_id'] ?? '')) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="organization_id">Организация</label>
                         <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['organization_name'] ?? ($document['organization_name'] ?? '')) ?>">
@@ -135,7 +135,7 @@ include 'header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="responsible_id">Ответственный</label>
                         <input type="text" class="form-control" id="responsible_id" name="responsible_name" placeholder="- Выберите ответственного -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['responsible_name'] ?? ($document['responsible_name'] ?? '')) ?>">
@@ -167,14 +167,14 @@ include 'header.php';
                         <tr class="product-row">
                             <td><?= $row_index + 1 ?></td>
                             <td>
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][product_name]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($_POST['products'][$row_index]['product_name'] ?? ($item['product_name'] ?? '')) ?>">
                                     <input type="hidden" name="products[<?= $row_index ?>][product_id]" class="product-id" value="<?= htmlspecialchars($item['product_id'] ?? '') ?>">
                                 </div>
                             </td>
                             <td>
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off"
                                     value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_name'] ?? ($item['seria_name'] ?? '')) ?>">
                                     <input type="hidden" name="products[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($item['seria_id'] ?? '') ?>">

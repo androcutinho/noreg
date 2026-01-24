@@ -56,15 +56,13 @@
 }
 
 .autocomplete-dropdown {
-    position: absolute;
+    position: fixed;
     background-color: #fff;
     border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 4px 4px;
+    border-radius: 4px;
     max-height: 200px;
     overflow-y: auto;
-    width: 100%;
-    z-index: 9999;
+    z-index: 99999;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 

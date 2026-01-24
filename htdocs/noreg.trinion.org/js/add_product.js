@@ -64,6 +64,15 @@ function updateRowNumbers() {
     });
 }
 
+// Helper function to position dropdown using fixed positioning relative to viewport
+function positionDropdown(dropdown, input) {
+    const rect = input.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.top = (rect.bottom + 2) + 'px';
+    dropdown.style.width = rect.width + 'px';
+}
+
 // Autocomplete for table product/series fields
 function initTableAutocomplete(row) {
     const productInput = row.querySelector('input[name*="[product_name]"]');
@@ -75,7 +84,7 @@ function initTableAutocomplete(row) {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
-        productInput.parentNode.insertBefore(dropdown, productInput.nextSibling);
+        document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         productInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
@@ -116,6 +125,7 @@ function initTableAutocomplete(row) {
                         dropdown.appendChild(option);
                     });
                     dropdown.style.display = 'block';
+                    positionDropdown(dropdown, productInput);
                 } else {
                     dropdown.style.display = 'none';
                 }
@@ -124,8 +134,21 @@ function initTableAutocomplete(row) {
             }
         });
 
+        productInput.addEventListener('focus', () => {
+            if (dropdown.children.length > 0 && productInput.value.trim()) {
+                dropdown.style.display = 'block';
+                positionDropdown(dropdown, productInput);
+            }
+        });
+
         productInput.addEventListener('blur', () => {
             setTimeout(() => dropdown.style.display = 'none', 200);
+        });
+
+        window.addEventListener('scroll', () => {
+            if (dropdown.style.display === 'block') {
+                positionDropdown(dropdown, productInput);
+            }
         });
     }
 
@@ -133,7 +156,7 @@ function initTableAutocomplete(row) {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
-        seriaInput.parentNode.insertBefore(dropdown, seriaInput.nextSibling);
+        document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         seriaInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
@@ -176,6 +199,7 @@ function initTableAutocomplete(row) {
                         dropdown.appendChild(option);
                     });
                     dropdown.style.display = 'block';
+                    positionDropdown(dropdown, seriaInput);
                 } else {
                     dropdown.style.display = 'none';
                 }
@@ -184,8 +208,21 @@ function initTableAutocomplete(row) {
             }
         });
 
+        seriaInput.addEventListener('focus', () => {
+            if (dropdown.children.length > 0 && seriaInput.value.trim()) {
+                dropdown.style.display = 'block';
+                positionDropdown(dropdown, seriaInput);
+            }
+        });
+
         seriaInput.addEventListener('blur', () => {
             setTimeout(() => dropdown.style.display = 'none', 200);
+        });
+
+        window.addEventListener('scroll', () => {
+            if (dropdown.style.display === 'block') {
+                positionDropdown(dropdown, seriaInput);
+            }
         });
     }
 }
@@ -213,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
-        input.parentNode.insertBefore(dropdown, input.nextSibling);
+        document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         input.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
@@ -257,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         dropdown.appendChild(option);
                     });
                     dropdown.style.display = 'block';
+                    positionDropdown(dropdown, input);
                 } else {
                     dropdown.style.display = 'none';
                 }
@@ -265,8 +303,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        input.addEventListener('focus', () => {
+            if (dropdown.children.length > 0 && input.value.trim()) {
+                dropdown.style.display = 'block';
+                positionDropdown(dropdown, input);
+            }
+        });
+
         input.addEventListener('blur', () => {
             setTimeout(() => dropdown.style.display = 'none', 200);
+        });
+
+        window.addEventListener('scroll', () => {
+            if (dropdown.style.display === 'block') {
+                positionDropdown(dropdown, input);
+            }
         });
     });
 });
