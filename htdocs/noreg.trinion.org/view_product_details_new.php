@@ -8,56 +8,84 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Handle document deletion if delete action is requested
-if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    require 'config/database_config.php';
-    require 'queries/delete_product_queries.php';
-    
-    if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
-        die("ID документа не предоставлен.");
-    }
-    
-    if (!isset($mysqli)) {
-        $mysqli = require 'config/database.php';
-    }
-    
-    $document_id = intval($_GET['product_id']);
-    
-    $result = deleteArrivalDocument($mysqli, $document_id);
-    
-    if ($result['success']) {
-        header('Location: admin_page.php');
-        exit;
-    } else {
-        die("Error: " . $result['message']);
-    }
-}
-
-require 'queries/view_product_queries.php';
-
-
+// Check if product_id is provided
 if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
     die("ID документа не предоставлен.");
 }
 
 $document_id = intval($_GET['product_id']);
 
-$document = fetchDocumentHeader($mysqli, $document_id);
+// Fetch document header
+$sql = "SELECT 
+    pt.id,
+    pt.data_dokumenta,
+    org.naimenovanie as organization,
+    ps.naimenovanie as vendor,
+    u.user_name as responsible
+FROM postupleniya_tovarov pt
+LEFT JOIN organizacii org ON pt.id_organizacii = org.id
+LEFT JOIN postavshchiki ps ON pt.id_postavshchika = ps.id
+LEFT JOIN users u ON pt.id_otvetstvennyj = u.user_id
+WHERE pt.id = ?";
+
+$stmt = $mysqli->stmt_init();
+if (!$stmt->prepare($sql)) {
+    die("SQL error: " . $mysqli->error);
+}
+
+$stmt->bind_param("i", $document_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$document = $result->fetch_assoc();
 
 if (!$document) {
     die("Документ не найден.");
 }
 
-$totals = calculateTotals($line_items);
-$subtotal = $totals['subtotal'];
-$vat_total = $totals['vat_total'];
-$total_due = $totals['total_due'];
+// Fetch line items
+$sql = "SELECT 
+    sd.id,
+    ti.naimenovanie as product_name,
+    sd.kolichestvo_postupleniya as quantity,
+    sd.cena_postupleniya as unit_price,
+    sn.stavka_nds as vat_rate,
+    (sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_amount
+FROM stroki_dokumentov sd
+LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+WHERE sd.id_dokumenta = ?
+ORDER BY sd.id ASC";
+
+$stmt = $mysqli->stmt_init();
+if (!$stmt->prepare($sql)) {
+    die("SQL error: " . $mysqli->error);
+}
+
+$stmt->bind_param("i", $document_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$line_items = array();
+$subtotal = 0;
+$vat_total = 0;
+
+while ($row = $result->fetch_assoc()) {
+    $line_items[] = $row;
+    $subtotal += $row['total_amount'];
+}
+
+// Calculate VAT if items exist
+if (!empty($line_items)) {
+    $first_item = $line_items[0];
+    $vat_rate = floatval($first_item['vat_rate']);
+    $vat_total = ($subtotal * $vat_rate) / 100;
+}
+
+$total_due = $subtotal + $vat_total;
 
 $page_title = 'Детали документа поступлення';
 
 include 'header.php';
 ?>
-        <div class="container-xl">
                      <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
@@ -77,7 +105,7 @@ include 'header.php';
                             </svg>
                             Редактировать
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='view_product_details.php?product_id=<?= $document_id ?>&action=delete';">
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='delete_product.php?product_id=<?= $document_id ?>';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
@@ -165,7 +193,6 @@ include 'header.php';
                 </table>
                 <p class="text-secondary text-center mt-5">Благодарим вас за сотрудничество. Мы надеемся на продолжение работы с вами!</p>
             </div>
-        </div>
         </div>
 
 <?php

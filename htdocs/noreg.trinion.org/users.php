@@ -8,32 +8,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$mysqli = require 'database.php';
+require 'queries/users_queries.php';
 
 // Check if logged in user is admin
-$sql = "SELECT user_role FROM users WHERE user_id = ?";
-$stmt = $mysqli->stmt_init();
-
-if (!$stmt->prepare($sql)) {
-    die("SQL error: " . $mysqli->error);
-}
-
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$logged_in_user = $result->fetch_assoc();
-$is_admin = $logged_in_user && $logged_in_user['user_role'] ? true : false;
+$is_admin = isUserAdminById($mysqli, $_SESSION['user_id']);
 
 // Fetch all users
-$sql = "SELECT user_id, user_name, email, user_role FROM users ORDER BY user_id DESC";
-$result = $mysqli->query($sql);
-$users = array();
-
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $users[] = $row;
-    }
-}
+$users = fetchAllUsers($mysqli);
 
 ?>
 

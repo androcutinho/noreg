@@ -1,0 +1,194 @@
+<?php
+
+/**
+ * Fetch document header by ID with all related data
+ * @param mysqli $mysqli Database connection
+ * @param int $document_id Document ID
+ * @return array|null Document data or null if not found
+ */
+function fetchDocumentHeader($mysqli, $document_id) {
+    $sql = "SELECT 
+        pt.id,
+        pt.data_dokumenta,
+        pt.id_organizacii,
+        pt.id_postavshchika,
+        pt.id_sklada,
+        pt.id_otvetstvennyj,
+        org.naimenovanie as organization_name,
+        org.id as organization_id,
+        ps.naimenovanie as vendor_name,
+        ps.id as vendor_id,
+        sl.naimenovanie as warehouse_name,
+        sl.id as warehouse_id,
+        u.user_name as responsible_name,
+        u.user_id as responsible_id
+    FROM postupleniya_tovarov pt
+    LEFT JOIN organizacii org ON pt.id_organizacii = org.id
+    LEFT JOIN postavshchiki ps ON pt.id_postavshchika = ps.id
+    LEFT JOIN sklady sl ON pt.id_sklada = sl.id
+    LEFT JOIN users u ON pt.id_otvetstvennyj = u.user_id
+    WHERE pt.id = ?";
+
+    $stmt = $mysqli->stmt_init();
+    if (!$stmt->prepare($sql)) {
+        return null;
+    }
+
+    $stmt->bind_param("i", $document_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_assoc();
+}
+
+/**
+ * Fetch document line items by document ID
+ * @param mysqli $mysqli Database connection
+ * @param int $document_id Document ID
+ * @return array Array of line items
+ */
+function fetchDocumentLineItems($mysqli, $document_id) {
+    $sql = "SELECT 
+        sd.id,
+        sd.id_dokumenta,
+        sd.id_tovary_i_uslugi as product_id,
+        ti.naimenovanie as product_name,
+        sd.id_serii as seria_id,
+        ser.nomer as seria_name,
+        sd.cena_postupleniya as price,
+        sd.kolichestvo_postupleniya as quantity,
+        sd.id_stavka_nds as nds_id,
+        sn.stavka_nds as nds_rate,
+    FROM stroki_dokumentov sd
+    LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+    LEFT JOIN serii ser ON sd.id_serii = ser.id
+    LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+    WHERE sd.id_dokumenta = ?
+    ORDER BY sd.id ASC";
+
+    $stmt = $mysqli->stmt_init();
+    if (!$stmt->prepare($sql)) {
+        return [];
+    }
+
+    $stmt->bind_param("i", $document_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $line_items = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $line_items[] = $row;
+    }
+
+    return $line_items;
+}
+
+/**
+ * Update arrival document with line items
+ * @param mysqli $mysqli Database connection
+ * @param int $document_id Document ID
+ * @param array $data Form data containing document and line item info
+ * @return array Result array with 'success' and 'message' keys
+ */
+function updateArrivalDocument($mysqli, $document_id, $data) {
+    try {
+        // Start transaction
+        $mysqli->begin_transaction();
+        
+        // Update document header
+        $doc_sql = "UPDATE postupleniya_tovarov SET 
+            data_dokumenta = ?,
+            id_sklada = ?,
+            id_postavshchika = ?,
+            id_organizacii = ?,
+            id_otvetstvennyj = ?
+        WHERE id = ?";
+        
+        $doc_stmt = $mysqli->stmt_init();
+        if (!$doc_stmt->prepare($doc_sql)) {
+            throw new Exception("Ошибка подготовки запроса документа: " . $mysqli->error);
+        }
+        
+        $doc_stmt->bind_param(
+            "siiii",
+            $data['product_date'],
+            $data['warehouse_id'],
+            $data['vendor_id'],
+            $data['organization_id'],
+            $data['responsible_id']
+        );
+        
+        if (!$doc_stmt->execute()) {
+            throw new Exception("Ошибка обновления документа: " . $doc_stmt->error);
+        }
+        
+        // Delete old line items
+        $delete_sql = "DELETE FROM stroki_dokumentov WHERE id_dokumenta = ?";
+        $delete_stmt = $mysqli->stmt_init();
+        if (!$delete_stmt->prepare($delete_sql)) {
+            throw new Exception("Ошибка подготовки удаления строк: " . $mysqli->error);
+        }
+        
+        $delete_stmt->bind_param("i", $document_id);
+        if (!$delete_stmt->execute()) {
+            throw new Exception("Ошибка удаления старых строк: " . $delete_stmt->error);
+        }
+        
+        // Insert new line items
+        $line_sql = "INSERT INTO stroki_dokumentov 
+            (id_dokumenta, id_tovary_i_uslugi, id_serii, cena_postupleniya, kolichestvo_postupleniya, id_stavka_nds) 
+        VALUES (?, ?, ?, ?, ?, ?)";
+        
+        $line_stmt = $mysqli->stmt_init();
+        if (!$line_stmt->prepare($line_sql)) {
+            throw new Exception("Ошибка подготовки вставки строк: " . $mysqli->error);
+        }
+        
+        foreach ($data['products'] as $product) {
+            if (empty($product['product_id']) || empty($product['quantity'])) {
+                continue;
+            }
+            
+            $product_id = intval($product['product_id']);
+            $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : null;
+            $price = floatval($product['price']);
+            $quantity = floatval($product['quantity']);
+            $nds_id = !empty($product['nds_id']) ? intval($product['nds_id']) : null;
+            
+            $line_stmt->bind_param(
+                "iiiddi",
+                $document_id,
+                $product_id,
+                $seria_id,
+                $price,
+                $quantity,
+                $nds_id
+            );
+            
+            if (!$line_stmt->execute()) {
+                throw new Exception("Ошибка вставки строки: " . $line_stmt->error);
+            }
+        }
+        
+        // Commit transaction
+        $mysqli->commit();
+        
+        return [
+            'success' => true,
+            'message' => 'Документ успешно обновлен'
+        ];
+        
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        
+        // Log error
+        error_log("[UPDATE ARRIVAL] Error: " . $e->getMessage());
+        
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+    }
+}
+
+?>

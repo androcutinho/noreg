@@ -8,23 +8,10 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$mysqli = require 'database.php';
+require 'queries/create_user_queries.php';
 
 // Check if user has admin permissions
-$sql = "SELECT user_role FROM users WHERE user_id = ?";
-$stmt = $mysqli->stmt_init();
-
-if (!$stmt->prepare($sql)) {
-    die("SQL error: " . $mysqli->error);
-}
-
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$logged_in_user = $result->fetch_assoc();
-
-// If user doesn't exist or doesn't have admin role, deny access
-if (!$logged_in_user || !$logged_in_user['user_role']) {
+if (!isUserAdmin($mysqli, $_SESSION['user_id'])) {
     die("Доступ запрещен. Вам нужны права администратора для доступа к этой странице.");
 }
 
@@ -51,26 +38,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Determine admin role (checkbox)
         $user_role = isset($_POST['user_role']) ? 1 : 0;
         
-        // Prepare insert statement
-        $sql = "INSERT INTO users (user_name, email, user_password_hash, user_role) VALUES (?, ?, ?, ?)";
-        $stmt = $mysqli->stmt_init();
+        // Create user
+        $result = createUser($mysqli, $_POST['user_name'], $_POST['email'], $_POST['password'], $user_role);
         
-        if (!$stmt->prepare($sql)) {
-            $error = "SQL error: " . $mysqli->error;
+        if ($result['success']) {
+            header('Location: users.php');
+            exit;
         } else {
-            $stmt->bind_param("sssi", $_POST['user_name'], $_POST['email'], $password_hash, $user_role);
-            
-            if ($stmt->execute()) {
-                $success = true;
-                header('Location: users.php');
-                exit;
-            } else {
-                if ($mysqli->errno === 1062) {
-                    $error = 'Электронная почта уже существует';
-                } else {
-                    $error = "Ошибка при создании пользователя: " . $mysqli->error;
-                }
-            }
+            $error = $result['message'];
         }
     }
 }

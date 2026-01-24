@@ -1,10 +1,5 @@
 <?php
-/**
- * Database Configuration and Constants
- * Centralized location for all database table and column names
- */
 
-// Table names
 define('TABLE_NDS_RATES', 'stavki_nds');
 define('TABLE_ARRIVALS', 'postupleniya_tovarov');
 define('TABLE_DOCUMENT_LINES', 'stroki_dokumentov');
@@ -15,7 +10,6 @@ define('TABLE_VENDORS', 'postavshchiki');
 define('TABLE_PRODUCTS', 'tovary_i_uslugi');
 define('TABLE_USERS', 'users');
 
-// Column names - NDS Rates
 define('COL_NDS_ID', 'id');
 define('COL_NDS_RATE', 'stavka_nds');
 
@@ -61,3 +55,5 @@ define('COL_SERIES_NAME', 'naimenovanie');
 define('COL_USER_ID', 'id');
 define('COL_USER_NAME', 'user_name');
 define('COL_USER_ROLE', 'role');
+
+?>

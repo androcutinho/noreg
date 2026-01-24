@@ -12,20 +12,20 @@ function createRowTemplate(rowIndex) {
         <td>${rowIndex + 1}</td>
         <td>
             <div class="search-container" style="position: relative;">
-                <input type="text" name="products[${rowIndex}][product_name]" placeholder="Введите товар..." autocomplete="off">
+                <input class="form-control" type="text" name="products[${rowIndex}][product_name]" placeholder="Введите товар..." autocomplete="off">
                 <input type="hidden" name="products[${rowIndex}][product_id]" class="product-id">
             </div>
         </td>
         <td>
             <div class="search-container" style="position: relative;">
-                <input type="text" name="products[${rowIndex}][seria_name]" placeholder="Введите серию..." autocomplete="off">
+                <input class="form-control" type="text" name="products[${rowIndex}][seria_name]" placeholder="Введите серию..." autocomplete="off">
                 <input type="hidden" name="products[${rowIndex}][seria_id]" class="seria-id">
             </div>
         </td>
-        <td><input type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
-        <td><input type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
         <td>шт</td>
-        <td><select name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
+        <td><select class="form-control" name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
         <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
 }
@@ -85,11 +85,13 @@ function initTableAutocomplete(row) {
             }
 
             try {
-                const response = await fetch(`api/autocomplete.php?search=${encodeURIComponent(query)}&table=tovary_i_uslugi&col=naimenovanie&id=id`);
+                const timestamp = new Date().getTime(); // Cache busting
+                const url = `api/autocomplete.php?search=${encodeURIComponent(query)}&table=tovary_i_uslugi&col=naimenovanie&id=id&t=${timestamp}`;
+                const response = await fetch(url);
                 const results = await response.json();
                 
                 dropdown.innerHTML = '';
-                if (results.length > 0) {
+                if (results && results.length > 0) {
                     results.forEach(item => {
                         const option = document.createElement('div');
                         option.className = 'autocomplete-option';
@@ -118,7 +120,7 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Autocomplete error:', error);
+                console.error('Product autocomplete error:', error);
             }
         });
 
@@ -135,17 +137,21 @@ function initTableAutocomplete(row) {
 
         seriaInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
+            
             if (query.length === 0) {
                 dropdown.style.display = 'none';
                 return;
             }
 
             try {
-                const response = await fetch(`api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=naimenovanie&id=id`);
+                const timestamp = new Date().getTime(); // Cache busting
+                const url = `api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=nomer&id=id&t=${timestamp}`;
+                
+                const response = await fetch(url);
                 const results = await response.json();
                 
                 dropdown.innerHTML = '';
-                if (results.length > 0) {
+                if (results && results.length > 0) {
                     results.forEach(item => {
                         const option = document.createElement('div');
                         option.className = 'autocomplete-option';
@@ -174,7 +180,7 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Autocomplete error:', error);
+                console.error('Series autocomplete error:', error);
             }
         });
 

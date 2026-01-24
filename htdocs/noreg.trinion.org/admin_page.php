@@ -2,31 +2,30 @@
 
 session_start();
 
-$page_title = 'Панель администратора - Продукты';
+$page_title = 'Панель администратора';
 
-$mysqli = require 'database.php';
+$mysqli = require 'config/database.php';
+require 'queries/admin_queries.php';
 
-// Fetch all products
-$sql = "SELECT 
-    pt.id,
-    pt.data_dokumenta,
-    ps.naimenovanie as vendor,
-    u.user_name as responsible,
-    SUM(sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_price
-FROM postupleniya_tovarov pt
-LEFT JOIN postavshchiki ps ON pt.id_postavshchika = ps.id
-LEFT JOIN users u ON pt.id_otvetstvennyj = u.user_id
-LEFT JOIN stroki_dokumentov sd ON pt.id = sd.id_dokumenta
-GROUP BY pt.id
-ORDER BY pt.id DESC";
-$result = $mysqli->query($sql);
-$products = array();
+$selected_warehouse_id = isset($_GET['warehouse_id']) ? intval($_GET['warehouse_id']) : null;
+$current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$items_per_page = 8;
 
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $products[] = $row;
-    }
-}
+$warehouses = fetchAllWarehouses($mysqli);
+
+// Get total count of products
+$total_products = getProductsCount($mysqli, $selected_warehouse_id);
+$total_pages = ceil($total_products / $items_per_page);
+
+// Ensure current page is within bounds
+if ($current_page < 1) $current_page = 1;
+if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pages;
+
+// Calculate offset
+$offset = ($current_page - 1) * $items_per_page;
+
+// Fetch products for current page
+$products = fetchAllProducts($mysqli, $selected_warehouse_id, $items_per_page, $offset);
 
 include 'header.php';
 ?>
@@ -37,7 +36,7 @@ include 'header.php';
               <div class="row w-full">
                 <div class="col">
                   <h3 class="card-title mb-0">Поступления товаров</h3>
-                  <p class="text-secondary m-0">Всего документов: <?= count($products) ?> штук.</p>
+                  <p class="text-secondary m-0">Всего документов: <?= $total_products ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -50,7 +49,6 @@ include 'header.php';
                       </span>
                       <input id="advanced-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
                       <span class="input-group-text">
-                        <kbd>ctrl + K</kbd>
                       </span>
                     </div>
                     <a href="#" class="btn btn-icon" aria-label="Button">
@@ -60,6 +58,25 @@ include 'header.php';
                         <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
                       </svg>
                     </a>
+                      <div class="dropdown">
+                              <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?php 
+                                if ($selected_warehouse_id) {
+                                    $selected = array_filter($warehouses, fn($w) => $w['id'] == $selected_warehouse_id);
+                                    $warehouse_name = !empty($selected) ? reset($selected)['naimenovanie'] : 'Склад';
+                                    echo htmlspecialchars($warehouse_name);
+                                } else {
+                                    echo 'Склады';
+                                }
+                                ?>
+                              </a>
+                              <div class="dropdown-menu" style="">
+                                <a class="dropdown-item" href="?">Склады</a>
+                                <?php foreach ($warehouses as $warehouse): ?>
+                                  <a class="dropdown-item" href="?warehouse_id=<?= htmlspecialchars($warehouse['id']) ?>"><?= htmlspecialchars($warehouse['naimenovanie']) ?></a>
+                                <?php endforeach; ?>
+                              </div>
+                            </div>
                     <a href="add_product.php" class="btn btn-primary">Создать</a>
                   </div>
                 </div>
@@ -97,12 +114,49 @@ include 'header.php';
                 </tbody>
               </table>
             </div>
-            <?php if (!empty($products)): ?>
+            <?php if ($total_pages > 0): ?>
             <div class="card-footer">
-              <div class="row g-2 justify-content-center justify-content-sm-between">
+              <div class="row g-2 justify-content-center justify-content-sm-between align-items-center">
                 <div class="col-auto d-flex align-items-center">
-                  <p class="m-0 text-secondary">Показано 1 по 4 из 1 записей</p>
+                  <p class="m-0 text-secondary">
+                    Показано <?= max(1, $offset + 1) ?> по <?= min($offset + $items_per_page, $total_products) ?> из <?= $total_products ?> записей
+                  </p>
                 </div>
+                <?php if ($total_pages > 1): ?>
+                <div class="col-auto">
+                  <ul class="pagination m-0 ms-auto">
+                    <?php 
+                    // Build base URL parameters
+                    $url_params = ($selected_warehouse_id) ? "?warehouse_id=" . htmlspecialchars($selected_warehouse_id) . "&" : "?";
+                    ?>
+                    <li class="page-item <?= ($current_page == 1) ? 'disabled' : '' ?>">
+                      <a class="page-link" href="<?= $url_params ?>page=<?= max(1, $current_page - 1) ?>" <?= ($current_page == 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M15 6l-6 6l6 6"></path>
+                        </svg>
+                      </a>
+                    </li>
+                    <?php
+                    // Calculate page range to display
+                    $start_page = max(1, $current_page - 2);
+                    $end_page = min($total_pages, $current_page + 2);
+                    
+                    for ($i = $start_page; $i <= $end_page; $i++):
+                    ?>
+                      <li class="page-item <?= ($i == $current_page) ? 'active' : '' ?>">
+                        <a class="page-link" href="<?= $url_params ?>page=<?= $i ?>"><?= $i ?></a>
+                      </li>
+                    <?php endfor; ?>
+                    <li class="page-item <?= ($current_page == $total_pages) ? 'disabled' : '' ?>">
+                      <a class="page-link" href="<?= $url_params ?>page=<?= min($total_pages, $current_page + 1) ?>" <?= ($current_page == $total_pages) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M9 6l6 6l-6 6"></path>
+                        </svg>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <?php endif; ?>
               </div>
             </div>
             <?php endif; ?>

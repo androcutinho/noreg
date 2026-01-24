@@ -2,22 +2,28 @@
 
 session_start();
 
-$mysqli = require 'database.php';
-
-// Fetch logged in user info
-$sql = "SELECT user_name FROM users WHERE user_id = ?";
-$stmt = $mysqli->stmt_init();
-
-if (!$stmt->prepare($sql)) {
-    die("SQL error: " . $mysqli->error);
+// Only require database if not already loaded (avoid multiple connections)
+if (!isset($mysqli)) {
+    $mysqli = require 'config/database.php';
 }
 
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$logged_in_user = $result->fetch_assoc();
-
-$user_name = $logged_in_user['user_name'] ?? 'User';
+// Fetch logged in user info - check if user_id exists in session
+$user_name = 'User';
+if (isset($_SESSION['user_id'])) {
+    $sql = "SELECT user_name FROM users WHERE user_id = ?";
+    $stmt = $mysqli->stmt_init();
+    
+    if (!$stmt->prepare($sql)) {
+        die("SQL error: " . $mysqli->error);
+    }
+    
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $logged_in_user = $result->fetch_assoc();
+    
+    $user_name = $logged_in_user['user_name'] ?? 'User';
+}
 
 ?>
 
@@ -108,7 +114,13 @@ $user_name = $logged_in_user['user_name'] ?? 'User';
             <h2 style="margin: 0; color: #333;"></h2>
             <div class="user-menu-container">
                 <div class="user-menu-trigger" onclick="toggleUserMenu()">
-                    <div class="user-avatar"><?= htmlspecialchars(substr($user_name, 0, 1)) ?></div>
+                    <span class="avatar avatar-0">
+                      <!-- Download SVG icon from http://tabler.io/icons/icon/user -->
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon avatar-icon icon-2">
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                      </svg>
+                    </span>
                     <span><?= htmlspecialchars($user_name) ?></span>
                 </div>
                 <div class="dropdown-menu" id="userDropdownMenu">

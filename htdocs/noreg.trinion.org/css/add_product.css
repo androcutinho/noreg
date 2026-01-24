@@ -1,7 +1,7 @@
 .products-table-wrapper {
     max-width: 1200px;
     margin: 20px auto;
-    overflow-x: auto;
+    overflow: visible;
     padding: 0 20px;
 }
 
@@ -24,6 +24,7 @@
 
 .search-container {
     position: relative;
+    z-index: 1;
 }
 
 .form-row {
@@ -63,8 +64,8 @@
     max-height: 200px;
     overflow-y: auto;
     width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .autocomplete-option {

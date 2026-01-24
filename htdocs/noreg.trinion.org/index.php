@@ -3,18 +3,14 @@
 session_start();
 
 if (isset($_SESSION["user_id"])) {
-    
-    $mysqli = require 'database.php';
-    
-    $sql = "SELECT * FROM users
-            WHERE user_id = {$_SESSION["user_id"]}";
-            
-    $result = $mysqli->query($sql);
-    
-    $user = $result->fetch_assoc();
+    require 'queries/index_queries.php';
 }
 
 include 'header.php';
+
+if (isset($_SESSION["user_id"])) {
+    $user = fetchUserById($mysqli, $_SESSION["user_id"]);
+}
 ?>
 <!DOCTYPE html>
 <html>
