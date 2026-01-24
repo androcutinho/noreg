@@ -50,31 +50,31 @@ function fetchDocumentHeader($mysqli, $document_id) {
 function fetchDocumentLineItems($mysqli, $document_id) {
     $sql = "SELECT 
         sd.id,
-        sd.id_dokumenta,
         sd.id_tovary_i_uslugi as product_id,
         ti.naimenovanie as product_name,
-        sd.id_serii as seria_id,
+        ser.id as seria_id,
         ser.nomer as seria_name,
-        sd.cena_postupleniya as price,
         sd.kolichestvo_postupleniya as quantity,
+        sd.cena_postupleniya as unit_price,
         sd.id_stavka_nds as nds_id,
-        sn.stavka_nds as nds_rate,
+        sn.stavka_nds as vat_rate,
+        (sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_amount
     FROM stroki_dokumentov sd
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
-    LEFT JOIN serii ser ON sd.id_serii = ser.id
+    LEFT JOIN serii ser ON ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi AND ser.id_dokumenta = ?
     LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
     WHERE sd.id_dokumenta = ?
     ORDER BY sd.id ASC";
 
     $stmt = $mysqli->stmt_init();
     if (!$stmt->prepare($sql)) {
-        return [];
+        die("SQL error: " . $mysqli->error);
     }
 
-    $stmt->bind_param("i", $document_id);
+    $stmt->bind_param("ii", $document_id, $document_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    $line_items = [];
+    $line_items = array();
 
     while ($row = $result->fetch_assoc()) {
         $line_items[] = $row;
@@ -110,16 +110,33 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         }
         
         $doc_stmt->bind_param(
-            "siiii",
+            "siiiii",
             $data['product_date'],
             $data['warehouse_id'],
             $data['vendor_id'],
             $data['organization_id'],
-            $data['responsible_id']
+            $data['responsible_id'],
+            $document_id
         );
         
         if (!$doc_stmt->execute()) {
             throw new Exception("Ошибка обновления документа: " . $doc_stmt->error);
+        }
+        
+        // Clean up serii table - set id_tovary_i_uslugi and id_dokumenta to NULL for entries associated with this document
+        $clean_serii_sql = "UPDATE serii SET 
+            id_tovary_i_uslugi = NULL,
+            id_dokumenta = NULL
+        WHERE id_dokumenta = ?";
+        
+        $clean_serii_stmt = $mysqli->stmt_init();
+        if (!$clean_serii_stmt->prepare($clean_serii_sql)) {
+            throw new Exception("Ошибка подготовки очистки серий: " . $mysqli->error);
+        }
+        
+        $clean_serii_stmt->bind_param("i", $document_id);
+        if (!$clean_serii_stmt->execute()) {
+            throw new Exception("Ошибка очистки серий: " . $clean_serii_stmt->error);
         }
         
         // Delete old line items
@@ -136,8 +153,8 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         
         // Insert new line items
         $line_sql = "INSERT INTO stroki_dokumentov 
-            (id_dokumenta, id_tovary_i_uslugi, id_serii, cena_postupleniya, kolichestvo_postupleniya, id_stavka_nds) 
-        VALUES (?, ?, ?, ?, ?, ?)";
+            (id_dokumenta, id_tovary_i_uslugi, cena_postupleniya, kolichestvo_postupleniya, id_stavka_nds) 
+        VALUES (?, ?, ?, ?, ?)";
         
         $line_stmt = $mysqli->stmt_init();
         if (!$line_stmt->prepare($line_sql)) {
@@ -150,16 +167,14 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             }
             
             $product_id = intval($product['product_id']);
-            $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : null;
             $price = floatval($product['price']);
             $quantity = floatval($product['quantity']);
             $nds_id = !empty($product['nds_id']) ? intval($product['nds_id']) : null;
             
             $line_stmt->bind_param(
-                "iiiddi",
+                "iiddi",
                 $document_id,
                 $product_id,
-                $seria_id,
                 $price,
                 $quantity,
                 $nds_id
@@ -167,6 +182,31 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             
             if (!$line_stmt->execute()) {
                 throw new Exception("Ошибка вставки строки: " . $line_stmt->error);
+            }
+            
+            // Update serii table with document and product info if seria_name is provided
+            if (!empty($product['seria_name'])) {
+                $seria_name = $product['seria_name'];
+                $update_serii_sql = "UPDATE serii SET 
+                    id_dokumenta = ?,
+                    id_tovary_i_uslugi = ?
+                WHERE nomer = ?";
+                
+                $update_serii_stmt = $mysqli->stmt_init();
+                if (!$update_serii_stmt->prepare($update_serii_sql)) {
+                    throw new Exception("Ошибка подготовки обновления серии: " . $mysqli->error);
+                }
+                
+                $update_serii_stmt->bind_param(
+                    "iis",
+                    $document_id,
+                    $product_id,
+                    $seria_name
+                );
+                
+                if (!$update_serii_stmt->execute()) {
+                    throw new Exception("Ошибка обновления серии: " . $update_serii_stmt->error);
+                }
             }
         }
         

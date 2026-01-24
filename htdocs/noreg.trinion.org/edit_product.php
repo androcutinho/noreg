@@ -30,6 +30,7 @@ if (!$document) {
     die("Документ не найден.");
 }
 
+$line_items = fetchDocumentLineItems($mysqli, $product_id);
 
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
@@ -76,11 +77,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $result = updateArrivalDocument($mysqli, $product_id, $_POST);
             
             if ($result['success']) {
-                $success = true;
-                $_POST = array(); 
-                $error = 'Документ успешно обновлен!';
-                // Refresh document data
-                $document = fetchDocumentHeader($mysqli, $product_id);
+                // Redirect to product details page
+                header("Location: view_product_details.php?product_id=" . $product_id);
+                exit;
             } else {
                 $error = $result['error'];
             }
@@ -144,6 +143,7 @@ include 'header.php';
                     </div>
                 </div>
 
+
                 <h2 style="margin-top: 30px;"></h2>
                 
                 <div class="products-table-wrapper">
@@ -161,34 +161,45 @@ include 'header.php';
                         </tr>
                     </thead>
                     <tbody id="productsBody">
+                        <?php if (!empty($line_items)): ?>
+                            <?php $row_index = 0; ?>
+                            <?php foreach ($line_items as $item): ?>
                         <tr class="product-row">
-                            <td>1</td>
+                            <td><?= $row_index + 1 ?></td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off"
-                                    value="<?= htmlspecialchars($_POST['product_name'] ?? ($document['_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[0][product_id]" class="product-id">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][product_name]" placeholder="Введите товар..." autocomplete="off"
+                                    value="<?= htmlspecialchars($_POST['products'][$row_index]['product_name'] ?? ($item['product_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][product_id]" class="product-id" value="<?= htmlspecialchars($item['product_id'] ?? '') ?>">
                                 </div>
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
-                                    <input type="hidden" name="products[0][seria_id]" class="seria-id">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off"
+                                    value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_name'] ?? ($item['seria_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($item['seria_id'] ?? '') ?>">
                                 </div>
                             </td>
-                            <td><input class="form-control" type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
-                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off"></td>
+                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][price]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['price'] ?? ($item['unit_price'] ?? '')) ?>"></td>
+                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['quantity'] ?? ($item['quantity'] ?? '')) ?>"></td>
                             <td>шт</td>
                             <td>
-                                <select class="form-control" name="products[0][nds_id]">
+                                <select class="form-control" name="products[<?= $row_index ?>][nds_id]">
                                     <option value="">--</option>
                                     <?php foreach ($nds_rates as $nds): ?>
-                                        <option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>
+                                        <option value="<?= $nds['id'] ?>" <?= ($nds['id'] == ($item['nds_id'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($nds['stavka_nds']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
+                            <?php $row_index++; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No hay productos en este documento</td>
+                        </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
                 </div>

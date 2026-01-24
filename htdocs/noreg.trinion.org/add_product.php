@@ -9,7 +9,7 @@ require 'config/database_config.php';
 require 'queries/database_queries.php';
 require 'queries/add_product_queries.php';
 
-// Fetch all NDS rates from the stavki_nds table
+
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
 $nds_result = $mysqli->query($nds_query);
@@ -51,13 +51,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!$user_role) {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
-            // Create arrival document with line items
+            
             $result = createArrivalDocument($mysqli, $_POST);
             
             if ($result['success']) {
-                $success = true;
-                $_POST = array(); 
-                $error = 'Документ поступления успешно создан!';
+                
+                header("Location: admin_page.php");
+                exit;
             } else {
                 $error = $result['error'];
             }

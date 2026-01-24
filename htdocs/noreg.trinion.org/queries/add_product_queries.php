@@ -57,14 +57,14 @@ function createArrivalDocument($mysqli, $data) {
             
             // Update series if provided
             if ($seria_id > 0) {
-                $update_seria_sql = "UPDATE " . TABLE_SERIES . " SET " . COL_SERIES_PRODUCT_ID . " = ? WHERE " . COL_SERIES_ID . " = ?";
+                $update_seria_sql = "UPDATE " . TABLE_SERIES . " SET " . COL_SERIES_PRODUCT_ID . " = ?, id_dokumenta = ? WHERE " . COL_SERIES_ID . " = ?";
                 $update_seria_stmt = $mysqli->stmt_init();
                 
                 if (!$update_seria_stmt->prepare($update_seria_sql)) {
                     throw new Exception("SQL error al preparar UPDATE serii: " . $mysqli->error);
                 }
                 
-                $update_seria_stmt->bind_param("ii", $goods_id, $seria_id);
+                $update_seria_stmt->bind_param("iii", $goods_id, $document_id, $seria_id);
                 
                 if (!$update_seria_stmt->execute()) {
                     throw new Exception("Error al actualizar serii: " . $mysqli->error);

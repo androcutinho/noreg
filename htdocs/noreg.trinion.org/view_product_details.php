@@ -17,10 +17,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
         die("ID документа не предоставлен.");
     }
     
-    if (!isset($mysqli)) {
-        $mysqli = require 'config/database.php';
-    }
-    
+    $mysqli = require 'config/database.php';
     $document_id = intval($_GET['product_id']);
     
     $result = deleteArrivalDocument($mysqli, $document_id);
@@ -32,6 +29,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
         die("Error: " . $result['message']);
     }
 }
+
+$mysqli = require 'config/database.php';
 
 require 'queries/view_product_queries.php';
 
@@ -47,6 +46,8 @@ $document = fetchDocumentHeader($mysqli, $document_id);
 if (!$document) {
     die("Документ не найден.");
 }
+
+$line_items = fetchDocumentLineItems($mysqli, $document_id);
 
 $totals = calculateTotals($line_items);
 $subtotal = $totals['subtotal'];
@@ -119,7 +120,8 @@ include 'header.php';
                     <thead>
                         <tr>
                             <th class="text-center" style="width: 5%"></th>
-                            <th style="width: 60%">Товар</th>
+                            <th style="width: 45%">Товар</th>
+                            <th style="width: 15%">Серия</th>
                             <th class="text-center" style="width: 5%">Кол-во</th>
                             <th class="text-end" style="width: 15%">Цена</th>
                             <th class="text-end" style="width: 15%">Сумма</th>
@@ -135,6 +137,7 @@ include 'header.php';
                                 <td>
                                     <p class="strong mb-1"><?= htmlspecialchars($item['product_name']) ?></p>
                                 </td>
+                                <td><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
                                 <td class="text-center"><?= htmlspecialchars($item['quantity']) ?></td>
                                 <td class="text-end"><?= number_format($item['unit_price'], 2, ',', ' ') ?></td>
                                 <td class="text-end"><?= number_format($item['total_amount'], 2, ',', ' ') ?></td>
