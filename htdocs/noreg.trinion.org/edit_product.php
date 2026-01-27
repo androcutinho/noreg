@@ -47,10 +47,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Массив валидации
     $validations = array(
         'product_date' => 'Требуется дата документа',
-        'warehouse_id' => 'Требуется выбрать склад',
-        'organization_id' => 'Требуется выбрать организацию',
-        'vendor_id' => 'Требуется выбрать поставщика',
-        'responsible_id' => 'Требуется выбрать ответственного'
+        'warehouse_name' => 'Требуется выбрать склад',
+        'organization_name' => 'Требуется выбрать организацию',
+        'vendor_name' => 'Требуется выбрать поставщика',
+        'responsible_name' => 'Требуется выбрать ответственного'
     );
     
     // Проверить обязательные поля
@@ -106,7 +106,7 @@ include 'header.php';
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="product_date">Дата поступления документа</label>
-                        <input class="form-control" type="datetime-local" id="product_date" name="product_date" required
+                        <input class="form-control" type="date" id="product_date" name="product_date" required
                         value="<?= htmlspecialchars($_POST['product_date'] ?? $document['data_dokumenta']) ?>">
                     </div>
 
@@ -145,9 +145,9 @@ include 'header.php';
 
 
                 <h2 style="margin-top: 30px;"></h2>
-                
-                <div class="products-table-wrapper">
-                <table class="table table-selectable card-table table-vcenter text-nowrap datatable" id="productsTable">
+                <div class="card">
+                <div class="table-responsive">
+                <table class="table table-vcenter card-table" id="productsTable">
                     <thead>
                         <tr>
                             <th>№</th>
@@ -182,7 +182,12 @@ include 'header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][price]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['price'] ?? ($item['unit_price'] ?? '')) ?>"></td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['quantity'] ?? ($item['quantity'] ?? '')) ?>"></td>
-                            <td>шт</td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][unit_name]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_name'] ?? ($item['unit_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['unit_id'] ?? '')) ?>">
+                                </div>
+                            </td>
                             <td>
                                 <select class="form-control" name="products[<?= $row_index ?>][nds_id]">
                                     <option value="">--</option>
@@ -203,9 +208,21 @@ include 'header.php';
                     </tbody>
                 </table>
                 </div>
+                </div>
 
                 <button type="button" class="btn" onclick="addRow()">+ строка</button>
                 <div class="row" style="margin-top: 20px;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3" style="position: relative;">
+                            <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
+                            <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off" value="<?= htmlspecialchars($_POST['data_izgotovleniya'] ?? ($line_items[0]['data_izgotovleniya'] ?? '')) ?>">
+                        </div>
+
+                        <div class="col-md-6 mb-3" style="position: relative;">
+                            <label class="form-label" for="srok_godnosti">Срок годности</label>
+                            <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off" value="<?= htmlspecialchars($_POST['srok_godnosti'] ?? ($line_items[0]['srok_godnosti'] ?? '')) ?>">
+                        </div>
+                    </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Обновить</button>
                         <a href="admin_page.php" class="btn">Отмена</a>

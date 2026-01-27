@@ -41,9 +41,13 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         sd.id,
         sd.id_tovary_i_uslugi as product_id,
         sd.id_serii,
+        sd.id_edinicy_izmereniya,
         ti.naimenovanie as product_name,
         ser.id as seria_id,
         ser.nomer as seria_name,
+        ser.data_izgotovleniya,
+        ser.srok_godnosti,
+        eu.naimenovanie as unit_name,
         sd.kolichestvo_postupleniya as quantity,
         sd.cena_postupleniya as unit_price,
         sd.id_stavka_nds as nds_id,
@@ -53,6 +57,7 @@ function fetchDocumentLineItems($mysqli, $document_id) {
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
     LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
     LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+    LEFT JOIN edinicy_izmereniya eu ON sd.id_edinicy_izmereniya = eu.id
     WHERE sd.id_dokumenta = ?
     ORDER BY sd.id ASC";
 
