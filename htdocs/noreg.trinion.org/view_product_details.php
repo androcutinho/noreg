@@ -146,22 +146,22 @@ include 'header.php';
                         $item_num++;
                         endforeach; 
                         ?>
-                        <tr style="height: 50px;"><td colspan="5"></td></tr>
-                        <tr style="height: 50px;"><td colspan="5"></td></tr>
+                        <tr style="height: 50px;"><td colspan="6"></td></tr>
+                        <tr style="height: 50px;"><td colspan="6"></td></tr>
                         <tr>
-                            <td colspan="4" class="strong text-end">Промежуточный итог</td>
+                            <td colspan="5" class="strong text-end">Промежуточный итог</td>
                             <td class="text-end"><?= number_format($subtotal, 2, ',', ' ') ?></td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="strong text-end">Ставка НДС</td>
+                            <td colspan="5" class="strong text-end">Ставка НДС</td>
                             <td class="text-end"><?= htmlspecialchars(!empty($line_items) ? $line_items[0]['vat_rate'] : 0) ?>%</td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="strong text-end">НДС к оплате</td>
+                            <td colspan="5" class="strong text-end">НДС к оплате</td>
                             <td class="text-end"><?= number_format($vat_total, 2, ',', ' ') ?></td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="font-weight-bold text-uppercase text-end">Итого к оплате</td>
+                            <td colspan="5" class="font-weight-bold text-uppercase text-end">Итого к оплате</td>
                             <td class="font-weight-bold text-end"><?= number_format($total_due, 2, ',', ' ') ?></td>
                         </tr>
                     </tbody>

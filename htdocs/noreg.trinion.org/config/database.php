@@ -1,52 +1,27 @@
 <?php
 
-// Load environment variables from .env file into array
-function loadEnvFile($filePath) {
-    $env = [];
-    
-    if (!file_exists($filePath)) {
-        die("Error: .env file not found at $filePath");
+// Load shared environment helper
+require_once(__DIR__ . '/env_helper.php');
+
+// Load .env file - try multiple locations
+$possiblePaths = [
+    __DIR__ . '/../../.env',                // Project root
+    __DIR__ . '/../../../.env',             // Two levels up
+    '/home/trinion-noreg/.env',             // Server home directory
+    $_SERVER['DOCUMENT_ROOT'] . '/../.env',  // Parent of web root
+];
+
+$envPath = null;
+foreach ($possiblePaths as $path) {
+    if (file_exists($path)) {
+        $envPath = $path;
+        break;
     }
-    
-    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!$lines) {
-        die("Error: Could not read .env file at $filePath");
-    }
-    
-    foreach ($lines as $line) {
-        // Skip comments and empty lines
-        if (empty($line) || strpos($line, '#') === 0) {
-            continue;
-        }
-        
-        // Only process lines with =
-        if (strpos($line, '=') === false) {
-            continue;
-        }
-        
-        // Split on first = only (important for passwords with =)
-        $parts = explode('=', $line, 2);
-        if (count($parts) !== 2) {
-            continue;
-        }
-        
-        $key = trim($parts[0]);
-        $value = trim($parts[1]);
-        
-        // Remove quotes if present
-        if ((strpos($value, '"') === 0 && strrpos($value, '"') === strlen($value) - 1) ||
-            (strpos($value, "'") === 0 && strrpos($value, "'") === strlen($value) - 1)) {
-            $value = substr($value, 1, -1);
-        }
-        
-        $env[$key] = $value;
-    }
-    
-    return $env;
 }
 
-// Load .env file from server root
-$envPath = '/home/trinion-noreg/.env';
+if (!$envPath) {
+    die("ERROR: .env file not found in any location: " . implode(', ', $possiblePaths));
+}
 
 $env = loadEnvFile($envPath);
 

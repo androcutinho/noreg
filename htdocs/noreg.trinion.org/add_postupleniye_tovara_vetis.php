@@ -2,13 +2,32 @@
 
 session_start();
 
-$page_title = 'Новое поступление товара';
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: log_in.php');
+    exit;
+}
 
+if (!isset($_GET['uuid']) || empty($_GET['uuid'])) {
+    die("UUID документа не предоставлен.");
+}
+
+$uuid = $_GET['uuid'];
 $mysqli = require 'config/database.php';
 require 'config/database_config.php';
 require 'queries/database_queries.php';
 require 'queries/add_product_queries.php';
+require 'queries/edit_product_queries.php';
+require_once(__DIR__ . '/api/vetis_service.php');
 
+$data = fetchVetisDocument($uuid);
+
+if (!$data['success']) {
+    die('Ошибка: ' . htmlspecialchars($data['error']));
+}
+extract($data);
+
+$page_title = 'Редактировать поступление товара из ветис';
 
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
@@ -51,12 +70,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!$user_role) {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
-            
-            $result = createArrivalDocument($mysqli, $_POST);
+            // Update arrival document with line items
+            $result = updateArrivalDocument($mysqli, $product_id, $_POST);
             
             if ($result['success']) {
-                
-                header("Location: admin_page.php");
+                // Redirect to product details page
+                header("Location: view_product_details.php?product_id=" . $product_id);
                 exit;
             } else {
                 $error = $result['error'];
@@ -77,48 +96,51 @@ include 'header.php';
 
 <div class="page-body">
 <div class="container-xl mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Новое поступление товара</h2>
+    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Редактировать поступление товара #<?= htmlspecialchars($product_id) ?></h2>
     <div class="card">
         <div class="card-body">
             <form method="POST" id="documentForm">   
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="product_date">Дата поступления документа</label>
-                        <input class="form-control" type="datetime-local" id="product_date" name="product_date" required
-                        value="<?= htmlspecialchars($_POST['product_date'] ?? date('Y-m-d\TH:i')) ?>">
+                        <input class="form-control" type="date" id="product_date" name="product_date" required value="<?= htmlspecialchars($date_issued) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="warehouse_id">Склад</label>
-                        <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off" required>
-                        <input type="hidden" name="warehouse_id" class="warehouse-id">
+                        <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off" required
+                        value="<?= htmlspecialchars($_POST['warehouse_name'] ?? ($document['warehouse_name'] ?? '')) ?>">
+                        <input type="hidden" name="warehouse_id" class="warehouse-id" value="<?= htmlspecialchars($_POST['warehouse_id'] ?? ($document['warehouse_id'] ?? '')) ?>">
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="vendor_id">Поставщик</label>
-                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required>
-                        <input type="hidden" name="vendor_id" class="vendor-id">
+                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required
+                        value="<?= htmlspecialchars($shipper_name) ?>">
+                        <input type="hidden" name="vendor_id" class="vendor-id" value="<?= htmlspecialchars($_POST['vendor_id'] ?? ($document['vendor_id'] ?? '')) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="organization_id">Организация</label>
-                        <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off" required>
-                        <input type="hidden" name="organization_id" class="organization-id">
+                        <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off" required
+                        value="<?= htmlspecialchars($_POST['organization_name'] ?? ($document['organization_name'] ?? '')) ?>">
+                        <input type="hidden" name="organization_id" class="organization-id" value="<?= htmlspecialchars($_POST['organization_id'] ?? ($document['organization_id'] ?? '')) ?>">
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label" for="responsible_id">Ответственный</label>
-                        <input type="text" class="form-control" id="responsible_id" name="responsible_name" placeholder="- Выберите ответственного -" autocomplete="off" required>
-                        <input type="hidden" name="responsible_id" class="responsible-id">
+                        <input type="text" class="form-control" id="responsible_id" name="responsible_name" placeholder="- Выберите ответственного -" autocomplete="off" required
+                        value="<?= htmlspecialchars($_POST['responsible_name'] ?? ($document['responsible_name'] ?? '')) ?>">
+                        <input type="hidden" name="responsible_id" class="responsible-id" value="<?= htmlspecialchars($_POST['responsible_id'] ?? ($document['responsible_id'] ?? '')) ?>">
                     </div>
                 </div>
+
 
                 <h2 style="margin-top: 30px;"></h2>
-                
                 <div class="card">
                 <div class="table-responsive">
                 <table class="table table-vcenter card-table" id="productsTable">
@@ -139,19 +161,21 @@ include 'header.php';
                             <td>1</td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
+                                    <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off"
+                                    value="<?= htmlspecialchars($product_name) ?>">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
                                 </div>
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
+                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off"
+                                    value="<?=htmlspecialchars(substr($doc_uuid, 0, 36))?>">
                                     <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td><input class="form-control" type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
-                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off"></td>
-                            <td>шт</td>
+                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($volume) ?>"></td>
+                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($unit_name) ?>"></td>
                             <td>
                                 <select class="form-control" name="products[0][nds_id]">
                                     <option value="">--</option>
@@ -170,7 +194,7 @@ include 'header.php';
                 <button type="button" class="btn" onclick="addRow()">+ строка</button>
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="submit" class="btn btn-primary">Обновить</button>
                         <a href="admin_page.php" class="btn">Отмена</a>
                     </div>
                 </div>

@@ -41,7 +41,7 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         (sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_amount
     FROM stroki_dokumentov sd
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
-    LEFT JOIN serii ser ON ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi AND ser.id_dokumenta = ?
+    LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
     LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
     WHERE sd.id_dokumenta = ?
     ORDER BY sd.id ASC";
@@ -51,7 +51,7 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         die("SQL error: " . $mysqli->error);
     }
 
-    $stmt->bind_param("ii", $document_id, $document_id);
+    $stmt->bind_param("i", $document_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $line_items = array();
