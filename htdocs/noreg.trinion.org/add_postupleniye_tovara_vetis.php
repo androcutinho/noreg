@@ -17,7 +17,6 @@ $mysqli = require 'config/database.php';
 require 'config/database_config.php';
 require 'queries/database_queries.php';
 require 'queries/add_product_queries.php';
-require 'queries/edit_product_queries.php';
 require_once(__DIR__ . '/api/vetis_service.php');
 
 $data = fetchVetisDocument($uuid);
@@ -44,10 +43,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Массив валидации
     $validations = array(
         'product_date' => 'Требуется дата документа',
-        'warehouse_id' => 'Требуется выбрать склад',
-        'organization_id' => 'Требуется выбрать организацию',
-        'vendor_id' => 'Требуется выбрать поставщика',
-        'responsible_id' => 'Требуется выбрать ответственного'
+        'warehouse_name' => 'Требуется выбрать склад',
+        'organization_name' => 'Требуется выбрать организацию',
+        'vendor_name' => 'Требуется выбрать поставщика',
+        'responsible_name' => 'Требуется выбрать ответственного'
     );
     
     // Проверить обязательные поля
@@ -70,12 +69,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!$user_role) {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
-            // Update arrival document with line items
-            $result = updateArrivalDocument($mysqli, $product_id, $_POST);
+            // Create arrival document with VETIS data
+            $result = createArrivalDocument($mysqli, $_POST);
             
             if ($result['success']) {
-                // Redirect to product details page
-                header("Location: view_product_details.php?product_id=" . $product_id);
+                // Redirect to admin page
+                header("Location: admin_page.php");
                 exit;
             } else {
                 $error = $result['error'];
@@ -96,17 +95,18 @@ include 'header.php';
 
 <div class="page-body">
 <div class="container-xl mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Редактировать поступление товара #<?= htmlspecialchars($product_id) ?></h2>
+    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Новое поступление товара из ветис</h2>
     <div class="card">
         <div class="card-body">
             <form method="POST" id="documentForm">   
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="product_date">Дата поступления документа</label>
-                        <input class="form-control" type="date" id="product_date" name="product_date" required value="<?= htmlspecialchars($date_issued) ?>">
+                        <input class="form-control" type="date" id="product_date" name="product_date" required
+                         value="<?= htmlspecialchars($date_issued) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" style="position: relative;">
                         <label class="form-label" for="warehouse_id">Склад</label>
                         <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['warehouse_name'] ?? ($document['warehouse_name'] ?? '')) ?>">
@@ -115,14 +115,13 @@ include 'header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" style="position: relative;">
                         <label class="form-label" for="vendor_id">Поставщик</label>
-                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required
-                        value="<?= htmlspecialchars($shipper_name) ?>">
-                        <input type="hidden" name="vendor_id" class="vendor-id" value="<?= htmlspecialchars($_POST['vendor_id'] ?? ($document['vendor_id'] ?? '')) ?>">
+                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" required value="<?= htmlspecialchars($shipper_name ?? '') ?>">
+                        <input type="hidden" name="vendor_id" class="vendor-id">
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" style="position: relative;">
                         <label class="form-label" for="organization_id">Организация</label>
                         <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['organization_name'] ?? ($document['organization_name'] ?? '')) ?>">
@@ -131,7 +130,7 @@ include 'header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" style="position: relative;">
                         <label class="form-label" for="responsible_id">Ответственный</label>
                         <input type="text" class="form-control" id="responsible_id" name="responsible_name" placeholder="- Выберите ответственного -" autocomplete="off" required
                         value="<?= htmlspecialchars($_POST['responsible_name'] ?? ($document['responsible_name'] ?? '')) ?>">
@@ -175,7 +174,12 @@ include 'header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
                             <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($volume) ?>"></td>
-                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($unit_name) ?>"></td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[0][unit_name]" placeholder="Введите ед." autocomplete="off" required value="<?= htmlspecialchars($unit_name) ?>">
+                                    <input type="hidden" name="products[0][unit_id]" class="unit-id">
+                                </div>
+                            </td>
                             <td>
                                 <select class="form-control" name="products[0][nds_id]">
                                     <option value="">--</option>
@@ -193,8 +197,19 @@ include 'header.php';
 
                 <button type="button" class="btn" onclick="addRow()">+ строка</button>
                 <div class="row" style="margin-top: 20px;">
+                     <div class="row"> 
+                <div class="col-md-6 mb-3" style="position: relative;">
+                        <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
+                        <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off" required value="<?= htmlspecialchars($prod_date) ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3" style="position: relative;">
+                        <label class="form-label" for="srok_godnosti">Срок годности</label>
+                        <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off" required value="<?= htmlspecialchars($exp_date) ?>">
+                    </div>    
+                </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary">Обновить</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
                         <a href="admin_page.php" class="btn">Отмена</a>
                     </div>
                 </div>

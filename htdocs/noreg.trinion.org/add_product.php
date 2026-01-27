@@ -32,10 +32,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Массив валидации
     $validations = array(
         'product_date' => 'Требуется дата документа',
-        'warehouse_id' => 'Требуется выбрать склад',
-        'organization_id' => 'Требуется выбрать организацию',
-        'vendor_id' => 'Требуется выбрать поставщика',
-        'responsible_id' => 'Требуется выбрать ответственного'
+        'warehouse_name' => 'Требуется выбрать склад',
+        'organization_name' => 'Требуется выбрать организацию',
+        'vendor_name' => 'Требуется выбрать поставщика',
+        'responsible_name' => 'Требуется выбрать ответственного'
     );
     
     // Проверить обязательные поля
@@ -91,7 +91,7 @@ include 'header.php';
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="product_date">Дата поступления документа</label>
-                        <input class="form-control" type="datetime-local" id="product_date" name="product_date" required
+                        <input class="form-control" type="date" id="product_date" name="product_date" required
                         value="<?= htmlspecialchars($_POST['product_date'] ?? date('Y-m-d\TH:i')) ?>">
                     </div>
 
