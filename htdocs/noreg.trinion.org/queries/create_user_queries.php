@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Check if user has admin permissions
- * @param mysqli $mysqli Database connection
- * @param int $user_id User ID
- * @return bool True if user is admin, false otherwise
- */
 function isUserAdmin($mysqli, $user_id) {
     $sql = "SELECT user_role FROM users WHERE user_id = ?";
     $stmt = $mysqli->stmt_init();
@@ -22,15 +16,7 @@ function isUserAdmin($mysqli, $user_id) {
     return $user && $user['user_role'] ? true : false;
 }
 
-/**
- * Create a new user
- * @param mysqli $mysqli Database connection
- * @param string $user_name User name
- * @param string $email User email
- * @param string $password User password (will be hashed)
- * @param int $user_role User role (0 = user, 1 = admin)
- * @return array Array with 'success' bool and 'message' string
- */
+
 function createUser($mysqli, $user_name, $email, $password, $user_role) {
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
     

@@ -1,14 +1,14 @@
 <?php
 
-// Load shared environment helper
+
 require_once(__DIR__ . '/env_helper.php');
 
-// Load .env file - try multiple locations
+
 $possiblePaths = [
-    __DIR__ . '/../../.env',                // Project root
-    __DIR__ . '/../../../.env',             // Two levels up
-    '/home/trinion-noreg/.env',             // Server home directory
-    $_SERVER['DOCUMENT_ROOT'] . '/../.env',  // Parent of web root
+    __DIR__ . '/../../.env',                
+    __DIR__ . '/../../../.env',             
+    '/home/trinion-noreg/.env',             
+    $_SERVER['DOCUMENT_ROOT'] . '/../.env',  
 ];
 
 $envPath = null;

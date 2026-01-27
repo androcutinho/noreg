@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Delete an arrival document and all associated line items
- * @param mysqli $mysqli Database connection
- * @param int $document_id Document ID from postupleniya_tovarov
- * @return array Array with 'success' bool and 'message' string
- */
+
 function deleteArrivalDocument($mysqli, $document_id) {
     try {
         $mysqli->begin_transaction();
@@ -63,11 +58,7 @@ function deleteArrivalDocument($mysqli, $document_id) {
     }
 }
 
-/**
- * Handle the complete deletion process for a document
- * Verifies session, checks document_id parameter, and deletes the document
- * Redirects on success or displays error message
- */
+
 function handleDeleteDocument() {
     // Check if user is logged in
     if (!isset($_SESSION['user_id'])) {

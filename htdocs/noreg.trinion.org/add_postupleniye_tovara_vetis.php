@@ -169,7 +169,7 @@ include 'header.php';
                             <td>
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off"
-                                    value="<?=htmlspecialchars(substr($doc_uuid, 0, 36))?>">
+                                    value="<?=htmlspecialchars(substr($product_guid, 0, 36))?>">
                                     <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>

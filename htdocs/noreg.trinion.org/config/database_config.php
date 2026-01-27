@@ -9,6 +9,7 @@ define('TABLE_ORGANIZATIONS', 'organizacii');
 define('TABLE_VENDORS', 'postavshchiki');
 define('TABLE_PRODUCTS', 'tovary_i_uslugi');
 define('TABLE_USERS', 'users');
+define('TABLE_UNITS', 'edinicy_izmereniya');
 
 define('COL_NDS_ID', 'id');
 define('COL_NDS_RATE', 'stavka_nds');
@@ -27,6 +28,7 @@ define('COL_LINE_PRODUCT_ID', 'id_tovary_i_uslugi');
 define('COL_LINE_NDS_ID', 'id_stavka_nds');
 define('COL_LINE_PRICE', 'cena_postupleniya');
 define('COL_LINE_QUANTITY', 'kolichestvo_postupleniya');
+define('COL_LINE_UNIT_ID', 'id_edinicy_izmereniya');
 
 // Column names - Series
 define('COL_SERIES_ID', 'id');
@@ -55,5 +57,9 @@ define('COL_SERIES_NAME', 'naimenovanie');
 define('COL_USER_ID', 'id');
 define('COL_USER_NAME', 'user_name');
 define('COL_USER_ROLE', 'role');
+
+// Unit columns
+define('COL_UNIT_ID', 'id');
+define('COL_UNIT_NAME', 'naimenovanie');
 
 ?>

@@ -132,6 +132,7 @@ function fetchVetisDocument($uuid)
         $storage_type = $vet_doc['certifiedConsignment']['transportStorageType'] ?? '';
         $batch = $vet_doc['certifiedConsignment']['batch'] ?? [];
         $product_name = $batch['productItem']['name'] ?? '';
+        $product_guid = $batch['productItem']['guid'] ?? '';
         $volume = $batch['volume'] ?? '';
         $unit_name = $batch['unit']['name'] ?? '';
         $package_type = $batch['packageList']['package']['packingType']['name'] ?? '';
@@ -171,6 +172,7 @@ function fetchVetisDocument($uuid)
             'trailer_number' => $trailer_number,
             'storage_type' => $storage_type,
             'product_name' => $product_name,
+            'product_guid' => $product_guid,
             'volume' => $volume,
             'unit_name' => $unit_name,
             'package_type' => $package_type,

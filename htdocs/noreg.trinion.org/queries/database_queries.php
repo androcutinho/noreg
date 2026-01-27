@@ -1,8 +1,5 @@
 <?php
 
-/**
- * Database query helper functions
- */
 
 function fetchTableData($mysqli, $table, $idCol, $nameCol, $orderBy = null, $extraCondition = null) {
     $sql = "SELECT {$idCol}, {$nameCol} FROM {$table}";

@@ -1,13 +1,5 @@
 <?php
 
-/**
- * Fetch all products with summary information
- * @param mysqli $mysqli Database connection
- * @param int|null $warehouse_id Optional warehouse ID to filter by
- * @param int $limit Number of rows to fetch
- * @param int $offset Number of rows to skip
- * @return array Array of products with id, date, vendor, responsible, and total_price
- */
 function fetchAllProducts($mysqli, $warehouse_id = null, $limit = 8, $offset = 0) {
     $sql = "SELECT 
         pt.id,
@@ -49,12 +41,6 @@ function fetchAllProducts($mysqli, $warehouse_id = null, $limit = 8, $offset = 0
     return $products;
 }
 
-/**
- * Fetch total count of products
- * @param mysqli $mysqli Database connection
- * @param int|null $warehouse_id Optional warehouse ID to filter by
- * @return int Total count of products
- */
 function getProductsCount($mysqli, $warehouse_id = null) {
     $sql = "SELECT COUNT(DISTINCT pt.id) as total FROM postupleniya_tovarov pt";
     
@@ -76,11 +62,7 @@ function getProductsCount($mysqli, $warehouse_id = null) {
     return 0;
 }
 
-/**
- * Fetch all warehouses from sklady table
- * @param mysqli $mysqli Database connection
- * @return array Array of warehouses with id and naimenovanie
- */
+
 function fetchAllWarehouses($mysqli) {
     $sql = "SELECT id, naimenovanie FROM sklady ORDER BY naimenovanie ASC";
     $result = $mysqli->query($sql);

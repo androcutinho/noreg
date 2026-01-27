@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Fetch document header by ID with all related data
- * @param mysqli $mysqli Database connection
- * @param int $document_id Document ID
- * @return array|null Document data or null if not found
- */
 function fetchDocumentHeader($mysqli, $document_id) {
     $sql = "SELECT 
         pt.id,
@@ -41,12 +35,7 @@ function fetchDocumentHeader($mysqli, $document_id) {
     return $result->fetch_assoc();
 }
 
-/**
- * Fetch document line items by document ID
- * @param mysqli $mysqli Database connection
- * @param int $document_id Document ID
- * @return array Array of line items
- */
+
 function fetchDocumentLineItems($mysqli, $document_id) {
     $sql = "SELECT 
         sd.id,
@@ -84,13 +73,6 @@ function fetchDocumentLineItems($mysqli, $document_id) {
     return $line_items;
 }
 
-/**
- * Update arrival document with line items
- * @param mysqli $mysqli Database connection
- * @param int $document_id Document ID
- * @param array $data Form data containing document and line item info
- * @return array Result array with 'success' and 'message' keys
- */
 function updateArrivalDocument($mysqli, $document_id, $data) {
     try {
         // Start transaction

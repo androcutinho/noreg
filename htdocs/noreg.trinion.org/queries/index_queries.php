@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Fetch current user information
- * @param mysqli $mysqli Database connection
- * @param int $user_id User ID
- * @return array|null User data array or null if not found
- */
 function fetchUserById($mysqli, $user_id) {
     $sql = "SELECT * FROM users WHERE user_id = ?";
     $stmt = $mysqli->stmt_init();

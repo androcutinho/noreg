@@ -17,6 +17,13 @@ if ($nds_result) {
     $nds_rates = $nds_result->fetch_all(MYSQLI_ASSOC);
 }
 
+$units = [];
+$units_query = "SELECT id, naimenovanie FROM edinicy_izmereniya ORDER BY naimenovanie ASC";
+$units_result = $mysqli->query($units_query);
+if ($units_result) {
+    $units = $units_result->fetch_all(MYSQLI_ASSOC);
+}
+
 $error = '';
 $success = false;
 
@@ -151,7 +158,12 @@ include 'header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
                             <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off"></td>
-                            <td>шт</td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[0][unit_name]" placeholder="Введите ед." autocomplete="off">
+                                    <input type="hidden" name="products[0][unit_id]" class="unit-id">
+                                </div>
+                            </td>
                             <td>
                                 <select class="form-control" name="products[0][nds_id]">
                                     <option value="">--</option>
@@ -169,6 +181,17 @@ include 'header.php';
 
                 <button type="button" class="btn" onclick="addRow()">+ строка</button>
                 <div class="row" style="margin-top: 20px;">
+                    <div class="row">
+                <div class="col-md-6 mb-3" style="position: relative;">
+                        <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
+                        <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off">
+                    </div>
+
+                    <div class="col-md-6 mb-3" style="position: relative;">
+                        <label class="form-label" for="srok_godnosti">Срок годности</label>
+                        <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off">
+                    </div>    
+                </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Сохранить</button>
                         <a href="admin_page.php" class="btn">Отмена</a>
@@ -185,6 +208,8 @@ include 'header.php';
             <?php foreach ($nds_rates as $nds): ?>
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
+            
+            let unitsData = <?= json_encode($units) ?>;
         </script>
         <script src="js/add_product.js"></script>
 </div>

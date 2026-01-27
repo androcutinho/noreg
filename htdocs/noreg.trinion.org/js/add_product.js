@@ -24,7 +24,12 @@ function createRowTemplate(rowIndex) {
         </td>
         <td><input class="form-control" type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
         <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
-        <td>шт</td>
+        <td>
+            <div class="search-container" style="position: relative;">
+                <input class="form-control" type="text" name="products[${rowIndex}][unit_name]" placeholder="Введите ед." autocomplete="off">
+                <input type="hidden" name="products[${rowIndex}][unit_id]" class="unit-id">
+            </div>
+        </td>
         <td><select class="form-control" name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
         <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
@@ -79,6 +84,8 @@ function initTableAutocomplete(row) {
     const productHidden = row.querySelector('input[name*="[product_id]"]');
     const seriaInput = row.querySelector('input[name*="[seria_name]"]');
     const seriaHidden = row.querySelector('input[name*="[seria_id]"]');
+    const unitInput = row.querySelector('input[name*="[unit_name]"]');
+    const unitHidden = row.querySelector('input[name*="[unit_id]"]');
 
     if (productInput && productHidden) {
         const dropdown = document.createElement('div');
@@ -222,6 +229,79 @@ function initTableAutocomplete(row) {
         window.addEventListener('scroll', () => {
             if (dropdown.style.display === 'block') {
                 positionDropdown(dropdown, seriaInput);
+            }
+        });
+    }
+
+    if (unitInput && unitHidden) {
+        const dropdown = document.createElement('div');
+        dropdown.className = 'autocomplete-dropdown';
+        dropdown.style.display = 'none';
+        document.body.appendChild(dropdown); // Portal: append to body, not parent
+
+        unitInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            try {
+                // Use local unitsData array instead of API call for better performance
+                const results = unitsData.filter(unit => 
+                    unit.naimenovanie.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                dropdown.innerHTML = '';
+                if (results && results.length > 0) {
+                    results.forEach(item => {
+                        const option = document.createElement('div');
+                        option.className = 'autocomplete-option';
+                        option.textContent = item.naimenovanie;
+                        option.style.padding = '8px 12px';
+                        option.style.cursor = 'pointer';
+                        option.style.borderBottom = '1px solid #eee';
+                        
+                        option.addEventListener('click', () => {
+                            unitInput.value = item.naimenovanie;
+                            unitHidden.value = item.id;
+                            dropdown.style.display = 'none';
+                        });
+
+                        option.addEventListener('mouseover', () => {
+                            option.style.backgroundColor = '#f0f0f0';
+                        });
+                        option.addEventListener('mouseout', () => {
+                            option.style.backgroundColor = 'transparent';
+                        });
+
+                        dropdown.appendChild(option);
+                    });
+                    dropdown.style.display = 'block';
+                    positionDropdown(dropdown, unitInput);
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Unit autocomplete error:', error);
+            }
+        });
+
+        unitInput.addEventListener('focus', () => {
+            if (dropdown.children.length > 0 && unitInput.value.trim()) {
+                dropdown.style.display = 'block';
+                positionDropdown(dropdown, unitInput);
+            }
+        });
+
+        unitInput.addEventListener('blur', () => {
+            setTimeout(() => dropdown.style.display = 'none', 200);
+        });
+
+        window.addEventListener('scroll', () => {
+            if (dropdown.style.display === 'block') {
+                positionDropdown(dropdown, unitInput);
             }
         });
     }
