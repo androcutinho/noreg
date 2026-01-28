@@ -136,6 +136,9 @@ include 'header.php';
                                 <td class="text-center"><?= $item_num ?></td>
                                 <td>
                                     <p class="strong mb-1"><?= htmlspecialchars($item['product_name']) ?></p>
+                                </td>
+                                <td>
+                                    <?= htmlspecialchars($item['seria_name'] ?? '-') ?>
                                     <?php if (!empty($item['data_izgotovleniya']) || !empty($item['srok_godnosti'])): ?>
                                         <small class="text-muted d-block">
                                             <?php if (!empty($item['data_izgotovleniya'])): ?>
@@ -147,7 +150,6 @@ include 'header.php';
                                         </small>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
                                 <td class="text-center"><?= htmlspecialchars($item['quantity']) ?> <?= htmlspecialchars($item['unit_name'] ?? '') ?></td>
                                 <td class="text-end"><?= number_format($item['unit_price'], 2, ',', ' ') ?></td>
                                 <td class="text-end"><?= number_format($item['total_amount'], 2, ',', ' ') ?></td>

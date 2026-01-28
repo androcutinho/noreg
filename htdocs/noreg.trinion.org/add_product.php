@@ -181,17 +181,6 @@ include 'header.php';
 
                 <button type="button" class="btn" onclick="addRow()">+ строка</button>
                 <div class="row" style="margin-top: 20px;">
-                    <div class="row">
-                <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
-                        <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off">
-                    </div>
-
-                    <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="srok_godnosti">Срок годности</label>
-                        <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off">
-                    </div>    
-                </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Сохранить</button>
                         <a href="admin_page.php" class="btn">Отмена</a>

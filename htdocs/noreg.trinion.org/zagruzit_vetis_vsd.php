@@ -22,7 +22,7 @@ $client = new nusoap_client('https://api.vetrf.ru/platform/services/2.1/Applicat
 	$client->decode_utf8 = false; // Кодировка ответа
 
 $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetStockEntryListOperation';
-$uuid_document = 'aa9cdb37-1da4-4313-86e5-3ff2949dc082';
+$uuid_document = '7d0c8633-f85a-4666-a635-ba819e9259b3';
 
 
 // STEP 1: GET VET DOCUMENT BY UUID (Request to get application ID)

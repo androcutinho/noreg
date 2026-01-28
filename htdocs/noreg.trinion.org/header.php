@@ -178,7 +178,27 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Задачи </span>
                       </a>
                     </li> 
-                  </ul>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#navbar-form" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M4 20h16"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M4 4h16"></path>
+                              </svg></span>
+                        <span class="nav-link-title"> Меню </span>
+                      </a>
+                      <div class="dropdown-menu" data-bs-popper="static" style="width: 350px;">
+                        <a class="dropdown-item" href="https://noreg.trinion.org/spisok_tovarov.php"> Список товаров </a>
+                        <div class="dropdown-divider"></div>
+                        <div style="padding: 12px 16px;">
+                          <div class="input-group mb-2">
+                            <input type="text" id="vsd-uuid-input" class="form-control" placeholder="Введите UUID...">
+                            <button class="btn" type="button" onclick="loadVSDSeries()">Загрузить</button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
       <!-- END NAVBAR  -->
         </div>
                 <div class="col col-md-auto">
@@ -217,6 +237,32 @@ if (isset($_SESSION['user_id'])) {
                 
                 if (!trigger.contains(event.target) && !menu.contains(event.target)) {
                     menu.classList.remove('show');
+                }
+            });
+
+            // Function to load VSD series
+            function loadVSDSeries() {
+                const uuidInput = document.getElementById('vsd-uuid-input');
+                const uuid = uuidInput.value.trim();
+                
+                if (uuid.length === 0) {
+                    alert('Пожалуйста, введите UUID');
+                    return;
+                }
+                
+                // Redirect to the VSD loader page with the UUID
+                window.location.href = 'https://noreg.trinion.org/postupleniye_tovara_vetis.php?uuid=' + encodeURIComponent(uuid);
+            }
+
+            // Allow Enter key to trigger the search
+            document.addEventListener('DOMContentLoaded', function() {
+                const uuidInput = document.getElementById('vsd-uuid-input');
+                if (uuidInput) {
+                    uuidInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            loadVSDSeries();
+                        }
+                    });
                 }
             });
         </script>

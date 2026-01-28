@@ -278,27 +278,6 @@ function createArrivalDocument($mysqli, $data) {
                 }
             }
             
-            // UPDATE dates for any seria_id (whether new or existing)
-            if (!empty($product['seria_id'])) {
-                $seria_id_for_dates = intval($product['seria_id']);
-                $data_izgotovleniya = !empty($data['data_izgotovleniya']) ? $data['data_izgotovleniya'] : null;
-                $srok_godnosti = !empty($data['srok_godnosti']) ? $data['srok_godnosti'] : null;
-                
-                if ($data_izgotovleniya || $srok_godnosti) {
-                    $update_seria_dates_sql = "UPDATE " . TABLE_SERIES . " SET data_izgotovleniya = ?, srok_godnosti = ? WHERE " . COL_SERIES_ID . " = ?";
-                    $update_seria_dates_stmt = $mysqli->stmt_init();
-                    
-                    if (!$update_seria_dates_stmt->prepare($update_seria_dates_sql)) {
-                        throw new Exception("SQL error updating series dates: " . $mysqli->error);
-                    }
-                
-                    $update_seria_dates_stmt->bind_param("ssi", $data_izgotovleniya, $srok_godnosti, $seria_id_for_dates);
-                    if (!$update_seria_dates_stmt->execute()) {
-                        throw new Exception("Error updating series dates: " . $mysqli->error);
-                    }
-                }
-            }
-            
             $goods_id = intval($product['product_id']);
             $nds_id = intval($product['nds_id']);
             $price = floatval($product['price']);

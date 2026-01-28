@@ -95,7 +95,7 @@ include 'header.php';
 
 <div class="page-body">
 <div class="container-xl mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Новое поступление товара из ветис</h2>
+    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">Новое поступление товара</h2>
     <div class="card">
         <div class="card-body">
             <form method="POST" id="documentForm">   

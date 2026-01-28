@@ -8,19 +8,15 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Панель администратора';
+$page_title = 'Список товаров';
 
 $mysqli = require 'config/database.php';
-require 'queries/admin_queries.php';
+require 'queries/spisok_tovarov_queries.php';
 
-$selected_warehouse_id = isset($_GET['warehouse_id']) ? intval($_GET['warehouse_id']) : null;
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-$warehouses = fetchAllWarehouses($mysqli);
-
-// Get total count of products
-$total_products = getProductsCount($mysqli, $selected_warehouse_id);
+$total_products = getProductsWithSeriesCount($mysqli, '');
 $total_pages = ceil($total_products / $items_per_page);
 
 
@@ -31,7 +27,7 @@ if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pag
 $offset = ($current_page - 1) * $items_per_page;
 
 
-$products = fetchAllProducts($mysqli, $selected_warehouse_id, $items_per_page, $offset);
+$products = fetchAllProductsWithSeries($mysqli, '', $items_per_page, $offset);
 
 include 'header.php';
 ?>
@@ -41,8 +37,8 @@ include 'header.php';
             <div class="card-header">
               <div class="row w-full">
                 <div class="col">
-                  <h3 class="card-title mb-0">Поступления товаров</h3>
-                  <p class="text-secondary m-0">Всего документов: <?= $total_products ?> штук.</p>
+                  <h3 class="card-title mb-0">Список товаров</h3>
+                  <p class="text-secondary m-0">Всего товаров: <?= $total_products ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -57,33 +53,6 @@ include 'header.php';
                       <span class="input-group-text">
                       </span>
                     </div>
-                    <a href="#" class="btn btn-icon" aria-label="Button">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                        <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                        <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                      </svg>
-                    </a>
-                      <div class="dropdown">
-                              <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <?php 
-                                if ($selected_warehouse_id) {
-                                    $selected = array_filter($warehouses, fn($w) => $w['id'] == $selected_warehouse_id);
-                                    $warehouse_name = !empty($selected) ? reset($selected)['naimenovanie'] : 'Склад';
-                                    echo htmlspecialchars($warehouse_name);
-                                } else {
-                                    echo 'Склады';
-                                }
-                                ?>
-                              </a>
-                              <div class="dropdown-menu" style="">
-                                <a class="dropdown-item" href="?">Склады</a>
-                                <?php foreach ($warehouses as $warehouse): ?>
-                                  <a class="dropdown-item" href="?warehouse_id=<?= htmlspecialchars($warehouse['id']) ?>"><?= htmlspecialchars($warehouse['naimenovanie']) ?></a>
-                                <?php endforeach; ?>
-                              </div>
-                            </div>
-                    <a href="add_product.php" class="btn btn-primary">Создать</a>
                   </div>
                 </div>
               </div>
@@ -92,28 +61,24 @@ include 'header.php';
               <table class="table table-vcenter card-table">
                 <thead>
                   <tr>
-                    <th>НОМЕР</th>
-                    <th>ДАТА</th>
-                    <th>ПОСТАВЩИК</th>
-                    <th>ОТВЕТСТВЕННЫЙ</th>
-                    <th>ЦЕНА</th>
+                    <th>ИД</th>
+                    <th>Название товара</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php if (!empty($products)): ?>
                     <?php foreach ($products as $product): ?>
                       <tr>
-                        <td><a href="view_product_details.php?product_id=<?= htmlspecialchars($product['id']) ?>" class="text-primary"><?= htmlspecialchars($product['id']) ?></a></td>
-                        <td class="text-secondary"><?= htmlspecialchars($product['data_dokumenta']) ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($product['vendor'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($product['responsible'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= number_format($product['total_price'] ?? 0, 2, ',', ' ') ?></td>
+                        <td><?= htmlspecialchars($product['id']) ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($product['product_name']) ?></td>
+                        <td class="text-secondary"><a href="spisok_serii.php?product_id=<?= htmlspecialchars($product['id']) ?>">Серии</a></td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="5" class="text-center text-secondary p-4">
-                        Документы еще не добавлены. <a href="add_product.php">Добавьте первый документ</a>
+                      <td colspan="3" class="text-center text-secondary p-4">
+                        Товары еще не добавлены.
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -132,8 +97,7 @@ include 'header.php';
                 <div class="col-auto">
                   <ul class="pagination m-0 ms-auto">
                     <?php 
-                    // Build base URL parameters
-                    $url_params = ($selected_warehouse_id) ? "?warehouse_id=" . htmlspecialchars($selected_warehouse_id) . "&" : "?";
+                    $url_params = "?";
                     ?>
                     <li class="page-item <?= ($current_page == 1) ? 'disabled' : '' ?>">
                       <a class="page-link" href="<?= $url_params ?>page=<?= max(1, $current_page - 1) ?>" <?= ($current_page == 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
@@ -143,7 +107,7 @@ include 'header.php';
                       </a>
                     </li>
                     <?php
-                    // Calculate page range to display
+                    
                     $start_page = max(1, $current_page - 2);
                     $end_page = min($total_pages, $current_page + 2);
                     
@@ -169,6 +133,8 @@ include 'header.php';
           </div>
         </div>
       </div>
+
+<?php include 'footer.php'; ?>
 
 <script>
 document.getElementById('advanced-table-search').addEventListener('keyup', function() {
@@ -196,5 +162,3 @@ document.getElementById('advanced-table-search').addEventListener('keyup', funct
     });
 });
 </script>
-
-<?php include 'footer.php'; ?>
