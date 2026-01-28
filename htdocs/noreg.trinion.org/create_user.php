@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: log_in.php');
     exit;
 }
-
+$mysqli = require 'config/database.php';
 require 'queries/create_user_queries.php';
 
 // Check if user has admin permissions
@@ -57,70 +57,114 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <head>
         <title>Создать пользователя</title>
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css">
-        <style>
-            .error {
-                color: red;
-                margin-bottom: 20px;
-            }
-            .checkbox-container {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .checkbox-container input[type="checkbox"] {
-                width: 20px;
-                height: 20px;
-                cursor: pointer;
-            }
-            .checkbox-container label {
-                margin: 0;
-                cursor: pointer;
-            }
-        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
     </head>
     <body>
-        <h1>Создать нового пользователя</h1>
-        
-        <?php if ($error): ?>
-            <div class="error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+        <?php include 'header.php'; ?>
+        <div class="page-body">
+        <div class="container-xl mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Создать нового пользователя</h3>
+                        </div>
+                        <div class="card-body">
+                            <?php if ($error): ?>
+                                <div class="alert alert-danger" role="alert">
+                                    <?= htmlspecialchars($error) ?>
+                                </div>
+                            <?php endif; ?>
 
-        <form method="POST">
+                            <form method="POST" class="space-y">
+                                <!-- Username -->
+                                <div>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="text" id="user_name" name="user_name" class="form-control" placeholder="Имя пользователя" required
+                                        value="<?= htmlspecialchars($_POST['user_name'] ?? '') ?>">
+                                    </div>
+                                </div>
 
-            <div>
-                <label for="user_name">Имя:</label>
-                <input type="text" id="user_name" name="user_name" required
-                value="<?= htmlspecialchars($_POST['user_name'] ?? '') ?>">
+                                <!-- Email -->
+                                <div>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z"></path>
+                                                <path d="M3 7l9 6l9 -6"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="email" id="email" name="email" class="form-control" placeholder="Адрес электронной почты" required
+                                        value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                                    </div>
+                                </div>
+
+                                <!-- Password -->
+                                <div>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"></path>
+                                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"></path>
+                                                <path d="M8 11v-4a4 4 0 1 1 8 0v4"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="password" id="password" name="password" class="form-control" placeholder="Пароль" required>
+                                    </div>
+                                </div>
+
+                                <!-- Confirm Password -->
+                                <div>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"></path>
+                                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"></path>
+                                                <path d="M8 11v-4a4 4 0 1 1 8 0v4"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" placeholder="Подтвердить пароль" required>
+                                    </div>
+                                </div>
+
+                                <!-- Admin Checkbox -->
+                                <div>
+                                    <label class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="user_role" name="user_role"
+                                        <?= isset($_POST['user_role']) ? 'checked' : '' ?>>
+                                        <span class="form-check-label">Права администратора</span>
+                                    </label>
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="row align-items-center">
+                                    <div class="col-auto ms-auto">
+                                        <a href="users.php" class="btn btn-secondary">Отмена</a>
+                                        <button type="submit" class="btn btn-primary">
+                                            Создать пользователя
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-end">
+                                                <path d="M5 12l14 0"></path>
+                                                <path d="M13 18l6 -6"></path>
+                                                <path d="M13 6l6 6"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required
-                value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
-            </div>
-
-            <div>
-                <label for="password">Пароль:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-
-            <div>
-                <label for="password_confirmation">Подтвердите пароль:</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" required>
-            </div>
-
-            <div class="checkbox-container">
-                <input type="checkbox" id="user_role" name="user_role"
-                <?= isset($_POST['user_role']) ? 'checked' : '' ?>>
-                <label for="user_role">Права администратора</label>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <button type="submit">Создать пользователя</button>
-                <a href="users.php" style="margin-left: 10px;">Отмена</a>
-            </div>
-
-        </form>
+        </div>
+        </div>
+        <?php include 'footer.php'; ?>
     </body>
 </html>

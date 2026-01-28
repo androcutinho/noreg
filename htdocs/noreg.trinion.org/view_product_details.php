@@ -101,7 +101,7 @@ include 'header.php';
                         </address>
                     </div>
                     <div class="col-4 text-center">
-                        <p class="h3">Дата</p>
+                        <p class="h3">Дата оформления</p>
                         <address>
                             <?= htmlspecialchars($document['data_dokumenta']) ?><br>
                         </address>
@@ -136,9 +136,19 @@ include 'header.php';
                                 <td class="text-center"><?= $item_num ?></td>
                                 <td>
                                     <p class="strong mb-1"><?= htmlspecialchars($item['product_name']) ?></p>
+                                    <?php if (!empty($item['data_izgotovleniya']) || !empty($item['srok_godnosti'])): ?>
+                                        <small class="text-muted d-block">
+                                            <?php if (!empty($item['data_izgotovleniya'])): ?>
+                                                Дата изготовления: <?= htmlspecialchars(date('d/m/Y', strtotime($item['data_izgotovleniya']))) ?><br>
+                                            <?php endif; ?>
+                                            <?php if (!empty($item['srok_godnosti'])): ?>
+                                                Срок годности: <?= htmlspecialchars(date('d/m/Y', strtotime($item['srok_godnosti']))) ?>
+                                            <?php endif; ?>
+                                        </small>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
-                                <td class="text-center"><?= htmlspecialchars($item['quantity']) ?></td>
+                                <td class="text-center"><?= htmlspecialchars($item['quantity']) ?> <?= htmlspecialchars($item['unit_name'] ?? '') ?></td>
                                 <td class="text-end"><?= number_format($item['unit_price'], 2, ',', ' ') ?></td>
                                 <td class="text-end"><?= number_format($item['total_amount'], 2, ',', ' ') ?></td>
                             </tr>
@@ -150,7 +160,7 @@ include 'header.php';
                         <tr style="height: 50px;"><td colspan="6"></td></tr>
                         <tr>
                             <td colspan="5" class="strong text-end">Промежуточный итог</td>
-                            <td class="text-end"><?= number_format($subtotal, 2, ',', ' ') ?></td>
+                            <td class="text-end"><?= number_format($subtotal, 2, ',', '.') ?></td>
                         </tr>
                         <tr>
                             <td colspan="5" class="strong text-end">Ставка НДС</td>
@@ -158,11 +168,11 @@ include 'header.php';
                         </tr>
                         <tr>
                             <td colspan="5" class="strong text-end">НДС к оплате</td>
-                            <td class="text-end"><?= number_format($vat_total, 2, ',', ' ') ?></td>
+                            <td class="text-end"><?= number_format($vat_total, 2, ',', '.') ?></td>
                         </tr>
                         <tr>
                             <td colspan="5" class="font-weight-bold text-uppercase text-end">Итого к оплате</td>
-                            <td class="font-weight-bold text-end"><?= number_format($total_due, 2, ',', ' ') ?></td>
+                            <td class="font-weight-bold text-end"><?= number_format($total_due, 2, ',', '.') ?></td>
                         </tr>
                     </tbody>
                 </table>

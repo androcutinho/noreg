@@ -35,14 +35,18 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         sd.id,
         ti.naimenovanie as product_name,
         ser.nomer as seria_name,
+        ser.data_izgotovleniya,
+        ser.srok_godnosti,
         sd.kolichestvo_postupleniya as quantity,
         sd.cena_postupleniya as unit_price,
+        eu.naimenovanie as unit_name,
         sn.stavka_nds as vat_rate,
         (sd.cena_postupleniya * sd.kolichestvo_postupleniya) as total_amount
     FROM stroki_dokumentov sd
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
     LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
     LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+    LEFT JOIN edinicy_izmereniya eu ON sd.id_edinicy_izmereniya = eu.id
     WHERE sd.id_dokumenta = ?
     ORDER BY sd.id ASC";
 
