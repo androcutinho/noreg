@@ -157,19 +157,20 @@ if (isset($_SESSION['user_id'])) {
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"></path></svg></span>
                         <span class="nav-link-title"> Документы </span>
                       </a>
-                      <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="./form-elements.html"> Поступление товаров </a>
-                        <a class="dropdown-item" href="./form-layout.html">
-                          Перемещение товаров
-                        </a>
+                      <div class="dropdown-menu" data-bs-popper="static" style="width: 175px;">
+                        <a class="dropdown-item" href="./">Поступление товаров</a>
+                        <a class="dropdown-item" href="./">Перемещение товаров</a>
                       </div>
                     </li>
-                    <li class="nav-item">
-                      <a class="nav-link" href="./">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#navbar-form" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24"24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-id"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -10" /><path d="M7 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 8l2 0" /><path d="M15 12l2 0" /><path d="M7 16l10 0" /></svg></span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-id"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -10" /><path d="M7 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 8l2 0" /><path d="M15 12l2 0" /><path d="M7 16l10 0" /></svg></span>
                         <span class="nav-link-title"> Справочники </span>
                       </a>
+                      <div class="dropdown-menu" data-bs-popper="static">
+                        <a class="dropdown-item" href="https://noreg.trinion.org/spisok_tovarov.php"> Список товары </a>
+                      </div>
                     </li>
                     <li class="nav-item">
                       <a class="nav-link" href="./">
@@ -186,14 +187,12 @@ if (isset($_SESSION['user_id'])) {
                                 <path d="M4 12h16"></path>
                                 <path d="M4 4h16"></path>
                               </svg></span>
-                        <span class="nav-link-title"> Меню </span>
+                        <span class="nav-link-title"> Cкрипты </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static" style="width: 350px;">
-                        <a class="dropdown-item" href="https://noreg.trinion.org/spisok_tovarov.php"> Список товаров </a>
-                        <div class="dropdown-divider"></div>
                         <div style="padding: 12px 16px;">
                           <div class="input-group mb-2">
-                            <input type="text" id="vsd-uuid-input" class="form-control" placeholder="Введите UUID...">
+                            <input type="text" id="vsd-uuid-input" class="form-control" placeholder=" Загрузить серию из Ветис">
                             <button class="btn" type="button" onclick="loadVSDSeries()">Загрузить</button>
                           </div>
                         </div>

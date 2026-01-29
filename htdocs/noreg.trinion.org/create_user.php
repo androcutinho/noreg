@@ -64,10 +64,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <body>
         <?php include 'header.php'; ?>
         <div class="page-body">
-        <div class="container-xl mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card">
+        <div class="container-xl">
+          <div class="card">
+            <div class="card-header">
+              <div class="row w-full">
+                <div class="col">
                         <div class="card-header">
                             <h3 class="card-title">Создать нового пользователя</h3>
                         </div>

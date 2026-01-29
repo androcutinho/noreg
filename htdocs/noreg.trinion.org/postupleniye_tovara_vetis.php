@@ -30,7 +30,7 @@ include 'header.php';
 <div class="container-xl">
     <div class="row mb-3 d-print-none" style="margin-top: 30px;">
         <div class="col-auto ms-auto">
-            <button type="button" class="btn btn-primary" onclick="window.location.href='add_postupleniye_tovara_vetis.php?uuid=<?php echo $uuid; ?>';"> Создать поступление</a>
+            <button type="button" class="btn btn-primary" onclick="window.location.href='add_postupleniye_tovara.php?uuid=<?php echo $uuid; ?>';"> Создать поступление</a>
             </button>
             <button type="button" class="btn btn-primary" onclick="window.print();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">

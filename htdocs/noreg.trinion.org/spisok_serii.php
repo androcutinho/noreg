@@ -42,7 +42,7 @@ include 'header.php';
     <div class="container-xl">
         <div style="text-align: right; margin-bottom: 10px;">
             <a href="redaktirovat_dannyye_serii.php?product_id=<?= htmlspecialchars($product_id) ?>" class="btn btn-primary">
-                Добавить серию и данные
+                Добавить
             </a>
         </div>
         <div class="card">
@@ -94,7 +94,7 @@ include 'header.php';
                                     <td class="text-secondary"><?= htmlspecialchars($seria['data_izgotovleniya'] ?? 'N/A') ?></td>
                                     <td class="text-secondary"><?= htmlspecialchars($seria['srok_godnosti'] ?? 'N/A') ?></td>
                                     <td>
-                                        <a style="left: 58%;" href="redaktirovat_dannyye_serii.php?product_id=<?= htmlspecialchars($product_id) ?>" class="btn btn-sm btn-primary">Редактировать</a>
+                                        <a style="left: 58%;" href="redaktirovat_dannyye_serii.php?seria_id=<?= htmlspecialchars($seria['id']) ?>" class="btn btn-sm btn-primary">Редактировать</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

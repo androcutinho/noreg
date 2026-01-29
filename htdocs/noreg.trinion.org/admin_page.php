@@ -57,13 +57,6 @@ include 'header.php';
                       <span class="input-group-text">
                       </span>
                     </div>
-                    <a href="#" class="btn btn-icon" aria-label="Button">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                        <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                        <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
-                      </svg>
-                    </a>
                       <div class="dropdown">
                               <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                 <?php 
@@ -83,7 +76,7 @@ include 'header.php';
                                 <?php endforeach; ?>
                               </div>
                             </div>
-                    <a href="add_product.php" class="btn btn-primary">Создать</a>
+                    <a href="add_postupleniye_tovara.php" class="btn btn-primary">Создать</a>
                   </div>
                 </div>
               </div>
