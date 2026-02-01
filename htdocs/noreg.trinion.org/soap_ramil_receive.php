@@ -16,7 +16,7 @@ $client = new nusoap_client('https://api.vetrf.ru/platform/services/2.1/Applicat
       <ws:receiveApplicationResultRequest>
          <ws:apiKey>ZWM0M2ZlM2ItOGIzNy00Y2FlLTkwYjMtM2QxYmVmMGI4YmM0MGRhM2ViNzYtZWM0Ny00ZjQyLWJhNTUtNGIyYjhmNTA5ODQ5</ws:apiKey>
          <ws:issuerId>0da3eb76-ec47-4f42-ba55-4b2b8f509849</ws:issuerId>
-         <ws:applicationId>546c3b32-0478-480d-aaa7-8c33565008e0</ws:applicationId>
+         <ws:applicationId>55444445-98bc-4ebe-b3e7-2644e5ee7d38</ws:applicationId>
       </ws:receiveApplicationResultRequest>
    </soapenv:Body>
 </soapenv:Envelope>'; // XML код запроса

@@ -88,7 +88,9 @@ function fetchVetisDocument($uuid)
         if (!$applicationId) {
             throw new Exception('Failed to retrieve Application ID. Check UUID.');
         }
-
+         
+        // Wait for API to process 
+        sleep(3);
         $request_xml_2 = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://api.vetrf.ru/schema/cdm/application/ws-definitions">
            <soapenv:Header/>
            <soapenv:Body>
@@ -135,6 +137,7 @@ function fetchVetisDocument($uuid)
         $product_guid = $batch['productItem']['guid'] ?? '';
         $volume = $batch['volume'] ?? '';
         $unit_name = $batch['unit']['name'] ?? '';
+        $unit_guid = $batch['unit']['guid'] ?? '';
         $package_type = $batch['packageList']['package']['packingType']['name'] ?? '';
         $package_quantity = $batch['packageList']['package']['quantity'] ?? '';
         $prod_date = '';
