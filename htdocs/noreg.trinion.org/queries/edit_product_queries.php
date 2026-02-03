@@ -50,11 +50,12 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         ser.data_izgotovleniya,
         ser.srok_godnosti,
         eu.naimenovanie as unit_name,
-        sd.kolichestvo_postupleniya as quantity,
-        sd.cena_postupleniya as unit_price,
+        sd.kolichestvo as quantity,
+        sd.cena as unit_price,
         sd.id_stavka_nds as nds_id,
         sn.stavka_nds as vat_rate,
-        sd.summa_postupleniya as total_amount
+        sd.summa as total_amount,
+        sd.summa_nds as nds_amount
     FROM stroki_dokumentov sd
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
     LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
@@ -84,7 +85,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
     try {
         $mysqli->begin_transaction();
         
-        // Get or create warehouse, vendor, organization
+        // Get or create warehouse, vendor, organization - use same logic as create
         $warehouse_id_input = isset($data['warehouse_id']) ? $data['warehouse_id'] : null;
         $warehouse_name_input = isset($data['warehouse_name']) ? $data['warehouse_name'] : null;
         $data['warehouse_id'] = getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_input);
@@ -96,6 +97,16 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         $org_id_input = isset($data['organization_id']) ? $data['organization_id'] : null;
         $org_name_input = isset($data['organization_name']) ? $data['organization_name'] : null;
         $data['organization_id'] = getOrCreateOrganization($mysqli, $org_id_input, $org_name_input);
+        
+        // Get responsible ID (must exist, don't create)
+        if (empty($data['responsible_id'])) {
+            throw new Exception("Пожалуйста, выберите ответственного из списка");
+        }
+        $responsible_id = intval($data['responsible_id']);
+        
+        $warehouse_id = intval($data['warehouse_id']);
+        $organization_id = intval($data['organization_id']);
+        $vendor_id = intval($data['vendor_id']);
         
         // Update document header
         $doc_sql = "UPDATE postupleniya_tovarov SET 
@@ -117,7 +128,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             $data['warehouse_id'],
             $data['vendor_id'],
             $data['organization_id'],
-            $data['responsible_id'],
+            $responsible_id,
             $document_id
         );
         
@@ -168,10 +179,11 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             $price = floatval($product['price']);
             $quantity = floatval($product['quantity']);
             $summa = floatval($product['summa']);
+            $summa_stavka = !empty($product['summa_stavka']) ? floatval($product['summa_stavka']) : 0;
             $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : 0;
             $unit_id = !empty($product['unit_id']) ? intval($product['unit_id']) : 0;
             
-            $line_sql = "INSERT INTO " . TABLE_DOCUMENT_LINES . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", id_serii, " . COL_LINE_UNIT_ID . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . TABLE_DOCUMENT_LINES . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", id_serii, " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -179,7 +191,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             }
             
             $line_stmt->bind_param(
-                "iiidddii",
+                "iiidddiid",
                 $document_id,
                 $goods_id,
                 $nds_id,
@@ -187,7 +199,8 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
                 $quantity,
                 $summa,
                 $seria_id,
-                $unit_id
+                $unit_id,
+                $summa_stavka
             );
             
             if (!$line_stmt->execute()) {

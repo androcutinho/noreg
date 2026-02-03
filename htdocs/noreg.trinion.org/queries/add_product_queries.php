@@ -83,6 +83,7 @@ function createArrivalDocument($mysqli, $data) {
             $price = floatval($product['price']);
             $quantity = floatval($product['quantity']);
             $summa = floatval($product['summa']);
+            $summa_stavka = !empty($product['summa_stavka']) ? floatval($product['summa_stavka']) : 0;
             $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : 0;
             $unit_id = !empty($product['unit_id']) ? intval($product['unit_id']) : 0;
             
@@ -92,7 +93,7 @@ function createArrivalDocument($mysqli, $data) {
             }
             
             // Insert line item with id_serii and id_edinicy_izmereniya
-            $line_sql = "INSERT INTO " . TABLE_DOCUMENT_LINES . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", id_serii, " . COL_LINE_UNIT_ID . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . TABLE_DOCUMENT_LINES . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", id_serii, " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -100,7 +101,7 @@ function createArrivalDocument($mysqli, $data) {
             }
             
             $line_stmt->bind_param(
-                "iiidddii",
+                "iiidddiid",
                 $document_id,
                 $goods_id,
                 $nds_id,
@@ -108,7 +109,8 @@ function createArrivalDocument($mysqli, $data) {
                 $quantity,
                 $summa,
                 $seria_id,
-                $unit_id
+                $unit_id,
+                $summa_stavka
             );
             
             if (!$line_stmt->execute()) {

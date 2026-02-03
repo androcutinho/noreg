@@ -72,15 +72,17 @@ function createRowTemplate(rowIndex) {
                 <input type="hidden" name="products[${rowIndex}][seria_id]" class="seria-id">   
             </div>
         </td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
-        <td>
+         <td>
             <div class="search-container" style="position: relative;">
                 <input class="form-control" type="text" name="products[${rowIndex}][unit_name]" placeholder="Введите ед." autocomplete="off">
                 <input type="hidden" name="products[${rowIndex}][unit_id]" class="unit-id">     
             </div>
         </td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
         <td><select class="form-control" name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][summa_stavka]" placeholder="0" autocomplete="off"></td>
+        <td><input class="form-control" type="text" name="products[${rowIndex}][summa]" placeholder="0" autocomplete="off"></td>
         <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
 }
@@ -93,6 +95,7 @@ function addRow() {
     newRow.innerHTML = createRowTemplate(rowCount);
     tbody.appendChild(newRow);
     initTableAutocomplete(newRow);
+    attachCalculationListeners(newRow);
     updateRowNumbers();
 }
 
@@ -128,6 +131,51 @@ function positionDropdown(dropdown, input) {
     dropdown.style.width = rect.width + 'px';
 }
 
+// Calculate summa based on price and quantity
+function attachCalculationListeners(row) {
+    const priceInput = row.querySelector('input[name*="[price]"]');
+    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    const summaInput = row.querySelector('input[name*="[summa]"]');
+    const ndsSelect = row.querySelector('select[name*="[nds_id]"]');
+    const ndsAmountInput = row.querySelector('input[name*="[summa_stavka]"]');
+
+    const calculateSumma = () => {
+        const price = parseFloat(priceInput.value) || 0;
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const summa = price * quantity;
+        summaInput.value = summa > 0 ? summa.toFixed(2) : '';
+        
+        // Recalculate НДС amount when summa changes
+        calculateNdsAmount();
+    };
+
+    const calculateNdsAmount = () => {
+        const summa = parseFloat(summaInput.value) || 0;
+        
+        if (!ndsSelect || ndsSelect.selectedIndex === 0) {
+            ndsAmountInput.value = '';
+            return;
+        }
+        
+        // Get НДС rate from the selected option's text content
+        const selectedOption = ndsSelect.options[ndsSelect.selectedIndex];
+        const ndsRate = parseFloat(selectedOption.textContent) || 0;
+        
+        
+        const ndsAmount = summa * (ndsRate / 100);
+        ndsAmountInput.value = ndsAmount > 0 ? ndsAmount.toFixed(2) : '';
+    };
+
+    if (priceInput && quantityInput && summaInput) {
+        priceInput.addEventListener('input', calculateSumma);
+        quantityInput.addEventListener('input', calculateSumma);
+    }
+    
+    if (ndsSelect) {
+        ndsSelect.addEventListener('change', calculateNdsAmount);
+    }
+}
+
 // Autocomplete for table product/series fields
 function initTableAutocomplete(row) {
     const productInput = row.querySelector('input[name*="[product_name]"]');
@@ -142,6 +190,11 @@ function initTableAutocomplete(row) {
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
         dropdown.style.backgroundColor = 'white';
+        dropdown.style.zIndex = '10000';
+        dropdown.style.border = '1px solid #ddd';
+        dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        dropdown.style.maxHeight = '300px';
+        dropdown.style.overflowY = 'auto';
         document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         productInput.addEventListener('input', async (e) => {
@@ -153,7 +206,7 @@ function initTableAutocomplete(row) {
 
             try {
                 const timestamp = new Date().getTime(); // Cache busting
-                const url = `api/autocomplete.php?search=${encodeURIComponent(query)}&table=tovary_i_uslugi&col=naimenovanie&id=id&t=${timestamp}`;
+                const url = `/api/autocomplete.php?search=${encodeURIComponent(query)}&table=tovary_i_uslugi&col=naimenovanie&id=id&t=${timestamp}`;
                 const response = await fetch(url);
                 const results = await response.json();
 
@@ -215,6 +268,11 @@ function initTableAutocomplete(row) {
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
         dropdown.style.backgroundColor = 'white';
+        dropdown.style.zIndex = '10000';
+        dropdown.style.border = '1px solid #ddd';
+        dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        dropdown.style.maxHeight = '300px';
+        dropdown.style.overflowY = 'auto';
         document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         seriaInput.addEventListener('input', async (e) => {
@@ -227,7 +285,7 @@ function initTableAutocomplete(row) {
 
             try {
                 const timestamp = new Date().getTime(); // Cache busting
-                const url = `api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=nomer&id=id&t=${timestamp}`;
+                const url = `/api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=nomer&id=id&t=${timestamp}`;
 
                 const response = await fetch(url);
                 const results = await response.json();
@@ -290,6 +348,11 @@ function initTableAutocomplete(row) {
         dropdown.className = 'autocomplete-dropdown';
         dropdown.style.display = 'none';
         dropdown.style.backgroundColor = 'white';
+        dropdown.style.zIndex = '10000';
+        dropdown.style.border = '1px solid #ddd';
+        dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        dropdown.style.maxHeight = '300px';
+        dropdown.style.overflowY = 'auto';
         document.body.appendChild(dropdown); // Portal: append to body, not parent
 
         unitInput.addEventListener('input', async (e) => {
@@ -364,6 +427,7 @@ function initTableAutocomplete(row) {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.product-row').forEach(row => {
         initTableAutocomplete(row);
+        attachCalculationListeners(row);
     });
 
     autocompleteFields.forEach(field => {
@@ -394,10 +458,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Clear the hidden ID field when user types - it will be set only if they select from dropdown
+            hiddenInput.value = '';
+
             try {
                 const idCol = field.idCol || 'id';
                 const timestamp = new Date().getTime(); // Cache busting
-                const url = `api/autocomplete.php?search=${encodeURIComponent(query)}&table=${field.table}&col=${field.col}&id=${idCol}&t=${timestamp}`;
+                const url = `/api/autocomplete.php?search=${encodeURIComponent(query)}&table=${field.table}&col=${field.col}&id=${idCol}&t=${timestamp}`;
 
                 const response = await fetch(url);
                 const results = await response.json();

@@ -78,7 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
             if ($result['success']) {
                 // Redirect to product details page
-                header("Location: view_product_details.php?product_id=" . $product_id);
+                header("Location: postuplenie/tovarov.php?product_id=" . $product_id);
                 exit;
             } else {
                 $error = $result['error'];
@@ -95,6 +95,7 @@ include 'header.php';
         <?= htmlspecialchars($error) ?>
     </div>
 <?php endif; ?>
+
 
 <div class="page-body">
 <div class="container-fluid mt-5">
@@ -157,6 +158,7 @@ include 'header.php';
                             <th>СУММА</th>
                             <th>ЕД</th>
                             <th>НДС</th>
+                            <th>СУММА НДС</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -197,6 +199,7 @@ include 'header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
+                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa_stavka'] ?? ($item['nds_amount'] ?? '')) ?>"></td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
@@ -216,7 +219,7 @@ include 'header.php';
                     <div class="col-12">
                         <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">Обновить</button>
-                        <a href="admin_page.php" class="btn">Отмена</a>
+                        <a href="postuplenie/index.php" class="btn">Отмена</a>
                         </div>
                     </div>
                 </div>
@@ -224,8 +227,6 @@ include 'header.php';
         </div>
     </div>
 </div>
-        <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
-        
         <script>
             let ndsOptionsTemplate = '<option value="">--</option>';
             <?php foreach ($nds_rates as $nds): ?>

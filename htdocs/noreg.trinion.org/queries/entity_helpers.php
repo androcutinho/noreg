@@ -4,7 +4,8 @@ function getOrCreateEntity($mysqli, $table_name, $id_column, $name_column, $enti
     $entity_name = trim($entity_name);
     
     // Check if entity exists
-    $check_sql = "SELECT " . $id_column . " FROM " . $table_name . " WHERE " . $name_column . " = ?";
+    $check_sql = "SELECT " . $id_column . " FROM " . $table_name . " WHERE " . $name_column . " = ?";;
+    
     $check_stmt = $mysqli->stmt_init();
     
     if (!$check_stmt->prepare($check_sql)) {
@@ -25,7 +26,8 @@ function getOrCreateEntity($mysqli, $table_name, $id_column, $name_column, $enti
     }
     
     // Entity doesn't exist, create it
-    $insert_sql = "INSERT INTO " . $table_name . "(" . $name_column . ") VALUES (?)";
+    $insert_sql = "INSERT INTO " . $table_name . "(" . $name_column . ") VALUES (?)";;
+    
     $insert_stmt = $mysqli->stmt_init();
     
     if (!$insert_stmt->prepare($insert_sql)) {

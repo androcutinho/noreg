@@ -4,35 +4,35 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: log_in.php');
+    header('Location: ../log_in.php');
     exit;
 }
 
 // Handle document deletion if delete action is requested
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    require 'config/database_config.php';
-    require 'queries/delete_product_queries.php';
+    require '../config/database_config.php';
+    require '../queries/delete_product_queries.php';
     
     if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
         die("ID документа не предоставлен.");
     }
     
-    $mysqli = require 'config/database.php';
+    $mysqli = require '../config/database.php';
     $document_id = intval($_GET['product_id']);
     
     $result = deleteArrivalDocument($mysqli, $document_id);
     
     if ($result['success']) {
-        header('Location: admin_page.php');
+        header('Location: index.php');
         exit;
     } else {
         die("Error: " . $result['message']);
     }
 }
 
-$mysqli = require 'config/database.php';
+$mysqli = require '../config/database.php';
 
-require 'queries/view_product_queries.php';
+require '../queries/view_product_queries.php';
 
 
 if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
@@ -56,7 +56,7 @@ $total_due = $totals['total_due'];
 
 $page_title = 'Детали документа поступлення';
 
-include 'header.php';
+include '../header.php';
 ?>
         <div class="container-fluid">
                      <div class="row mb-3 d-print-none" style="margin-top: 30px;">
@@ -69,7 +69,7 @@ include 'header.php';
                             </svg>
                             Печать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='postupleniye_tovara.php?product_id=<?= $document_id ?>';">
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='form.php?product_id=<?= $document_id ?>';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -78,7 +78,7 @@ include 'header.php';
                             </svg>
                             Редактировать
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='view_product_details.php?product_id=<?= $document_id ?>&action=delete';">
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='tovarov.php?product_id=<?= $document_id ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
@@ -184,5 +184,5 @@ include 'header.php';
         </div>
 
 <?php
-include 'footer.php';
+include '../footer.php';
 ?>
