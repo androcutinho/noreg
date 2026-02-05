@@ -38,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             
             $_SESSION["user_id"] = $user["user_id"];
             
-            header("Location: postuplenie/index.php");
+            header("Location: postuplenie");
             exit;
         }
         

@@ -16,15 +16,15 @@ require '../queries/spisok_postavshchikov_queries.php';
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-$total_postavshchiki = getPostavshchikiCount($mysqli, '');
-$total_pages = ceil($total_postavshchiki / $items_per_page);
+$total_kontagenti = getkontagentiCount($mysqli, '');
+$total_pages = ceil($total_kontagenti / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
 if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pages;
 
 $offset = ($current_page - 1) * $items_per_page;
 
-$postavshchiki = fetchAllPostavshchiki($mysqli, '', $items_per_page, $offset);
+$kontragenti = fetchAllkontagenti($mysqli, '', $items_per_page, $offset);
 
 include '../header.php';
 ?>
@@ -40,7 +40,7 @@ include '../header.php';
               <div class="row w-full">
                 <div class="col">
                   <h3 class="card-title mb-0">Список поставщиков</h3>
-                  <p class="text-secondary m-0">Всего поставщиков: <?= $total_postavshchiki ?> штук.</p>
+                  <p class="text-secondary m-0">Всего поставщиков: <?= $total_kontagenti ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -51,7 +51,7 @@ include '../header.php';
                           <path d="M21 21l-6 -6"></path>
                         </svg>
                       </span>
-                      <input id="postavshchiki-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
+                      <input id="kontragenti-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
                       <span class="input-group-text">
                       </span>
                     </div>
@@ -69,8 +69,8 @@ include '../header.php';
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($postavshchiki)): ?>
-                    <?php foreach ($postavshchiki as $postavshchik): ?>
+                  <?php if (!empty($kontragenti)): ?>
+                    <?php foreach ($kontragenti as $postavshchik): ?>
                       <tr>
                         <td><?= htmlspecialchars($postavshchik['id']) ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($postavshchik['naimenovanie']) ?></td>
@@ -136,7 +136,7 @@ include '../header.php';
 <?php include '../footer.php'; ?>
 
 <script>
-document.getElementById('postavshchiki-table-search').addEventListener('keyup', function() {
+document.getElementById('kontragenti-table-search').addEventListener('keyup', function() {
     const searchInput = this.value.toLowerCase();
     const tableRows = document.querySelectorAll('.table tbody tr');
     

@@ -6,7 +6,7 @@ function deleteArrivalDocument($mysqli, $document_id) {
         $mysqli->begin_transaction();
         
         // First, verify the document exists
-        $verify_sql = "SELECT id FROM " . TABLE_ARRIVALS . " WHERE id = ?";
+        $verify_sql = "SELECT id FROM " . postupleniya_tovarov . " WHERE id = ?";
         $verify_stmt = $mysqli->stmt_init();
         
         if (!$verify_stmt->prepare($verify_sql)) {
@@ -23,7 +23,7 @@ function deleteArrivalDocument($mysqli, $document_id) {
         }
         
         // Delete all line items associated with this document
-        $delete_lines_sql = "DELETE FROM " . TABLE_DOCUMENT_LINES . " WHERE " . COL_LINE_DOCUMENT_ID . " = ?";
+        $delete_lines_sql = "DELETE FROM " . stroki_dokumentov . " WHERE " . COL_LINE_DOCUMENT_ID . " = ?";
         $delete_lines_stmt = $mysqli->stmt_init();
         
         if (!$delete_lines_stmt->prepare($delete_lines_sql)) {
@@ -37,7 +37,7 @@ function deleteArrivalDocument($mysqli, $document_id) {
         }
         
         // Delete the document itself
-        $delete_doc_sql = "DELETE FROM " . TABLE_ARRIVALS . " WHERE id = ?";
+        $delete_doc_sql = "DELETE FROM " . postupleniya_tovarov . " WHERE id = ?";
         $delete_doc_stmt = $mysqli->stmt_init();
         
         if (!$delete_doc_stmt->prepare($delete_doc_sql)) {

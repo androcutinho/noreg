@@ -55,7 +55,7 @@ if (isset($_SESSION['user_id'])) {
                   <!-- BEGIN NAVBAR MENU -->
                   <ul class="navbar-nav">
                     <li class="nav-item">
-                      <a class="nav-link" href="https://noreg.trinion.org/postuplenie/index.php">
+                      <a class="nav-link" href="https://noreg.trinion.org/postuplenie/">
                         <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                             <path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
@@ -71,7 +71,7 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Документы </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static" style="width: 175px;">
-                        <a class="dropdown-item" href="/postuplenie/form.php">Поступление товаров</a>
+                        <a class="dropdown-item" href="/noreg_specifikacii_k_dogovoru">Поступление товаров</a>
                         <a class="dropdown-item" href="./">Перемещение товаров</a>
                       </div>
                     </li>
@@ -82,8 +82,10 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Справочники </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="https://noreg.trinion.org/tovary/index.php"> Список товары </a>
-                        <a class="dropdown-item" href="https://noreg.trinion.org/vsd/index.php"> Список ВСД </a>
+                        <a class="dropdown-item" href="/vsd"> Список ВСД </a>
+                        <a class="dropdown-item" href="/tovary"> Список товары </a>
+                        <a class="dropdown-item" href="/sklady"> Список складов </a>
+                        <a class="dropdown-item" href="/kontragenti"> Список поставщиков</a>
                       </div>
                     </li>
                     <li class="nav-item">
@@ -128,7 +130,7 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Настройки </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="polzovateli/index.php">Пользователи</a>
+                        <a class="dropdown-item" href="https://noreg.trinion.org/polzovateli">Пользователи</a>
                         <a class="dropdown-item" href="https://noreg.trinion.org/log_out.php">Выход</a>
                       </div>
                     </li>

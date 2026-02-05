@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
         $id_col = $_GET['id'] ?? 'id';
         
         // Validate table and column names (whitelist for safety)
-        $allowed_tables = ['sklady', 'postavshchiki', 'organizacii', 'tovary_i_uslugi', 'serii', 'users'];
-        $allowed_cols = ['naimenovanie', 'user_name', 'id', 'user_id', 'nomer'];
+        $allowed_tables = ['sklady', 'kontragenti', 'organizacii', 'tovary_i_uslugi', 'serii', 'users', 'sotrudniki'];
+        $allowed_cols = ['naimenovanie', 'user_name', 'id', 'user_id', 'nomer', 'fio'];
         
         if (!in_array($table, $allowed_tables)) {
             throw new Exception('Invalid table: ' . $table);
@@ -32,12 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
             throw new Exception('Invalid id column: ' . $id_col);
         }
         
-        // Escape identifiers using backticks
-        $sql = "SELECT `{$id_col}` as id, `{$col}` as name FROM `{$table}` WHERE `{$col}` LIKE ?";
-        
-        // If searching serii table, exclude entries that already have an id_tovary_i_uslugi assigned
-        if ($table === 'serii') {
-            $sql .= " AND (id_tovary_i_uslugi IS NULL OR id_tovary_i_uslugi = 0)";
+        // Handle special case for sotrudniki with concatenated FIO
+        if ($table === 'sotrudniki' && $col === 'fio') {
+            $sql = "SELECT `id` as id, CONCAT(COALESCE(familiya, ''), ' ', COALESCE(imya, ''), ' ', COALESCE(otchestvo, '')) as name FROM `sotrudniki` 
+                    WHERE CONCAT(COALESCE(familiya, ''), ' ', COALESCE(imya, ''), ' ', COALESCE(otchestvo, '')) LIKE ? OR familiya LIKE ? OR imya LIKE ? OR otchestvo LIKE ?";
+            $search_param = '%' . $search . '%';
+        } else {
+            // Escape identifiers using backticks
+            $sql = "SELECT `{$id_col}` as id, `{$col}` as name FROM `{$table}` WHERE `{$col}` LIKE ?";
+            $search_param = $search . "%";
+            
+            // If searching serii table, exclude entries that already have an id_tovary_i_uslugi assigned
+            if ($table === 'serii') {
+                $sql .= " AND (id_tovary_i_uslugi IS NULL OR id_tovary_i_uslugi = 0)";
+            }
         }
         
         $sql .= " LIMIT 10";
@@ -48,9 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
             throw new Exception('Prepare failed: ' . $mysqli->error);
         }
         
-        $search_param = $search . "%";
-        if (!$stmt->bind_param("s", $search_param)) {
-            throw new Exception('Bind param failed: ' . $stmt->error);
+        // Bind parameters based on table type
+        if ($table === 'sotrudniki' && $col === 'fio') {
+            if (!$stmt->bind_param("ssss", $search_param, $search_param, $search_param, $search_param)) {
+                throw new Exception('Bind param failed: ' . $stmt->error);
+            }
+        } else {
+            if (!$stmt->bind_param("s", $search_param)) {
+                throw new Exception('Bind param failed: ' . $stmt->error);
+            }
         }
         
         if (!$stmt->execute()) {

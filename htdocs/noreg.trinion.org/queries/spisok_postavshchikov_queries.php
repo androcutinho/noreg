@@ -1,7 +1,7 @@
 <?php
 
-function getPostavshchikiCount($mysqli, $search = '') {
-    $sql = "SELECT COUNT(*) as count FROM postavshchiki";
+function getkontagentiCount($mysqli, $search = '') {
+    $sql = "SELECT COUNT(*) as count FROM kontragenti";
     
     if (!empty($search)) {
         $sql .= " WHERE naimenovanie LIKE ?";
@@ -24,8 +24,8 @@ function getPostavshchikiCount($mysqli, $search = '') {
     return $row['count'] ?? 0;
 }
 
-function fetchAllPostavshchiki($mysqli, $search = '', $limit = 8, $offset = 0) {
-    $sql = "SELECT id, naimenovanie FROM postavshchiki";
+function fetchAllkontagenti($mysqli, $search = '', $limit = 8, $offset = 0) {
+    $sql = "SELECT id, naimenovanie FROM kontragenti";
     
     if (!empty($search)) {
         $sql .= " WHERE naimenovanie LIKE ?";
@@ -47,17 +47,17 @@ function fetchAllPostavshchiki($mysqli, $search = '', $limit = 8, $offset = 0) {
     
     $stmt->execute();
     $result = $stmt->get_result();
-    $postavshchiki = [];
+    $kontragenti = [];
     
     while ($row = $result->fetch_assoc()) {
-        $postavshchiki[] = $row;
+        $kontragenti[] = $row;
     }
     
-    return $postavshchiki;
+    return $kontragenti;
 }
 
 function getPostavshchikById($mysqli, $id) {
-    $sql = "SELECT id, naimenovanie FROM postavshchiki WHERE id = ?";
+    $sql = "SELECT id, naimenovanie FROM kontragenti WHERE id = ?";
     
     $stmt = $mysqli->stmt_init();
     if (!$stmt->prepare($sql)) {
@@ -72,7 +72,7 @@ function getPostavshchikById($mysqli, $id) {
 }
 
 function insertPostavshchik($mysqli, $name) {
-    $sql = "INSERT INTO postavshchiki (naimenovanie) VALUES (?)";
+    $sql = "INSERT INTO kontragenti (naimenovanie) VALUES (?)";
     
     $stmt = $mysqli->stmt_init();
     if (!$stmt->prepare($sql)) {
@@ -89,7 +89,7 @@ function insertPostavshchik($mysqli, $name) {
 }
 
 function updatePostavshchik($mysqli, $id, $name) {
-    $sql = "UPDATE postavshchiki SET naimenovanie = ? WHERE id = ?";
+    $sql = "UPDATE kontragenti SET naimenovanie = ? WHERE id = ?";
     
     $stmt = $mysqli->stmt_init();
     if (!$stmt->prepare($sql)) {
@@ -102,7 +102,7 @@ function updatePostavshchik($mysqli, $id, $name) {
 }
 
 function postavshchikNameExists($mysqli, $name, $exclude_id = null) {
-    $sql = "SELECT id FROM postavshchiki WHERE naimenovanie = ?";
+    $sql = "SELECT id FROM kontragenti WHERE naimenovanie = ?";
     
     if ($exclude_id !== null) {
         $sql .= " AND id != ?";

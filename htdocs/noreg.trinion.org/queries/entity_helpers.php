@@ -54,7 +54,7 @@ function getOrCreateWarehouse($mysqli, $warehouse_id, $warehouse_name) {
         throw new Exception("Warehouse name is required when warehouse_id is not provided");
     }
     
-    return getOrCreateEntity($mysqli, TABLE_WAREHOUSES, COL_WAREHOUSE_ID, COL_WAREHOUSE_NAME, $warehouse_name);
+    return getOrCreateEntity($mysqli, sklady, COL_WAREHOUSE_ID, COL_WAREHOUSE_NAME, $warehouse_name);
 }
 
 /**
@@ -69,7 +69,7 @@ function getOrCreateVendor($mysqli, $vendor_id, $vendor_name) {
         throw new Exception("Vendor name is required when vendor_id is not provided");
     }
     
-    return getOrCreateEntity($mysqli, TABLE_VENDORS, COL_VENDOR_ID, COL_VENDOR_NAME, $vendor_name);
+    return getOrCreateEntity($mysqli, kontragenti, kon_id, kon_naimenovanie, $vendor_name);
 }
 
 /**
@@ -84,7 +84,7 @@ function getOrCreateOrganization($mysqli, $organization_id, $organization_name) 
         throw new Exception("Organization name is required when organization_id is not provided");
     }
     
-    return getOrCreateEntity($mysqli, TABLE_ORGANIZATIONS, COL_ORG_ID, COL_ORG_NAME, $organization_name);
+    return getOrCreateEntity($mysqli, organizacii, COL_ORG_ID, COL_ORG_NAME, $organization_name);
 }
 
 /**
@@ -99,7 +99,7 @@ function getOrCreateProduct($mysqli, $product_id, $product_name) {
         throw new Exception("Product name is required when product_id is not provided");
     }
     
-    return getOrCreateEntity($mysqli, TABLE_PRODUCTS, COL_PRODUCT_ID, COL_PRODUCT_NAME, $product_name);
+    return getOrCreateEntity($mysqli, tovary_i_uslugi, COL_PRODUCT_ID, COL_PRODUCT_NAME, $product_name);
 }
 
 /**
@@ -114,7 +114,7 @@ function getOrCreateUnit($mysqli, $unit_id, $unit_name) {
         return 0; // Unit is optional
     }
     
-    return getOrCreateEntity($mysqli, TABLE_UNITS, COL_UNIT_ID, COL_UNIT_NAME, $unit_name);
+    return getOrCreateEntity($mysqli, edinicy_izmereniya, COL_UNIT_ID, COL_UNIT_NAME, $unit_name);
 }
 
 
@@ -130,7 +130,7 @@ function getOrCreateSeries($mysqli, $seria_id, $seria_name, $product_id, $prod_d
     $seria_name = trim($seria_name);
     
     // Check if series exists
-    $check_seria_sql = "SELECT " . COL_SERIES_ID . " FROM " . TABLE_SERIES . " WHERE nomer = ?";
+    $check_seria_sql = "SELECT " . COL_SERIES_ID . " FROM " . serii . " WHERE " . COL_SERIES_NUMBER . " = ?";
     $check_seria_stmt = $mysqli->stmt_init();
     
     if (!$check_seria_stmt->prepare($check_seria_sql)) {
@@ -155,7 +155,7 @@ function getOrCreateSeries($mysqli, $seria_id, $seria_name, $product_id, $prod_d
     
     if ($insert_dates) {
         // For creation: include dates
-        $insert_seria_sql = "INSERT INTO " . TABLE_SERIES . "(nomer, " . COL_SERIES_PRODUCT_ID . ", data_izgotovleniya, srok_godnosti) VALUES (?, ?, ?, ?)";
+        $insert_seria_sql = "INSERT INTO " . serii . "(" . COL_SERIES_NUMBER . ", " . serii_id_tovary_i_uslugi . ", " . data_izgotovleniya . ", " . srok_godnosti . ") VALUES (?, ?, ?, ?)";
         $insert_seria_stmt = $mysqli->stmt_init();
         
         if (!$insert_seria_stmt->prepare($insert_seria_sql)) {
@@ -165,7 +165,7 @@ function getOrCreateSeries($mysqli, $seria_id, $seria_name, $product_id, $prod_d
         $insert_seria_stmt->bind_param("siss", $seria_name, $product_id_for_seria, $prod_date, $exp_date);
     } else {
         // For updates: don't include dates in creation
-        $insert_seria_sql = "INSERT INTO " . TABLE_SERIES . "(nomer, " . COL_SERIES_PRODUCT_ID . ") VALUES (?, ?)";
+        $insert_seria_sql = "INSERT INTO " . serii . "(" . COL_SERIES_NUMBER . ", " . serii_id_tovary_i_uslugi . ") VALUES (?, ?)";
         $insert_seria_stmt = $mysqli->stmt_init();
         
         if (!$insert_seria_stmt->prepare($insert_seria_sql)) {
@@ -191,7 +191,7 @@ function updateSeriesData($mysqli, $seria_id, $product_id, $prod_date = null, $e
     }
     
     $goods_id = intval($product_id);
-    $update_seria_sql = "UPDATE " . TABLE_SERIES . " SET " . COL_SERIES_PRODUCT_ID . " = ?, data_izgotovleniya = ?, srok_godnosti = ? WHERE " . COL_SERIES_ID . " = ?";
+    $update_seria_sql = "UPDATE " . serii . " SET " . serii_id_tovary_i_uslugi . " = ?, " . data_izgotovleniya . " = ?, " . srok_godnosti . " = ? WHERE " . COL_SERIES_ID . " = ?";
     $update_seria_stmt = $mysqli->stmt_init();
     
     if (!$update_seria_stmt->prepare($update_seria_sql)) {

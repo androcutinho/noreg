@@ -51,7 +51,7 @@ function deleteRow(btn) {
 // Autocomplete for form fields
 const autocompleteFields = [
     { inputId: 'warehouse_id', table: 'sklady', col: 'naimenovanie' },
-    { inputId: 'vendor_id', table: 'postavshchiki', col: 'naimenovanie' },
+    { inputId: 'vendor_id', table: 'kontragenti', col: 'naimenovanie' },
     { inputId: 'organization_id', table: 'organizacii', col: 'naimenovanie' },
     { inputId: 'responsible_id', table: 'users', col: 'user_name', idCol: 'user_id' }
 ];
@@ -68,14 +68,8 @@ function createRowTemplate(rowIndex) {
         </td>
         <td>
             <div class="search-container" style="position: relative;">
-                <input class="form-control" type="text" name="products[${rowIndex}][seria_name]" placeholder="Введите серию..." autocomplete="off">
-                <input type="hidden" name="products[${rowIndex}][seria_id]" class="seria-id">   
-            </div>
-        </td>
-         <td>
-            <div class="search-container" style="position: relative;">
                 <input class="form-control" type="text" name="products[${rowIndex}][unit_name]" placeholder="Введите ед." autocomplete="off">
-                <input type="hidden" name="products[${rowIndex}][unit_id]" class="unit-id">     
+                <input type="hidden" name="products[${rowIndex}][unit_id]" class="unit-id">
             </div>
         </td>
         <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
@@ -83,6 +77,7 @@ function createRowTemplate(rowIndex) {
         <td><select class="form-control" name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
         <td><input class="form-control" type="text" name="products[${rowIndex}][summa_stavka]" placeholder="0" autocomplete="off"></td>
         <td><input class="form-control" type="text" name="products[${rowIndex}][summa]" placeholder="0" autocomplete="off"></td>
+        <td><input class="form-control" type="date" name="products[${rowIndex}][planiruemaya_data_postavki]" required></td>
         <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
 }
@@ -280,6 +275,7 @@ function initTableAutocomplete(row) {
 
             if (query.length === 0) {
                 dropdown.style.display = 'none';
+                seriaHidden.value = ''; // Clear ID when input is cleared
                 return;
             }
 
@@ -318,7 +314,11 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'block';
                     positionDropdown(dropdown, seriaInput);
                 } else {
+                    // No results found - user may be entering a new series
+                    // Keep the seria_name and leave seria_id empty (0)
+                    // The backend will create it when saving
                     dropdown.style.display = 'none';
+                    seriaHidden.value = ''; // Leave empty to trigger insertion in backend
                 }
             } catch (error) {
                 console.error('Series autocomplete error:', error);
@@ -439,7 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (field.inputId === 'responsible_id') {
             hiddenInput = input.parentNode.querySelector('input[name="responsible_id"]');       
         } else {
-            hiddenInput = input.nextElementSibling;
+            // Use parent container to find hidden input - more robust than nextElementSibling
+            hiddenInput = input.parentNode.querySelector(`input[type="hidden"][name="${field.inputId}"]`);
         }
 
         if (!hiddenInput || hiddenInput.type !== 'hidden') return;

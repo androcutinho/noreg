@@ -10,28 +10,28 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 
 $page_title = 'Список поставщиков';
 
-$mysqli = require 'config/database.php';
-require 'queries/spisok_postavshchikov_queries.php';
+$mysqli = require '../config/database.php';
+require '../queries/spisok_postavshchikov_queries.php';
 
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-$total_postavshchiki = getPostavshchikiCount($mysqli, '');
-$total_pages = ceil($total_postavshchiki / $items_per_page);
+$total_kontagenti = getkontagentiCount($mysqli, '');
+$total_pages = ceil($total_kontagenti / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
 if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pages;
 
 $offset = ($current_page - 1) * $items_per_page;
 
-$postavshchiki = fetchAllPostavshchiki($mysqli, '', $items_per_page, $offset);
+$kontagenti = fetchAllkontagenti($mysqli, '', $items_per_page, $offset);
 
-include 'header.php';
+include '../header.php';
 ?>
       <div class="page-body">
         <div class="container-fluid">
           <div style="text-align: right; margin-bottom: 10px;">
-            <a href="postavshchik.php" class="btn btn-primary">
+            <a href="form.php" class="btn btn-primary">
                 Добавить
             </a>
         </div>
@@ -40,7 +40,7 @@ include 'header.php';
               <div class="row w-full">
                 <div class="col">
                   <h3 class="card-title mb-0">Список поставщиков</h3>
-                  <p class="text-secondary m-0">Всего поставщиков: <?= $total_postavshchiki ?> штук.</p>
+                  <p class="text-secondary m-0">Всего поставщиков: <?= $total_kontagenti ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -51,7 +51,7 @@ include 'header.php';
                           <path d="M21 21l-6 -6"></path>
                         </svg>
                       </span>
-                      <input id="postavshchiki-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
+                      <input id="kontagenti-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
                       <span class="input-group-text">
                       </span>
                     </div>
@@ -69,12 +69,12 @@ include 'header.php';
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($postavshchiki)): ?>
-                    <?php foreach ($postavshchiki as $postavshchik): ?>
+                  <?php if (!empty($kontagenti)): ?>
+                    <?php foreach ($kontagenti as $postavshchik): ?>
                       <tr>
                         <td><?= htmlspecialchars($postavshchik['id']) ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($postavshchik['naimenovanie']) ?></td>
-                        <td class="text-secondary"><a href="postavshchik.php?postavshchik_id=<?= $postavshchik['id'] ?>" class="btn btn-sm btn-primary">Редактировать</a></td>
+                        <td class="text-secondary"><a href="form.php?postavshchik_id=<?= $postavshchik['id'] ?>" class="btn btn-sm btn-primary">Редактировать</a></td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
@@ -133,10 +133,10 @@ include 'header.php';
         </div>
       </div>
 
-<?php include 'footer.php'; ?>
+<?php include '../footer.php'; ?>
 
 <script>
-document.getElementById('postavshchiki-table-search').addEventListener('keyup', function() {
+document.getElementById('kontagenti-table-search').addEventListener('keyup', function() {
     const searchInput = this.value.toLowerCase();
     const tableRows = document.querySelectorAll('.table tbody tr');
     

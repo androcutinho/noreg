@@ -101,7 +101,7 @@ include '../header.php';
                 <form method="POST" style="max-width: 500px;">
                     <div class="mb-3">
                         <label class="form-label" for="naimenovanie">Название склада</label>
-                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($sklad['naimenovanie'] ?? '') ?>" placeholder="Введите название склада...">
+                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($sklad['naimenovanie'] ?? '') ?>" placeholder="Введите название склада..." autocomplete="off">
                     </div>
 
                     <div class="form-footer">

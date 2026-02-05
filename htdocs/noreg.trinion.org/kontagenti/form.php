@@ -8,26 +8,26 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Редактировать склад';
+$page_title = 'Редактировать поставщика';
 
-$mysqli = require 'config/database.php';
-require 'queries/spisok_skladov_queries.php';
+$mysqli = require '../config/database.php';
+require '../queries/spisok_postavshchikov_queries.php';
 
-$sklad_id = isset($_GET['sklad_id']) ? intval($_GET['sklad_id']) : null;
+$postavshchik_id = isset($_GET['postavshchik_id']) ? intval($_GET['postavshchik_id']) : null;
 
 
-if ($sklad_id) {
-    $sklad = getSkladById($mysqli, $sklad_id);
+if ($postavshchik_id) {
+    $postavshchik = getPostavshchikById($mysqli, $postavshchik_id);
     
-    if (!$sklad) {
-        die('Склад не найден');
+    if (!$postavshchik) {
+        die('Поставщик не найден');
     }
     
     $is_creating = false;
 } else {
-    $sklad = null;
+    $postavshchik = null;
     $is_creating = true;
-    $page_title = 'Создать склад';
+    $page_title = 'Создать поставщика';
 }
 
 $error_message = '';
@@ -44,34 +44,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $naimenovanie = trim($_POST['naimenovanie']);
         
         if (empty($naimenovanie)) {
-            $error_message = 'Название склада не может быть пустым';
+            $error_message = 'Название поставщика не может быть пустым';
         } else {
             
             
-            if (skladNameExists($mysqli, $naimenovanie, $sklad_id)) {
-                $error_message = 'Склад с таким названием уже существует';
+            if (postavshchikNameExists($mysqli, $naimenovanie, $postavshchik_id)) {
+                $error_message = 'Поставщик с таким названием уже существует';
             } else {
-                $sklad_saved = false;
+                $postavshchik_saved = false;
                 
                 if ($is_creating) {
                     
-                    if (insertSklad($mysqli, $naimenovanie)) {
-                        $sklad_saved = true;
+                    if (insertPostavshchik($mysqli, $naimenovanie)) {
+                        $postavshchik_saved = true;
                     } else {
-                        $error_message = 'Ошибка при добавлении склада';
+                        $error_message = 'Ошибка при добавлении поставщика';
                     }
                 } else {
                     
-                    if (updateSklad($mysqli, $sklad_id, $naimenovanie)) {
-                        $sklad_saved = true;
+                    if (updatePostavshchik($mysqli, $postavshchik_id, $naimenovanie)) {
+                        $postavshchik_saved = true;
                     } else {
                         $error_message = 'Ошибка при сохранении данных';
                     }
                 }
                 
-                if ($sklad_saved) {
+                if ($postavshchik_saved) {
                     $_SESSION['success_message'] = 'Данные успешно сохранены';
-                    header('Location: spisok_skladov.php');
+                    header('Location: index.php');
                     exit();
                 }
             }
@@ -81,14 +81,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-include 'header.php';
+include '../header.php';
 ?>
 
 <div class="page-body">
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title mb-0"><?= $is_creating ? 'Создать склад' : 'Редактировать склад' ?></h3>
+                <h3 class="card-title mb-0"><?= $is_creating ? 'Создать поставщика' : 'Редактировать поставщика' ?></h3>
             </div>
 
             <div class="card-body">
@@ -100,8 +100,8 @@ include 'header.php';
 
                 <form method="POST" style="max-width: 500px;">
                     <div class="mb-3">
-                        <label class="form-label" for="naimenovanie">Название склада</label>
-                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($sklad['naimenovanie'] ?? '') ?>" placeholder="Введите название склада...">
+                        <label class="form-label" for="naimenovanie">Название поставщика</label>
+                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($postavshchik['naimenovanie'] ?? '') ?>" placeholder="Введите название поставщика..." autocomplete="off">
                     </div>
 
                     <div class="form-footer">
@@ -116,4 +116,4 @@ include 'header.php';
     </div>
 </div>
 
-<?php include 'footer.php'; ?>
+<?php include '../footer.php'; ?>

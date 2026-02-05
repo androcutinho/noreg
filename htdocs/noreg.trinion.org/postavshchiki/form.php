@@ -15,7 +15,7 @@ require '../queries/spisok_postavshchikov_queries.php';
 
 $postavshchik_id = isset($_GET['postavshchik_id']) ? intval($_GET['postavshchik_id']) : null;
 
-// If postavshchik_id is provided, fetch the postavshchik data
+
 if ($postavshchik_id) {
     $postavshchik = getPostavshchikById($mysqli, $postavshchik_id);
     
@@ -47,21 +47,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error_message = 'Название поставщика не может быть пустым';
         } else {
             
-            // Check if name already exists (excluding current postavshchik if editing)
+            
             if (postavshchikNameExists($mysqli, $naimenovanie, $postavshchik_id)) {
                 $error_message = 'Поставщик с таким названием уже существует';
             } else {
                 $postavshchik_saved = false;
                 
                 if ($is_creating) {
-                    // Create new postavshchik
+                    
                     if (insertPostavshchik($mysqli, $naimenovanie)) {
                         $postavshchik_saved = true;
                     } else {
                         $error_message = 'Ошибка при добавлении поставщика';
                     }
                 } else {
-                    // Update existing postavshchik
+                    
                     if (updatePostavshchik($mysqli, $postavshchik_id, $naimenovanie)) {
                         $postavshchik_saved = true;
                     } else {
@@ -101,7 +101,7 @@ include '../header.php';
                 <form method="POST" style="max-width: 500px;">
                     <div class="mb-3">
                         <label class="form-label" for="naimenovanie">Название поставщика</label>
-                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($postavshchik['naimenovanie'] ?? '') ?>" placeholder="Введите название поставщика...">
+                        <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($postavshchik['naimenovanie'] ?? '') ?>" placeholder="Введите название поставщика..." autocomplete="off">
                     </div>
 
                     <div class="form-footer">
