@@ -15,65 +15,39 @@ require '../queries/add_product_queries.php';
 require '../queries/edit_product_queries.php';
 
 
-$is_edit = isset($_GET['product_id']) && !empty($_GET['product_id']);
-$product_id = $is_edit ? intval($_GET['product_id']) : null;
+$is_edit = isset($_GET['order_id']) && !empty($_GET['order_id']);
+$order_id = $is_edit ? intval($_GET['order_id']) : null;
 
 
-$page_title = $is_edit ? 'Редактировать поступление товара' : 'Новое поступление товара';
+$page_title = $is_edit ? 'Редактировать заказ поставщику' : 'Новый заказ поставщику';
 $date_issued = date('Y-m-d');
-$shipper_name = '';
-$product_name = '';
-$product_guid = '';
-$volume = '';
-$unit_name = '';
-$prod_date = date('Y-m-d');
-$exp_date = date('Y-m-d');
+$order_number = '';
+$vendor_name = '';
+$vendor_id = '';
 $organization_name = '';
 $organization_id = '';
-$warehouse_name = '';
-$warehouse_id = '';
-$vendor_id = '';
 $responsible_name = '';
 $responsible_id = '';
 $document = null;
 $line_items = [];
-$vetis_data_loaded = false;
-$vetis_error = '';
 
 // Load existing document if editing
 if ($is_edit) {
-    $document = fetchDocumentHeader($mysqli, $product_id);
+    $document = fetchOrderHeader($mysqli, $order_id);
     
     if (!$document) {
-        die("Документ не найден.");
+        die("Заказ не найден.");
     }
     
-    $line_items = fetchDocumentLineItems($mysqli, $product_id);
+    $line_items = fetchOrderLineItems($mysqli, $order_id);
     $date_issued = $document['data_dokumenta'];
-    $shipper_name = $document['vendor_name'] ?? '';
+    $order_number = $document['nomer'] ?? '';
+    $vendor_name = $document['vendor_name'] ?? '';
+    $vendor_id = $document['id_postavshchika'] ?? '';
     $organization_name = $document['organization_name'] ?? '';
-    $warehouse_name = $document['warehouse_name'] ?? '';
+    $organization_id = $document['id_organizacii'] ?? '';
     $responsible_name = $document['responsible_name'] ?? '';
-    $warehouse_id = $document['warehouse_id'] ?? '';
-    $organization_id = $document['organization_id'] ?? '';
-    $vendor_id = $document['vendor_id'] ?? '';
-    $responsible_id = $document['responsible_id'] ?? '';
-} else {
-    
-    $uuid = isset($_GET['uuid']) ? $_GET['uuid'] : null;
-    
-    if (!empty($uuid)) {
-        require_once(__DIR__ . '/../api/vetis_service.php');
-        
-        $data = fetchVetisDocument($uuid);
-        
-        if (!$data['success']) {
-            $vetis_error = 'Ошибка загрузки данных VETIS: ' . htmlspecialchars($data['error']);
-        } else {
-            extract($data);
-            $vetis_data_loaded = true;
-        }
-    }
+    $responsible_id = $document['id_otvetstvennyj'] ?? '';
 }
 
 // Fetch NDS rates
@@ -84,24 +58,14 @@ if ($nds_result) {
     $nds_rates = $nds_result->fetch_all(MYSQLI_ASSOC);
 }
 
-
-$units = [];
-if (!$is_edit && !$vetis_data_loaded) {
-    $units_query = "SELECT id, naimenovanie FROM edinicy_izmereniya ORDER BY naimenovanie ASC";
-    $units_result = $mysqli->query($units_query);
-    if ($units_result) {
-        $units = $units_result->fetch_all(MYSQLI_ASSOC);
-    }
-}
-
 $error = '';
 $success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validation
     $validations = array(
-        'product_date' => 'Требуется дата документа',
-        'warehouse_name' => 'Требуется указать склад',
+        'order_date' => 'Требуется дата заказа',
+        'order_number' => 'Требуется указать номер заказа',
         'organization_name' => 'Требуется указать организацию',
         'vendor_name' => 'Требуется указать поставщика',
         'responsible_name' => 'Требуется указать ответственного'
@@ -115,10 +79,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     
    
-    if (!$error && empty($_POST['responsible_id'])) {
-        $error = 'Пожалуйста, выберите ответственного из списка пользователей';
+    if (!$error && empty($_POST['organization_id'])) {
+        $error = 'Пожалуйста, выберите организацию из списка';
     }
     
+    if (!$error && empty($_POST['vendor_id'])) {
+        $error = 'Пожалуйста, выберите поставщика из списка';
+    }
+    
+    if (!$error && empty($_POST['responsible_id'])) {
+        $error = 'Пожалуйста, выберите ответственного из списка';
+    }
     
     if (!$error && (!isset($_POST['products']) || empty($_POST['products']))) {
         $error = 'Требуется добавить хотя бы один товар';
@@ -132,17 +103,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else {
             if ($is_edit) {
                 // Update existing document
-                $result = updateArrivalDocument($mysqli, $product_id, $_POST);
+                $result = updateOrderDocument($mysqli, $order_id, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: tovarov.php?product_id=" . $product_id);
+                    header("Location: tovarov.php?order_id=" . $order_id);
                     exit;
                 } else {
                     $error = $result['error'];
                 }
             } else {
                 // Create new document
-                $result = createArrivalDocument($mysqli, $_POST);
+                $result = createOrderDocument($mysqli, $_POST);
                 
                 if ($result['success']) {
                     header("Location: index.php");
@@ -164,18 +135,12 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<?php if ($vetis_error): ?>
-    <div class="alert alert-warning" role="alert">
-        <?= $vetis_error ?>
-    </div>
-<?php endif; ?>
-
 <div class="page-body">
 <div class="container-fluid mt-5">
     <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">
         <?= htmlspecialchars($page_title) ?>
         <?php if ($is_edit): ?>
-            #<?= htmlspecialchars($product_id) ?>
+            #<?= htmlspecialchars($order_id) ?>
         <?php endif; ?>
     </h2>
     <div class="card">
@@ -183,16 +148,15 @@ include '../header.php';
             <form method="POST" id="documentForm">   
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="product_date">Дата поступления документа</label>
-                        <input class="form-control" type="date" id="product_date" name="product_date"
-                        value="<?= htmlspecialchars($_POST['product_date'] ?? $date_issued) ?>">
+                        <label class="form-label" for="order_date">Дата заказа</label>
+                        <input class="form-control" type="date" id="order_date" name="order_date"
+                        value="<?= htmlspecialchars($_POST['order_date'] ?? $date_issued) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="warehouse_id">Склад</label>
-                        <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off"
-                        value="<?= htmlspecialchars($_POST['warehouse_name'] ?? $warehouse_name) ?>">
-                        <input type="hidden" name="warehouse_id" class="warehouse-id" value="<?= htmlspecialchars($_POST['warehouse_id'] ?? $warehouse_id) ?>">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="order_number">№ заказа</label>
+                        <input class="form-control" type="text" id="order_number" name="order_number" placeholder="Введите номер заказа..." autocomplete="off"
+                        value="<?= htmlspecialchars($_POST['order_number'] ?? $order_number) ?>">
                     </div>
                 </div>
 
@@ -200,7 +164,7 @@ include '../header.php';
                     <div class="col-md-6 mb-3" style="position: relative;">
                         <label class="form-label" for="vendor_id">Поставщик</label>
                         <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" 
-                        value="<?= htmlspecialchars($_POST['vendor_name'] ?? $shipper_name) ?>">
+                        value="<?= htmlspecialchars($_POST['vendor_name'] ?? $vendor_name) ?>">
                         <input type="hidden" name="vendor_id" class="vendor-id" value="<?= htmlspecialchars($_POST['vendor_id'] ?? $vendor_id) ?>">
                     </div>
 
@@ -276,8 +240,8 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" readonly value="<?= htmlspecialchars($_POST['products'][$row_index]['summa_stavka'] ?? ($item['nds_amount'] ?? '')) ?>"></td>
-                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" readonly value="<?= htmlspecialchars($_POST['products'][$row_index]['summa'] ?? ($item['total_amount'] ?? '')) ?>"></td>
+                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa_stavka'] ?? ($item['nds_amount'] ?? '')) ?>"></td>
+                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa'] ?? ($item['total_amount'] ?? '')) ?>"></td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
@@ -287,25 +251,23 @@ include '../header.php';
                             <td>1</td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off"
-                                    value="<?= htmlspecialchars($product_name) ?>">
+                                    <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
                                 </div>
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off"
-                                    value="<?= htmlspecialchars($vetis_data_loaded ? substr($product_guid, 0, 36) : '') ?>">
+                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
                                     <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][unit_name]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($unit_name) ?>">
+                                    <input class="form-control" type="text" name="products[0][unit_name]" placeholder="Введите ед." autocomplete="off">
                                     <input type="hidden" name="products[0][unit_id]" class="unit-id">
                                 </div>
                             </td>
-                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($volume) ?>"></td>
+                            <td><input class="form-control" type="text" name="products[0][quantity]" placeholder="0" autocomplete="off"></td>
                             <td><input class="form-control" type="text" name="products[0][price]" placeholder="0" autocomplete="off"></td>
                             <td>
                                 <select class="form-control" name="products[0][nds_id]">
@@ -315,8 +277,8 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><input class="form-control" type="text" name="products[0][summa_stavka]" placeholder="0" autocomplete="off" readonly></td>
-                            <td><input class="form-control" type="text" name="products[0][summa]" placeholder="0" autocomplete="off" readonly></td>
+                            <td><input class="form-control" type="text" name="products[0][summa_stavka]" placeholder="0" autocomplete="off"></td>
+                            <td><input class="form-control" type="text" name="products[0][summa]" placeholder="0" autocomplete="off"></td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                         <?php endif; ?>
@@ -326,20 +288,6 @@ include '../header.php';
                 </div>
 
                 <button type="button" class="btn mt-3 btn-primary" onclick="addRow()">Добавить строку</button>
-                
-                <?php if ($vetis_data_loaded): ?>
-                    <div class="row" style="margin-top: 20px;">
-                        <div class="col-md-6 mb-3" style="position: relative;">
-                            <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
-                            <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off" value="<?= htmlspecialchars($prod_date) ?>">
-                        </div>
-
-                        <div class="col-md-6 mb-3" style="position: relative;">
-                            <label class="form-label" for="srok_godnosti">Срок годности</label>
-                            <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off" value="<?= htmlspecialchars($exp_date) ?>">
-                        </div>    
-                    </div>
-                <?php endif; ?>
                 
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
@@ -362,10 +310,9 @@ include '../header.php';
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
             
-            // Load units data for autocomplete (needed for both new and edit forms)
+            // Load units data for autocomplete
             let unitsData = [];
             <?php
-            // Fetch units for both new and edit forms
             $units_query = "SELECT id, naimenovanie FROM edinicy_izmereniya ORDER BY naimenovanie ASC";
             $units_result = $mysqli->query($units_query);
             if ($units_result) {

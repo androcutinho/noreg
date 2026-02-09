@@ -64,4 +64,3 @@ try {
     ]);
     exit;
 }
-// No closing PHP tag to avoid accidental output

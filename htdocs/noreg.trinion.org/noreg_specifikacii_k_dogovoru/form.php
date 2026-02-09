@@ -180,6 +180,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 include '../header.php';
 ?>
 
+<!-- Summernote CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-bs4.min.css" rel="stylesheet">
+
 <?php if ($error): ?>
     <div class="alert alert-danger" role="alert">
         <?= htmlspecialchars($error) ?>
@@ -333,21 +336,24 @@ include '../header.php';
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label class="form-label" for="usloviya_otgruzki">Условия отгрузки</label>
-                        <textarea class="form-control" id="usloviya_otgruzki" name="usloviya_otgruzki" rows="3" placeholder="Введите условия отгрузки..."><?= htmlspecialchars($_POST['usloviya_otgruzki'] ?? $usloviya_otgruzki) ?></textarea>
+                        <div id="usloviya_otgruzki"></div>
+                        <input type="hidden" name="usloviya_otgruzki" id="usloviya_otgruzki_hidden">
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label class="form-label" for="usloviya_oplaty">Условия оплаты</label>
-                        <textarea class="form-control" id="usloviya_oplaty" name="usloviya_oplaty" rows="3" placeholder="Введите условия оплаты..."><?= htmlspecialchars($_POST['usloviya_oplaty'] ?? $usloviya_oplaty) ?></textarea>
+                        <div id="usloviya_oplaty"></div>
+                        <input type="hidden" name="usloviya_oplaty" id="usloviya_oplaty_hidden">
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label class="form-label" for="inye_usloviya">Иные условия</label>
-                        <textarea class="form-control" id="inye_usloviya" name="inye_usloviya" rows="3" placeholder="Введите иные условия..."><?= htmlspecialchars($_POST['inye_usloviya'] ?? $inye_usloviya) ?></textarea>
+                        <div id="inye_usloviya"></div>
+                        <input type="hidden" name="inye_usloviya" id="inye_usloviya_hidden">
                     </div>
                 </div>
 
@@ -379,7 +385,7 @@ include '../header.php';
                         <button type="submit" class="btn btn-primary">
                             Сохранить
                         </button>
-                        <a href="index.php" class="btn">Отмена</a>
+                        <a href="javascript:history.back()" class="btn">Отмена</a>
                     </div>
                 </div>
             </form>
@@ -402,4 +408,75 @@ include '../header.php';
         
         <script src="/js/add_product.js"></script>
         <script src="/js/spec_autocomplete.js"></script>
+        
+        <!-- Summernote JS -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-bs4.min.js"></script>
+        
+        <script>
+            $(document).ready(function() {
+                let initialContent1 = <?php echo json_encode($_POST['usloviya_otgruzki'] ?? $usloviya_otgruzki); ?>;
+                let initialContent2 = <?php echo json_encode($_POST['usloviya_oplaty'] ?? $usloviya_oplaty); ?>;
+                let initialContent3 = <?php echo json_encode($_POST['inye_usloviya'] ?? $inye_usloviya); ?>;
+                
+                
+                $('#usloviya_otgruzki').summernote({
+                    height: 100,
+                    placeholder: 'Введите условия отгрузки...',
+                    tabsize: 2,
+                     toolbar: [
+                         ['style', ['bold','underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                    ]
+                });
+                
+                $('#usloviya_oplaty').summernote({
+                    height: 100,
+                    placeholder: 'Введите условия оплаты...',
+                    tabsize: 2,
+                     toolbar: [
+                        ['style', ['bold','underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                    ]
+                });
+                
+                $('#inye_usloviya').summernote({
+                    height: 100,
+                    placeholder: 'Введите иные условия...',
+                    tabsize: 2,
+                     toolbar: [
+                        ['style', ['bold','underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                    ]
+                });
+                
+                
+                if (initialContent1) {
+                    $('#usloviya_otgruzki').summernote('code', initialContent1);
+                }
+                if (initialContent2) {
+                    $('#usloviya_oplaty').summernote('code', initialContent2);
+                }
+                if (initialContent3) {
+                    $('#inye_usloviya').summernote('code', initialContent3);
+                }
+                
+                
+                $('#documentForm').on('submit', function() {
+                    let content1 = $('#usloviya_otgruzki').summernote('code');
+                    $('#usloviya_otgruzki_hidden').val(content1);
+                    
+                    let content2 = $('#usloviya_oplaty').summernote('code');
+                    $('#usloviya_oplaty_hidden').val(content2);
+                    
+                    let content3 = $('#inye_usloviya').summernote('code');
+                    $('#inye_usloviya_hidden').val(content3);
+                });
+            });
+        </script>
 <?php include '../footer.php'; ?>

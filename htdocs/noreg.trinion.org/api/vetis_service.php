@@ -24,7 +24,7 @@ function fetchVetisDocument($uuid)
         }
 
         if (!$envPath) {
-            throw new Exception('.env file not found in any of the expected locations: ' . implode(', ', $possiblePaths));
+            throw new Exception('.env файл не найден в следующих директориях: ' . implode(', ', $possiblePaths));
         }
 
         $env = loadEnvFile($envPath);
@@ -42,42 +42,42 @@ function fetchVetisDocument($uuid)
         $client->soap_defencoding = 'UTF-8';
         $client->decode_utf8 = false;
 
-        $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetStockEntryListOperation';
+        $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentByUuidOperation';
 
         $request_xml_1 = '
-         <SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-          <SOAP-ENV:Header/>
-          <SOAP-ENV:Body>
-            <apldef:submitApplicationRequest>
-              <apldef:apiKey>' . $apikey . '</apldef:apiKey>
-              <apl:application>
-                <apl:serviceId>mercury-g2b.service:2.1</apl:serviceId>
-                <apl:issuerId>' . $vetis_issuerId . '</apl:issuerId>
-                <apl:issueDate>' . date('Y-m-d\TH:i:s') . '</apl:issueDate>
-                <apl:data>
-                  <merc:getVetDocumentByUuidRequest>
-                    <merc:localTransactionId>' . uniqid('TR') . '</merc:localTransactionId>
-                    <merc:initiator>
-                      <vd:login>' . $user_login . '</vd:login>
-                    </merc:initiator>
-                    <bs:uuid>' . $uuid . '</bs:uuid>
-                    <dt:enterpriseGuid>' . $vetis_guid . '</dt:enterpriseGuid>
-                  </merc:getVetDocumentByUuidRequest>
-                </apl:data>
-              </apl:application>
-            </apldef:submitApplicationRequest>
-          </SOAP-ENV:Body>
-        </SOAP-ENV:Envelope>';
+<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP-ENV:Header/>
+  <SOAP-ENV:Body>
+    <apldef:submitApplicationRequest>
+      <apldef:apiKey>'.$apikey.'</apldef:apiKey>
+      <apl:application>
+        <apl:serviceId>mercury-g2b.service:2.1</apl:serviceId>
+        <apl:issuerId>'.$vetis_issuerId.'</apl:issuerId>
+        <apl:issueDate>' . date('Y-m-d\TH:i:s') . '</apl:issueDate>
+        <apl:data>
+          <merc:getVetDocumentByUuidRequest>
+            <merc:localTransactionId>' . uniqid('TR') . '</merc:localTransactionId>
+            <merc:initiator>
+              <vd:login>'.$user_login.'</vd:login>
+            </merc:initiator>
+            <bs:uuid>'.$uuid.'</bs:uuid>
+            <dt:enterpriseGuid>'.$vetis_guid.'</dt:enterpriseGuid>
+          </merc:getVetDocumentByUuidRequest>
+        </apl:data>
+      </apl:application>
+    </apldef:submitApplicationRequest>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>';
 
         $result_1 = $client->send($request_xml_1, $soapaction, '');
 
         if ($client->fault) {
-            throw new Exception('SOAP Fault Step 1: ' . ($result_1['faultstring'] ?? 'Unknown error'));
+            throw new Exception('SOAP Ошибка Шаг 1: ' . ($result_1['faultstring'] ?? 'Неизвестная ошибка'));
         }
 
         $err = $client->getError();
         if ($err) {
-            throw new Exception('Error Step 1: ' . $err);
+            throw new Exception('Ошибка Шаг 1: ' . $err);
         }
 
         $applicationId = null;
@@ -86,7 +86,7 @@ function fetchVetisDocument($uuid)
         }
 
         if (!$applicationId) {
-            throw new Exception('Failed to retrieve Application ID. Check UUID.');
+            throw new Exception('Не удалось получить Application ID. Проверьте UUID.');
         }
 
         // Save VETIS request data to database from Step 1
@@ -109,13 +109,13 @@ function fetchVetisDocument($uuid)
                 );
                 
                 if (!$save_stmt->execute()) {
-                    error_log("Error saving VETIS request: " . $save_stmt->error);
+                    error_log("Ошибка сохранения VETIS запроса: " . $save_stmt->error);
                 }
                 
                 $save_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Database error in fetchVetisDocument: " . $e->getMessage());
+            error_log("Ошибка БД в fetchVetisDocument: " . $e->getMessage());
         }
          
         // Retrieve applicationId from database for Step 2 request
@@ -137,7 +137,7 @@ function fetchVetisDocument($uuid)
                 $db_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Error retrieving applicationId from database: " . $e->getMessage());
+            error_log("Ошибка получения applicationId из БД: " . $e->getMessage());
         }
          
         // Wait for API to process 
@@ -156,18 +156,18 @@ function fetchVetisDocument($uuid)
         $result_2 = $client->send($request_xml_2, $soapaction, '');
 
         if ($client->fault) {
-            throw new Exception('SOAP Fault Step 2: ' . ($result_2['faultstring'] ?? 'Unknown error'));
+            throw new Exception('SOAP Ошибка Шаг 2: ' . ($result_2['faultstring'] ?? 'Неизвестная ошибка'));
         }
 
         $err = $client->getError();
         if ($err) {
-            throw new Exception('Error Step 2: ' . $err);
+            throw new Exception('Ошибка Шаг 2: ' . $err);
         }
 
         $vet_doc = $result_2['application']['result']['getVetDocumentByUuidResponse']['vetDocument'] ?? null;
 
         if (!$vet_doc) {
-            throw new Exception('Document not found in API response');
+            throw new Exception('Документ не найден в ответе API');
         }
 
         $doc_uuid = $vet_doc['uuid'] ?? '';
@@ -178,36 +178,74 @@ function fetchVetisDocument($uuid)
         $last_update = $vet_doc['lastUpdateDate'] ?? '';
         $shipper_name = $vet_doc['certifiedConsignment']['consignor']['enterprise']['name'] ?? 'Не указано';
         $shipper_uuid = $vet_doc['certifiedConsignment']['consignor']['enterprise']['uuid'] ?? '';
+        $shipper_guid = $vet_doc['certifiedConsignment']['consignor']['enterprise']['guid'] ?? '';
+        $shipper_business_guid = $vet_doc['certifiedConsignment']['consignor']['businessEntity']['guid'] ?? '';
         $receiver_name = $vet_doc['certifiedConsignment']['consignee']['enterprise']['name'] ?? 'Не указано';
         $receiver_uuid = $vet_doc['certifiedConsignment']['consignee']['enterprise']['uuid'] ?? '';
+        $receiver_guid = $vet_doc['certifiedConsignment']['consignee']['enterprise']['guid'] ?? '';
+        $receiver_business_guid = $vet_doc['certifiedConsignment']['consignee']['businessEntity']['guid'] ?? '';
         $vehicle_number = $vet_doc['certifiedConsignment']['transportInfo']['transportNumber']['vehicleNumber'] ?? '';
         $trailer_number = $vet_doc['certifiedConsignment']['transportInfo']['transportNumber']['trailerNumber'] ?? '';
         $storage_type = $vet_doc['certifiedConsignment']['transportStorageType'] ?? '';
+        $transportType = $vet_doc['certifiedConsignment']['transportInfo']['transportType'] ?? '1';
+        $broker_guid = $vet_doc['certifiedConsignment']['broker']['guid'] ?? '';
+        
         $batch = $vet_doc['certifiedConsignment']['batch'] ?? [];
+        $productType = $batch['productType'] ?? '2';
         $product_name = $batch['productItem']['name'] ?? '';
         $product_guid = $batch['productItem']['guid'] ?? '';
+        $product_uuid = $batch['product']['uuid'] ?? '';
+        $subProduct_guid = $batch['subProduct']['guid'] ?? '';
+        $subProduct_uuid = $batch['subProduct']['uuid'] ?? '';
+        $productItem_guid = $batch['productItem']['guid'] ?? '';
         $volume = $batch['volume'] ?? '';
         $unit_name = $batch['unit']['name'] ?? '';
         $unit_guid = $batch['unit']['guid'] ?? '';
+        $unit_uuid = $batch['unit']['uuid'] ?? '';
+        $batchID = $batch['batchID'] ?? '';
+        $perishable = $batch['perishable'] ?? false;
+        $lowGradeCargo = $batch['lowGradeCargo'] ?? false;
+        
         $package_type = $batch['packageList']['package']['packingType']['name'] ?? '';
         $package_quantity = $batch['packageList']['package']['quantity'] ?? '';
+        
+        // Parse production date
         $prod_date = '';
+        $prod_date_year = date('Y');
+        $prod_date_month = date('m');
+        $prod_date_day = date('d');
         if (isset($batch['dateOfProduction']['firstDate'])) {
             $pd = $batch['dateOfProduction']['firstDate'];
-            $prod_date = $pd['year'] . '-' . str_pad($pd['month'], 2, '0', STR_PAD_LEFT) . '-' . str_pad($pd['day'], 2, '0', STR_PAD_LEFT);
+            $prod_date_year = $pd['year'] ?? date('Y');
+            $prod_date_month = str_pad($pd['month'] ?? date('m'), 2, '0', STR_PAD_LEFT);
+            $prod_date_day = str_pad($pd['day'] ?? date('d'), 2, '0', STR_PAD_LEFT);
+            $prod_date = $prod_date_year . '-' . $prod_date_month . '-' . $prod_date_day;
         }
 
+        // Parse expiry date
         $exp_date = '';
+        $exp_date_year = date('Y');
+        $exp_date_month = date('m');
+        $exp_date_day = date('d');
         if (isset($batch['expiryDate']['firstDate'])) {
             $ed = $batch['expiryDate']['firstDate'];
-            $exp_date = $ed['year'] . '-' . str_pad($ed['month'], 2, '0', STR_PAD_LEFT) . '-' . str_pad($ed['day'], 2, '0', STR_PAD_LEFT);
+            $exp_date_year = $ed['year'] ?? date('Y');
+            $exp_date_month = str_pad($ed['month'] ?? date('m'), 2, '0', STR_PAD_LEFT);
+            $exp_date_day = str_pad($ed['day'] ?? date('d'), 2, '0', STR_PAD_LEFT);
+            $exp_date = $exp_date_year . '-' . $exp_date_month . '-' . $exp_date_day;
         }
+        
+        $country_guid = $batch['origin']['country']['guid'] ?? '';
         $country = $batch['origin']['country']['name'] ?? '';
+        $producer_enterprise_guid = $batch['origin']['producer']['enterprise']['guid'] ?? '';
         $producer = $batch['origin']['producer']['enterprise']['name'] ?? '';
+        $producer_role = $batch['origin']['producer']['role'] ?? 'PRODUCER';
+        
         $status_changes = $vet_doc['statusChange'] ?? [];
         if (!isset($status_changes[0])) {
             $status_changes = [$status_changes];
         }
+
 
         // Return clean array with all extracted data
         return [
@@ -220,21 +258,46 @@ function fetchVetisDocument($uuid)
             'last_update' => $last_update,
             'shipper_name' => $shipper_name,
             'shipper_uuid' => $shipper_uuid,
+            'shipper_enterprise_guid' => $shipper_guid,
+            'shipper_business_guid' => $shipper_business_guid,
             'receiver_name' => $receiver_name,
             'receiver_uuid' => $receiver_uuid,
+            'receiver_enterprise_guid' => $receiver_guid,
+            'receiver_business_guid' => $receiver_business_guid,
             'vehicle_number' => $vehicle_number,
             'trailer_number' => $trailer_number,
             'storage_type' => $storage_type,
+            'transportType' => $transportType,
+            'broker_guid' => $broker_guid,
+            'productType' => $productType,
             'product_name' => $product_name,
             'product_guid' => $product_guid,
+            'product_uuid' => $product_uuid,
+            'subProduct_guid' => $subProduct_guid,
+            'subProduct_uuid' => $subProduct_uuid,
+            'productItem_guid' => $productItem_guid,
             'volume' => $volume,
             'unit_name' => $unit_name,
+            'unit_guid' => $unit_guid,
+            'unit_uuid' => $unit_uuid,
+            'batchID' => $batchID,
+            'perishable' => $perishable,
+            'lowGradeCargo' => $lowGradeCargo,
             'package_type' => $package_type,
             'package_quantity' => $package_quantity,
             'prod_date' => $prod_date,
+            'prod_date_year' => $prod_date_year,
+            'prod_date_month' => $prod_date_month,
+            'prod_date_day' => $prod_date_day,
             'exp_date' => $exp_date,
+            'exp_date_year' => $exp_date_year,
+            'exp_date_month' => $exp_date_month,
+            'exp_date_day' => $exp_date_day,
             'country' => $country,
+            'country_guid' => $country_guid,
             'producer' => $producer,
+            'producer_enterprise_guid' => $producer_enterprise_guid,
+            'producer_role' => $producer_role,
             'status_changes' => $status_changes
         ];
 
