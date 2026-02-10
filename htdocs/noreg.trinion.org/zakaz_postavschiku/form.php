@@ -278,7 +278,7 @@ include '../header.php';
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
-                            <?= $is_edit ? 'Обновить' : 'Сохранить' ?>
+                            <?= $is_edit ? 'Сохранить' : 'Сохранить' ?>
                         </button>
                         <a href="index.php" class="btn">Отмена</a>
                     </div>

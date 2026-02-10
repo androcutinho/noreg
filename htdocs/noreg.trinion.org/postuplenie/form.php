@@ -40,7 +40,7 @@ $line_items = [];
 $vetis_data_loaded = false;
 $vetis_error = '';
 
-// Load existing document if editing
+
 if ($is_edit) {
     $document = fetchDocumentHeader($mysqli, $product_id);
     
@@ -76,7 +76,7 @@ if ($is_edit) {
     }
 }
 
-// Fetch NDS rates
+
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
 $nds_result = $mysqli->query($nds_query);
@@ -98,7 +98,7 @@ $error = '';
 $success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Validation
+  
     $validations = array(
         'product_date' => 'Требуется дата документа',
         'warehouse_name' => 'Требуется указать склад',
@@ -131,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
             if ($is_edit) {
-                // Update existing document
+                
                 $result = updateArrivalDocument($mysqli, $product_id, $_POST);
                 
                 if ($result['success']) {
@@ -141,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $error = $result['error'];
                 }
             } else {
-                // Create new document
+                
                 $result = createArrivalDocument($mysqli, $_POST);
                 
                 if ($result['success']) {
@@ -345,10 +345,14 @@ include '../header.php';
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
-                            <?= $is_edit ? 'Обновить' : 'Сохранить' ?>
+                            <?= $is_edit ? 'Сохранить' : 'Сохранить' ?>
                         </button>
                         <a href="index.php" class="btn">Отмена</a>
                     </div>
+                    <label class="form-check">
+                                  <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= isset($_POST['utverzhden']) ? 'checked' : '' ?>>
+                                  <span class="form-check-label">Утведить в документах</span>
+                                </label>
                 </div>
             </form>
         </div>
@@ -357,7 +361,7 @@ include '../header.php';
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
         <script>
-            // Form configuration for postuplenie (includes seria)
+           
             const formConfig = {
                 columns: [
                     { key: 'product', label: 'Товар', type: 'autocomplete' },
@@ -374,10 +378,10 @@ include '../header.php';
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
             
-            // Load units data for autocomplete (needed for both new and edit forms)
+           
             let unitsData = [];
             <?php
-            // Fetch units for both new and edit forms
+            
             $units_query = "SELECT id, naimenovanie FROM edinicy_izmereniya ORDER BY naimenovanie ASC";
             $units_result = $mysqli->query($units_query);
             if ($units_result) {
