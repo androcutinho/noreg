@@ -11,12 +11,11 @@ if (!isset($_SESSION['user_id'])) {
 $mysqli = require '../config/database.php';
 require '../config/database_config.php';
 require '../queries/database_queries.php';
-require '../queries/add_product_queries.php';
-require '../queries/edit_product_queries.php';
+require '../queries/zakaz_query.php';
 
 
-$is_edit = isset($_GET['order_id']) && !empty($_GET['order_id']);
-$order_id = $is_edit ? intval($_GET['order_id']) : null;
+$is_edit = isset($_GET['zakaz_id']) && !empty($_GET['zakaz_id']);
+$zakaz_id = $is_edit ? intval($_GET['zakaz_id']) : null;
 
 
 $page_title = $is_edit ? 'Редактировать заказ поставщику' : 'Новый заказ поставщику';
@@ -33,13 +32,13 @@ $line_items = [];
 
 // Load existing document if editing
 if ($is_edit) {
-    $document = fetchOrderHeader($mysqli, $order_id);
+    $document = fetchOrderHeader($mysqli, $zakaz_id);
     
     if (!$document) {
         die("Заказ не найден.");
     }
     
-    $line_items = fetchOrderLineItems($mysqli, $order_id);
+    $line_items = fetchOrderLineItems($mysqli, $zakaz_id);
     $date_issued = $document['data_dokumenta'];
     $order_number = $document['nomer'] ?? '';
     $vendor_name = $document['vendor_name'] ?? '';
@@ -103,10 +102,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else {
             if ($is_edit) {
                 // Update existing document
-                $result = updateOrderDocument($mysqli, $order_id, $_POST);
+                $result = updateOrderDocument($mysqli, $zakaz_id, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: tovarov.php?order_id=" . $order_id);
+                    header("Location: zakaz.php?zakaz_id=" . $zakaz_id);
                     exit;
                 } else {
                     $error = $result['error'];
@@ -140,7 +139,7 @@ include '../header.php';
     <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">
         <?= htmlspecialchars($page_title) ?>
         <?php if ($is_edit): ?>
-            #<?= htmlspecialchars($order_id) ?>
+            #<?= htmlspecialchars($zakaz_id) ?>
         <?php endif; ?>
     </h2>
     <div class="card">
@@ -194,7 +193,6 @@ include '../header.php';
                         <tr>
                             <th>№</th>
                             <th>Товар</th>
-                            <th>Серия</th>
                             <th>Ед</th>
                             <th>Кол-во</th>
                             <th>Цена</th>
@@ -214,20 +212,13 @@ include '../header.php';
                                 <div class="search-container">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][product_name]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($_POST['products'][$row_index]['product_name'] ?? ($item['product_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[<?= $row_index ?>][product_id]" class="product-id" value="<?= htmlspecialchars($item['product_id'] ?? '') ?>">
-                                </div>
-                            </td>
-                            <td>
-                                <div class="search-container">
-                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off"
-                                    value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_name'] ?? ($item['seria_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($item['seria_id'] ?? '') ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][product_id]" class="product-id" value="<?= htmlspecialchars($item['id_tovary_i_uslugi'] ?? '') ?>">
                                 </div>
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][unit_name]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_name'] ?? ($item['unit_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['unit_id'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['id_edinicy_izmenereniya'] ?? '')) ?>">
                                 </div>
                             </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['quantity'] ?? ($item['quantity'] ?? '')) ?>"></td>
@@ -236,7 +227,7 @@ include '../header.php';
                                 <select class="form-control" name="products[<?= $row_index ?>][nds_id]">
                                     <option value="">--</option>
                                     <?php foreach ($nds_rates as $nds): ?>
-                                        <option value="<?= $nds['id'] ?>" <?= ($nds['id'] == ($item['nds_id'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($nds['stavka_nds']) ?></option>
+                                        <option value="<?= $nds['id'] ?>" <?= ($nds['id'] == ($item['id_stavka_nds'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($nds['stavka_nds']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
@@ -253,12 +244,6 @@ include '../header.php';
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
-                                </div>
-                            </td>
-                            <td>
-                                <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
-                                    <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td>
@@ -304,8 +289,17 @@ include '../header.php';
 </div>
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
-        <script>
-            let ndsOptionsTemplate = '<option value="">--</option>';
+        <script>            // Form configuration for zakaz_postavschiku
+            const formConfig = {
+                columns: [
+                    { key: 'product', label: 'Товар', type: 'autocomplete' },
+                    { key: 'unit', label: 'Ед', type: 'autocomplete' },
+                    { key: 'quantity', label: 'Кол-во', type: 'text' },
+                    { key: 'price', label: 'Цена', type: 'text' },
+                    { key: 'nds_id', label: 'НДС', type: 'select' }
+                ]
+            };
+                        let ndsOptionsTemplate = '<option value="">--</option>';
             <?php foreach ($nds_rates as $nds): ?>
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>

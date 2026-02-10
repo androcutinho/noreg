@@ -399,6 +399,18 @@ include '../header.php';
         </script>
         
         <script>
+            // Form configuration for noreg_specifikacii_k_dogovoru (includes delivery_date)
+            const formConfig = {
+                columns: [
+                    { key: 'product', label: 'Товар', type: 'autocomplete' },
+                    { key: 'unit', label: 'Ед', type: 'autocomplete' },
+                    { key: 'quantity', label: 'Кол-во', type: 'text' },
+                    { key: 'price', label: 'Цена', type: 'text' },
+                    { key: 'nds_id', label: 'НДС', type: 'select' },
+                    { key: 'planiruemaya_data_postavki', label: 'Планируемая дата поставки', type: 'date' }
+                ]
+            };
+            
             let unitsData = <?php echo json_encode($units); ?>;
         </script>
         

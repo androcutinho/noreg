@@ -357,6 +357,18 @@ include '../header.php';
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
         <script>
+            // Form configuration for postuplenie (includes seria)
+            const formConfig = {
+                columns: [
+                    { key: 'product', label: 'Товар', type: 'autocomplete' },
+                    { key: 'seria', label: 'Серия', type: 'autocomplete' },
+                    { key: 'unit', label: 'Ед', type: 'autocomplete' },
+                    { key: 'quantity', label: 'Кол-во', type: 'text' },
+                    { key: 'price', label: 'Цена', type: 'text' },
+                    { key: 'nds_id', label: 'НДС', type: 'select' }
+                ]
+            };
+            
             let ndsOptionsTemplate = '<option value="">--</option>';
             <?php foreach ($nds_rates as $nds): ?>
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';

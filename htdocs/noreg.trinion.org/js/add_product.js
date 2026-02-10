@@ -6,35 +6,166 @@ const autocompleteFields = [
     { inputId: 'responsible_id', table: 'users', col: 'user_name', idCol: 'user_id' }
 ];
 
+// Default columns config (fallback if not defined in form)
+const defaultColumns = [
+    { key: 'product', label: 'Товар', type: 'autocomplete' },
+    { key: 'unit', label: 'Ед', type: 'autocomplete' },
+    { key: 'quantity', label: 'Кол-во', type: 'text' },
+    { key: 'price', label: 'Цена', type: 'text' },
+    { key: 'nds_id', label: 'НДС', type: 'select' }
+];
+
 // Table manipulation functions
-function createRowTemplate(rowIndex) {
-    return `
-        <td>${rowIndex + 1}</td>
-        <td>
-            <div class="search-container" style="position: relative;">
-                <input class="form-control" type="text" name="products[${rowIndex}][product_name]" placeholder="Введите товар..." autocomplete="off">
-                <input type="hidden" name="products[${rowIndex}][product_id]" class="product-id">
-            </div>
-        </td>
-        <td>
-            <div class="search-container" style="position: relative;">
-                <input class="form-control" type="text" name="products[${rowIndex}][seria_name]" placeholder="Введите серию..." autocomplete="off">
-                <input type="hidden" name="products[${rowIndex}][seria_id]" class="seria-id">   
-            </div>
-        </td>
-        <td>
-            <div class="search-container" style="position: relative;">
-                <input class="form-control" type="text" name="products[${rowIndex}][unit_name]" placeholder="Введите ед." autocomplete="off">
-                <input type="hidden" name="products[${rowIndex}][unit_id]" class="unit-id">     
-            </div>
-        </td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][quantity]" placeholder="0" autocomplete="off"></td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][price]" placeholder="0" autocomplete="off"></td>
-        <td><select class="form-control" name="products[${rowIndex}][nds_id]">${ndsOptionsTemplate}</select></td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][summa_stavka]" placeholder="0" autocomplete="off" readonly></td>
-        <td><input class="form-control" type="text" name="products[${rowIndex}][summa]" placeholder="0" autocomplete="off" readonly></td>
+function createColumnHTML(rowIndex, column) {
+    const fieldName = `products[${rowIndex}][${column.key}]`;
+    
+    switch (column.type) {
+        case 'autocomplete':
+            if (column.table === 'serii') {
+                return `
+                    <td>
+                        <div class="search-container" style="position: relative;">
+                            <input class="form-control" type="text" name="${fieldName}_name" placeholder="Введите ${column.label.toLowerCase()}..." autocomplete="off">
+                            <input type="hidden" name="${fieldName}" class="${column.key}-id">
+                        </div>
+                    </td>
+                `;
+            } else if (column.table === 'tovary_i_uslugi') {
+                return `
+                    <td>
+                        <div class="search-container" style="position: relative;">
+                            <input class="form-control" type="text" name="${fieldName}_name" placeholder="Введите ${column.label.toLowerCase()}..." autocomplete="off">
+                            <input type="hidden" name="${fieldName}" class="product-id">
+                        </div>
+                    </td>
+                `;
+            } else if (column.table === 'edinicy_izmenereniya') {
+                return `
+                    <td>
+                        <div class="search-container" style="position: relative;">
+                            <input class="form-control" type="text" name="${fieldName}_name" placeholder="Введите ${column.label.toLowerCase()}..." autocomplete="off">
+                            <input type="hidden" name="${fieldName}" class="unit-id">
+                        </div>
+                    </td>
+                `;
+            }
+            break;
+            
+        case 'select':
+            return `
+                <td>
+                    <select class="form-control" name="${fieldName}">
+                        ${ndsOptionsTemplate}
+                    </select>
+                </td>
+            `;
+            
+        case 'date':
+            return `
+                <td>
+                    <input class="form-control" type="date" name="${fieldName}" autocomplete="off">
+                </td>
+            `;
+            
+        case 'text':
+        default:
+            return `
+                <td>
+                    <input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off">
+                </td>
+            `;
+    }
+}
+
+function createRowTemplate(rowIndex, config = null) {
+    // Use provided config, or formConfig from PHP, or fall back to defaultColumns
+    let cfg = config || (typeof formConfig !== 'undefined' ? formConfig : { columns: defaultColumns });
+    // Get ndsOptionsTemplate with fallback
+    let ndsOptions = (typeof ndsOptionsTemplate !== 'undefined') ? ndsOptionsTemplate : '<option value="">--</option>';
+    let html = `<td>${rowIndex + 1}</td>`;
+    
+    // Separate delivery date fields from other columns (they need to come after summa)
+    let deliveryDateColumn = null;
+    
+    for (const column of cfg.columns) {
+        // Skip delivery date fields for now, we'll add them after summa
+        if (column.key === 'delivery_date' || column.key === 'planiruemaya_data_postavki') {
+            deliveryDateColumn = column;
+            continue;
+        }
+        
+        if (column.key === 'nds_id' || column.type === 'select') {
+            const fieldName = `products[${rowIndex}][${column.key}]`;
+            html += `
+                <td>
+                    <select class="form-control" name="${fieldName}">
+                        ${ndsOptions}
+                    </select>
+                </td>
+            `;
+        } else if (column.key === 'quantity' || column.key === 'price') {
+            const fieldName = `products[${rowIndex}][${column.key}]`;
+            html += `<td><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
+        } else if (column.key === 'product') {
+            const fieldName = `products[${rowIndex}][product_name]`;
+            const hiddenName = `products[${rowIndex}][product_id]`;
+            html += `
+                <td>
+                    <div class="search-container" style="position: relative;">
+                        <input class="form-control" type="text" name="${fieldName}" placeholder="Введите товар..." autocomplete="off">
+                        <input type="hidden" name="${hiddenName}" class="product-id">
+                    </div>
+                </td>
+            `;
+        } else if (column.key === 'seria') {
+            const fieldName = `products[${rowIndex}][seria_name]`;
+            const hiddenName = `products[${rowIndex}][seria_id]`;
+            html += `
+                <td>
+                    <div class="search-container" style="position: relative;">
+                        <input class="form-control" type="text" name="${fieldName}" placeholder="Введите серию..." autocomplete="off">
+                        <input type="hidden" name="${hiddenName}" class="seria-id">
+                    </div>
+                </td>
+            `;
+        } else if (column.key === 'unit') {
+            const fieldName = `products[${rowIndex}][unit_name]`;
+            const hiddenName = `products[${rowIndex}][unit_id]`;
+            html += `
+                <td>
+                    <div class="search-container" style="position: relative;">
+                        <input class="form-control" type="text" name="${fieldName}" placeholder="Введите ед." autocomplete="off">
+                        <input type="hidden" name="${hiddenName}" class="unit-id">
+                    </div>
+                </td>
+            `;
+        }
+    }
+    
+    // Add summa_stavka and summa fields (always present)
+    const summaBefore = `products[${rowIndex}][summa_stavka]`;
+    const summaAfter = `products[${rowIndex}][summa]`;
+    html += `
+        <td><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
+        <td><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
+    `;
+    
+    // Add delivery date field after summa if it exists
+    if (deliveryDateColumn) {
+        const fieldName = `products[${rowIndex}][${deliveryDateColumn.key}]`;
+        html += `
+            <td>
+                <input class="form-control" type="date" name="${fieldName}" autocomplete="off" required>
+            </td>
+        `;
+    }
+    
+    // Add delete button at the end
+    html += `
         <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
+    
+    return html;
 }
 
 function addRow() {
@@ -42,7 +173,9 @@ function addRow() {
     const rowCount = tbody.rows.length;
     const newRow = document.createElement('tr');
     newRow.className = 'product-row';
-    newRow.innerHTML = createRowTemplate(rowCount);
+    // Use formConfig if defined, otherwise createRowTemplate will use default
+    const cfg = typeof formConfig !== 'undefined' ? formConfig : null;
+    newRow.innerHTML = createRowTemplate(rowCount, cfg);
     tbody.appendChild(newRow);
     initTableAutocomplete(newRow);
     attachCalculationListeners(newRow);
@@ -482,4 +615,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // Close autocomplete when clicking elsewhere
 document.addEventListener('click', function(e) {
     // This is handled by the blur events on inputs
+});
+
+// Handle form submission - ensure unit_id is populated for rows that weren't modified
+document.getElementById('documentForm').addEventListener('submit', function(e) {
+    const rows = document.querySelectorAll('.product-row');
+    let hasError = false;
+    
+    rows.forEach((row, index) => {
+        const unitNameInput = row.querySelector('input[name*="[unit_name]"]');
+        const unitIdHidden = row.querySelector('input[name*="[unit_id]"]');
+        
+        if (unitNameInput && unitIdHidden && unitNameInput.value.trim()) {
+            // If unit name is filled but unit_id is empty, try to find it
+            if (!unitIdHidden.value) {
+                const matchedUnit = unitsData.find(unit => 
+                    unit.naimenovanie.toLowerCase() === unitNameInput.value.toLowerCase()
+                );
+                
+                if (matchedUnit) {
+                    unitIdHidden.value = matchedUnit.id;
+                }
+            }
+        }
+    });
 });
