@@ -22,12 +22,12 @@ if ($tov_id) {
     if (!$tov_us) {
         die('Товар и услуг не найден');
     }
-    $utverzhden = $tov_us['poserijnyj_uchet'] ?? 0;
+    $poserijnyj_uchet = $tov_us['poserijnyj_uchet'] ?? 0;
     $is_creating = false;
 
 } else {
     $tov_us = null;
-    $utverzhden='';
+    $poserijnyj_uchet='';
     $is_creating = true;
     $page_title = 'Создать товар и услуги';
 }
@@ -44,12 +44,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     if (isset($_POST['naimenovanie'])) {
         $naimenovanie = trim($_POST['naimenovanie']);
-        $utverzhden = isset($_POST['utverzhden']) ? 1 : 0;
+        $poserijnyj_uchet = isset($_POST['poserijnyj_uchet']) ? 1 : 0;
         
          if ($is_creating) {
-            $sklad_id = null;
+            $tov_id = null;
         } else {
-            $sklad_id = $tov_us['id'];
+            $tov_id = $tov_us['id'];
         }
         
         if (empty($naimenovanie)) {
@@ -57,21 +57,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else {
             
             
-            if (TovarNameExists($mysqli, $naimenovanie, $sklad_id)) {
+            if (TovarNameExists($mysqli, $naimenovanie, $tov_id)) {
                 $error_message = 'Товар с таким названием уже существует';
             } else {
                 $tovar_saved = false;
                 
                 if ($is_creating) {
                     
-                    if (insertTovar($mysqli, $naimenovanie, $utverzhden)) {
+                    if (insertTovar($mysqli, $naimenovanie, $poserijnyj_uchet)) {
                         $tovar_saved = true;
                     } else {
                         $error_message = 'Ошибка при добавлении склада';
                     }
                 } else {
                     
-                    if (updateTovar($mysqli, $sklad_id, $naimenovanie, $utverzhden)) {
+                    if (updateTovar($mysqli, $tov_id, $naimenovanie, $poserijnyj_uchet)) {
                         $tovar_saved = true;
                     } else {
                         $error_message = 'Ошибка при сохранении данных';
@@ -116,7 +116,7 @@ include '../header.php';
                       <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
                         <label class="form-check">
-                            <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= (isset($_POST['utverzhden']) || (!$is_creating && $utverzhden)) ? 'checked' : '' ?>>
+                            <input class="form-check-input" type="checkbox" name="poserijnyj_uchet" value="1" <?= (isset($_POST['poserijnyj_uchet']) || (!$is_creating && $poserijnyj_uchet)) ? 'checked' : '' ?>>
                             <span class="form-check-label">Посерийный учет</span>
                         </label>
                     </div>

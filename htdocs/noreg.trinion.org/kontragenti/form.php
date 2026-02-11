@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Редактировать поставщика';
+$page_title = 'Редактировать контрагента';
 
 $mysqli = require '../config/database.php';
 require '../queries/spisok_postavshchikov_queries.php';
@@ -27,7 +27,7 @@ if ($postavshchik_id) {
 } else {
     $postavshchik = null;
     $is_creating = true;
-    $page_title = 'Создать поставщика';
+    $page_title = 'Создать контрагента';
 }
 
 $error_message = '';
@@ -44,12 +44,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $naimenovanie = trim($_POST['naimenovanie']);
         
         if (empty($naimenovanie)) {
-            $error_message = 'Название поставщика не может быть пустым';
+            $error_message = 'Название контрагента не может быть пустым';
         } else {
             
             
             if (postavshchikNameExists($mysqli, $naimenovanie, $postavshchik_id)) {
-                $error_message = 'Поставщик с таким названием уже существует';
+                $error_message = 'Контрагент с таким названием уже существует';
             } else {
                 $kontragenti_type = $_POST['radios-inline'] ?? 'postavshchik';
                 $data = [
@@ -73,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     if (insertPostavshchik($mysqli, $data)) {
                         $postavshchik_saved = true;
                     } else {
-                        $error_message = 'Ошибка при добавлении поставщика';
+                        $error_message = 'Ошибка при добавлении контрагента';
                     }
                 } else {
                     
@@ -103,7 +103,7 @@ include '../header.php';
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title mb-0"><?= $is_creating ? 'Создать поставщика' : 'Редактировать поставщика' ?></h3>
+                <h3 class="card-title mb-0"><?= $is_creating ? 'Создать контрагента' : 'Редактировать контраргента' ?></h3>
             </div>
 
             <div class="card-body">
@@ -116,8 +116,8 @@ include '../header.php';
                 <form method="POST">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" for="naimenovanie">Название поставщика</label>
-                            <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($postavshchik['naimenovanie'] ?? '') ?>" placeholder="Введите название поставщика..." autocomplete="off">
+                            <label class="form-label" for="naimenovanie">Название контрагента</label>
+                            <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($postavshchik['naimenovanie'] ?? '') ?>" placeholder="Введите название контрагента..." autocomplete="off">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label" for="INN">ИНН</label>
@@ -131,8 +131,8 @@ include '../header.php';
                             <input class="form-control" type="text" id="KPP" name="KPP" value="<?= htmlspecialchars($postavshchik['KPP'] ?? '') ?>" placeholder="Введите КПП" autocomplete="off">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" for="OGRN">ОРГН</label>
-                            <input class="form-control" type="text" id="OGRN" name="OGRN" value="<?= htmlspecialchars($postavshchik['OGRN'] ?? '') ?>" placeholder="Введите ОРГН" autocomplete="off">
+                            <label class="form-label" for="OGRN">ОГРН</label>
+                            <input class="form-control" type="text" id="OGRN" name="OGRN" value="<?= htmlspecialchars($postavshchik['OGRN'] ?? '') ?>" placeholder="Введите ОГРН" autocomplete="off">
                         </div>
                     </div>
                     <div class="row">

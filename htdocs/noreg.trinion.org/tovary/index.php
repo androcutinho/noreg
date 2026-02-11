@@ -34,7 +34,7 @@ include '../header.php';
       <div class="page-body">
         <div class="container-fluid">
           <div style="text-align: right; margin-bottom: 10px;">
-            <a href="" class="btn btn-primary">
+            <a href="dannye.php" class="btn btn-primary">
                 Добавить
             </a>
         </div>
@@ -77,7 +77,11 @@ include '../header.php';
                       <tr>
                         <td><?= htmlspecialchars($product['id']) ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($product['product_name']) ?></td>
-                        <td class="text-secondary"><a href="serii.php?product_id=<?= htmlspecialchars($product['id']) ?>">Серии</a></td>
+                        <td class="text-secondary">
+                          <a href="dannye.php?tov_id=<?= htmlspecialchars($product['id']) ?>">Редактировать</a>
+                          <span> | </span>
+                          <a href="serii.php?product_id=<?= htmlspecialchars($product['id']) ?>">Серии</a>
+                        </td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
