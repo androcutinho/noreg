@@ -27,6 +27,7 @@ $organization_name = '';
 $organization_id = '';
 $responsible_name = '';
 $responsible_id = '';
+$utverzhden = '';
 $document = null;
 $line_items = [];
 
@@ -42,11 +43,12 @@ if ($is_edit) {
     $date_issued = $document['data_dokumenta'];
     $order_number = $document['nomer'] ?? '';
     $vendor_name = $document['vendor_name'] ?? '';
-    $vendor_id = $document['id_postavshchika'] ?? '';
+    $vendor_id = $document['id_kontragenti_postavshchik'] ?? '';
     $organization_name = $document['organization_name'] ?? '';
     $organization_id = $document['id_organizacii'] ?? '';
     $responsible_name = $document['responsible_name'] ?? '';
     $responsible_id = $document['id_otvetstvennyj'] ?? '';
+    $utverzhden = $document['utverzhden'] ?? 0;
 }
 
 // Fetch NDS rates
@@ -274,6 +276,15 @@ include '../header.php';
 
                 <button type="button" class="btn mt-3 btn-primary" onclick="addRow()">Добавить строку</button>
                 
+                <div class="row" style="margin-top: 20px;">
+                    <div class="col-12">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= (isset($_POST['utverzhden']) || ($is_edit && $utverzhden)) ? 'checked' : '' ?>>
+                            <span class="form-check-label">Утведить в документах</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">

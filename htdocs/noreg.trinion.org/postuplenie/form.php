@@ -39,6 +39,7 @@ $document = null;
 $line_items = [];
 $vetis_data_loaded = false;
 $vetis_error = '';
+$utverzhden = false;
 
 
 if ($is_edit) {
@@ -58,6 +59,7 @@ if ($is_edit) {
     $organization_id = $document['organization_id'] ?? '';
     $vendor_id = $document['vendor_id'] ?? '';
     $responsible_id = $document['responsible_id'] ?? '';
+    $utverzhden = $document['utverzhden'] ?? false;
 } else {
     
     $uuid = isset($_GET['uuid']) ? $_GET['uuid'] : null;
@@ -340,6 +342,15 @@ include '../header.php';
                         </div>    
                     </div>
                 <?php endif; ?>
+
+                <div class="row" style="margin-top: 20px;">
+                    <div class="col-12">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= (isset($_POST['utverzhden']) || ($is_edit && $utverzhden)) ? 'checked' : '' ?>>
+                            <span class="form-check-label">Утведить в документах</span>
+                        </label>
+                    </div>
+                </div>
                 
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
@@ -349,10 +360,6 @@ include '../header.php';
                         </button>
                         <a href="index.php" class="btn">Отмена</a>
                     </div>
-                    <label class="form-check">
-                                  <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= isset($_POST['utverzhden']) ? 'checked' : '' ?>>
-                                  <span class="form-check-label">Утведить в документах</span>
-                                </label>
                 </div>
             </form>
         </div>
