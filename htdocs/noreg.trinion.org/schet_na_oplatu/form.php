@@ -27,6 +27,10 @@ $organization_name = '';
 $organization_id = '';
 $responsible_name = '';
 $responsible_id = '';
+$schet_pokupatelya_id = '';
+$schet_pokupatelya_naimenovanie = '';
+$schet_postavschika_id = '';
+$schet_postavschika_naimenovanie = '';
 $utverzhden = '';
 $document = null;
 $line_items = [];
@@ -39,7 +43,7 @@ if ($is_edit) {
         die("Заказ не найден.");
     }
     
-    $line_items = fetchOrderLineItems($mysqli, $id);
+    $line_items = fetchSchetLineItems($mysqli, $id);
     $date_issued = $document['data_dokumenta'];
     $schet_number = $document['nomer'] ?? '';
     $vendor_name = $document['vendor_name'] ?? '';
@@ -48,6 +52,10 @@ if ($is_edit) {
     $organization_id = $document['id_organizacii'] ?? '';
     $responsible_name = $document['responsible_name'] ?? '';
     $responsible_id = $document['id_otvetstvennyj'] ?? '';
+    $schet_pokupatelya_id = $document['Id_raschetnye_scheta_kontragenti_pokupatel'] ?? '';
+    $schet_postavschika_id = $document['Id_raschetnye_scheta_organizacii'] ?? '';
+    $schet_pokupatelya_naimenovanie = $document['schet_pokupatelya_naimenovanie'] ?? '';
+    $schet_postavschika_naimenovanie = $document['schet_postavschika_naimenovanie'] ?? '';
     $utverzhden = $document['utverzhden'] ?? 0;
 }
 
@@ -149,13 +157,13 @@ include '../header.php';
             <form method="POST" id="documentForm">   
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="schet_date">Дата счета</label>
+                        <label class="form-label" for="schet_date">Дата</label>
                         <input class="form-control" type="date" id="schet_date" name="schet_date"
                         value="<?= htmlspecialchars($_POST['schet_date'] ?? $date_issued) ?>">
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label" for="schet_number">№ счета на оплату</label>
+                        <label class="form-label" for="schet_number">№ cчета на оплату</label>
                         <input class="form-control" type="text" id="schet_number" name="schet_number" placeholder="Введите номер счета на оплату..." autocomplete="off"
                         value="<?= htmlspecialchars($_POST['schet_number'] ?? $schet_number) ?>">
                     </div>
@@ -177,19 +185,19 @@ include '../header.php';
                     </div>
                 </div>
 
-                 <div class="row">
+                <div class="row">
                     <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="vendor_id">Расчетный счет поставщика</label>
-                        <input class="form-control" type="text" id="vendor_id" name="vendor_name" placeholder="- Выберите поставщика -" autocomplete="off" 
-                        value="<?= htmlspecialchars($_POST['vendor_name'] ?? $vendor_name) ?>">
-                        <input type="hidden" name="vendor_id" class="vendor-id" value="<?= htmlspecialchars($_POST['vendor_id'] ?? $vendor_id) ?>">
+                        <label class="form-label" for="schet_pokupatelya_id">Расчетный счет покупателя</label>
+                        <input class="form-control" type="text" id="schet_pokupatelya_id" name="schet_pokupatelya_naimenovanie" placeholder="- Выберите расчетный счет покупателя -" autocomplete="off" 
+                        value="<?= htmlspecialchars($_POST['schet_pokupatelya_naimenovanie'] ?? $schet_pokupatelya_naimenovanie) ?>">
+                        <input type="hidden" name="schet_pokupatelya_id" class="schet-pokupatelya-id" value="<?= htmlspecialchars($_POST['schet_pokupatelya_id'] ?? $schet_pokupatelya_id) ?>">
                     </div>
 
                     <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="organization_id">Расчетный счет поставщика</label>
-                        <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off"
-                        value="<?= htmlspecialchars($_POST['organization_name'] ?? $organization_name) ?>">
-                        <input type="hidden" name="organization_id" class="organization-id" value="<?= htmlspecialchars($_POST['organization_id'] ?? $organization_id) ?>">
+                        <label class="form-label" for="schet_postavschika_id">Расчетный счет поставщика</label>
+                        <input class="form-control" type="text" id="schet_postavschika_id" name="schet_postavschika_naimenovanie" placeholder="- Выберите расчетный счет поставщика -" autocomplete="off"
+                        value="<?= htmlspecialchars($_POST['schet_postavschika_naimenovanie'] ?? $schet_postavschika_naimenovanie) ?>">
+                        <input type="hidden" name="schet_postavschika_id" class="schet-postavschika-id" value="<?= htmlspecialchars($_POST['schet_postavschika_id'] ?? $schet_postavschika_id) ?>">
                     </div>
                 </div>
 
@@ -356,6 +364,7 @@ include '../header.php';
                 unitsData = <?= json_encode($units_data) ?>;
             <?php } ?>
         </script>
+        <script src="../js/schet.js"></script>
         <script src="../js/add_product.js"></script>
 </div>
 <?php include '../footer.php'; ?>

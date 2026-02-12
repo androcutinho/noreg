@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
         $id_col = $_GET['id'] ?? 'id';
         
         // Validate table and column names (whitelist for safety)
-        $allowed_tables = ['sklady', 'kontragenti', 'organizacii', 'tovary_i_uslugi', 'serii', 'users', 'sotrudniki'];
+        $allowed_tables = ['sklady', 'kontragenti', 'organizacii', 'tovary_i_uslugi', 'serii', 'users', 'sotrudniki', 'raschetnye_scheta'];
         $allowed_cols = ['naimenovanie', 'user_name', 'id', 'user_id', 'nomer', 'fio'];
         
         if (!in_array($table, $allowed_tables)) {

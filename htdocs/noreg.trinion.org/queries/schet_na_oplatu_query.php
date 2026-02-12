@@ -1,7 +1,7 @@
 <?php
 
 function getOrdersCount($mysqli) {
-    $query = "SELECT COUNT(*) as total FROM zakazy_postavshchikam";
+    $query = "SELECT COUNT(*) as total FROM scheta_na_oplatu_pokupatelyam";
     $result = $mysqli->query($query);
     if ($result) {
         $row = $result->fetch_assoc();
@@ -11,20 +11,20 @@ function getOrdersCount($mysqli) {
 }
 
 
-function getAllOrders($mysqli, $limit, $offset) {
+function getAllschetov($mysqli, $limit, $offset) {
     $query = "
         SELECT 
-            zp.id,
-            zp.data_dokumenta,
-            zp.nomer,
+            sp.id,
+            sp.data_dokumenta,
+            sp.nomer,
             k.naimenovanie AS vendor_name,
             o.naimenovanie AS organization_name,
             u.user_name AS responsible_name
-        FROM  zakazy_pokupatelei zp
-        LEFT JOIN kontragenti k ON zp.id_kontragenti_pokupatel = k.id
-        LEFT JOIN organizacii o ON zp.id_organizacii = o.id
-        LEFT JOIN users u ON zp.id_otvetstvennyj = u.user_id
-        ORDER BY zp.data_dokumenta DESC
+        FROM  scheta_na_oplatu_pokupatelyam sp
+        LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
+        LEFT JOIN organizacii o ON sp.id_organizacii = o.id
+        LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
+        ORDER BY sp.data_dokumenta DESC
         LIMIT ? OFFSET ?
     ";
     
@@ -42,7 +42,7 @@ function getAllOrders($mysqli, $limit, $offset) {
     return $orders;
 }
 
-function fetchOrderHeader($mysqli, $id) {
+function fetchSchetHeader($mysqli, $id) {
     $query = "
         SELECT 
             sp.id,
@@ -52,22 +52,29 @@ function fetchOrderHeader($mysqli, $id) {
             sp.id_organizacii,
             sp.id_otvetstvennyj,
             sp.utverzhden,
-            sl.id AS warehouse_id,
-            sl.naimenovanie AS warehouse_name,
+            sp.Id_raschetnye_scheta_kontragenti_pokupatel,
+            sp.Id_raschetnye_scheta_organizacii,
             k.naimenovanie AS vendor_name,
             k.INN AS vendor_inn,
             k.KPP AS vendor_kpp,
             o.naimenovanie AS organization_name,
             o.INN AS organization_inn,
             o.KPP AS organization_kpp,
-            u.user_name AS responsible_name
+            u.user_name AS responsible_name,
+            rs1.naimenovanie AS schet_pokupatelya_naimenovanie,
+            rs2.naimenovanie AS schet_postavschika_naimenovanie,
+            rs2.naimenovanie_banka AS bank_name,
+            rs2.BIK_banka AS bik_bank,
+            rs2.nomer_korrespondentskogo_scheta AS correspondent_account,
+            rs2.nomer AS account_number
         FROM  scheta_na_oplatu_pokupatelyam sp
-        LEFT JOIN kontragenti k ON zp.id_kontragenti_pokupatel = k.id
-        LEFT JOIN organizacii o ON zp.id_organizacii = o.id
-        LEFT JOIN users u ON zp.id_otvetstvennyj = u.user_id
-        LEFT JOIN sklady sl ON zp.id_sklada = sl.id
+        LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
+        LEFT JOIN organizacii o ON sp.id_organizacii = o.id
+        LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
+        LEFT JOIN raschetnye_scheta rs1 ON sp.Id_raschetnye_scheta_kontragenti_pokupatel = rs1.id
+        LEFT JOIN raschetnye_scheta rs2 ON sp.Id_raschetnye_scheta_organizacii = rs2.id
         
-        WHERE zp.id = ?
+        WHERE sp.id = ?
     ";
     
     $stmt = $mysqli->prepare($query);
@@ -81,7 +88,7 @@ function fetchOrderHeader($mysqli, $id) {
 }
 
 
-function fetchOrderLineItems($mysqli, $zakaz_id) {
+function fetchSchetLineItems($mysqli, $id) {
     $query = "
         SELECT 
             sd.id,
@@ -108,7 +115,7 @@ function fetchOrderLineItems($mysqli, $zakaz_id) {
     ";
     
     $stmt = $mysqli->prepare($query);
-    $stmt->bind_param('i', $zakaz_id);
+    $stmt->bind_param('i', $id);
     $stmt->execute();
     $result = $stmt->get_result();
     $items = $result->fetch_all(MYSQLI_ASSOC);
@@ -118,12 +125,12 @@ function fetchOrderLineItems($mysqli, $zakaz_id) {
 }
 
 
-function createOrderDocument($mysqli, $data) {
+function createSchetDocument($mysqli, $data) {
     try {
         $mysqli->begin_transaction();
         
         // Validate required fields
-        if (empty($data['order_date']) || empty($data['order_number']) || 
+        if (empty($data['schet_date']) || empty($data['schet_number']) || 
             empty($data['vendor_id']) || empty($data['organization_id']) || 
             empty($data['responsible_id']) || empty($data['products'])) {
             throw new Exception('Недостаточно данных для создания заказа');
@@ -131,14 +138,16 @@ function createOrderDocument($mysqli, $data) {
         
         // Insert order header
         $query = "
-            INSERT INTO zakazy_pokupatelei (
+            INSERT INTO scheta_na_oplatu_pokupatelyam (
                 data_dokumenta,
                 nomer,
                 id_kontragenti_pokupatel,
                 id_organizacii,
                 id_otvetstvennyj,
-                utverzhden
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                utverzhden,
+                Id_raschetnye_scheta_kontragenti_pokupatel,
+                Id_raschetnye_scheta_organizacii
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ";
         
         $stmt = $mysqli->prepare($query);
@@ -147,15 +156,19 @@ function createOrderDocument($mysqli, $data) {
         }
         
         $utverzhden = isset($data['utverzhden']) && $data['utverzhden'] == 1 ? 1 : 0;
+        $schet_pokupatelya_id = !empty($data['schet_pokupatelya_id']) ? $data['schet_pokupatelya_id'] : null;
+        $schet_postavschika_id = !empty($data['schet_postavschika_id']) ? $data['schet_postavschika_id'] : null;
         
         $stmt->bind_param(
-            'ssiiii',
-            $data['order_date'],
-            $data['order_number'],
+            'ssiiiiii',
+            $data['schet_date'],
+            $data['schet_number'],
             $data['vendor_id'],
             $data['organization_id'],
             $data['responsible_id'],
-            $utverzhden
+            $utverzhden,
+            $schet_pokupatelya_id,
+            $schet_postavschika_id
         );
         
         if (!$stmt->execute()) {
@@ -223,7 +236,7 @@ function createOrderDocument($mysqli, $data) {
         
         return [
             'success' => true,
-            'zakaz_id' => $zakaz_id
+            'id' => $id
         ];
         
     } catch (Exception $e) {
@@ -238,12 +251,12 @@ function createOrderDocument($mysqli, $data) {
 /**
  * Update existing order document
  */
-function updateOrderDocument($mysqli, $zakaz_id, $data) {
+function updateSchetDocument($mysqli, $id, $data) {
     try {
         $mysqli->begin_transaction();
         
         // Validate required fields
-        if (empty($data['order_date']) || empty($data['order_number']) || 
+        if (empty($data['schet_date']) || empty($data['schet_number']) || 
             empty($data['vendor_id']) || empty($data['organization_id']) || 
             empty($data['responsible_id']) || empty($data['products'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
@@ -251,13 +264,15 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
         
         // Update order header
         $query = "
-            UPDATE  zakazy_pokupatelei SET
+            UPDATE   scheta_na_oplatu_pokupatelyam SET
                 data_dokumenta = ?,
                 nomer = ?,
                 id_kontragenti_pokupatel = ?,
                 id_organizacii = ?,
                 id_otvetstvennyj = ?,
-                utverzhden = ?
+                utverzhden = ?,
+                Id_raschetnye_scheta_kontragenti_pokupatel = ?,
+                Id_raschetnye_scheta_organizacii = ?
             WHERE id = ?
         ";
         
@@ -267,16 +282,20 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
         }
         
         $utverzhden = isset($data['utverzhden']) && $data['utverzhden'] == 1 ? 1 : 0;
+        $schet_pokupatelya_id = !empty($data['schet_pokupatelya_id']) ? $data['schet_pokupatelya_id'] : null;
+        $schet_postavschika_id = !empty($data['schet_postavschika_id']) ? $data['schet_postavschika_id'] : null;
         
         $stmt->bind_param(
-            'ssiiii',
-            $data['order_date'],
-            $data['order_number'],
+            'ssiiiiiii',
+            $data['schet_date'],
+            $data['schet_number'],
             $data['vendor_id'],
             $data['organization_id'],
             $data['responsible_id'],
             $utverzhden,
-            $zakaz_id
+            $schet_pokupatelya_id,
+            $schet_postavschika_id,
+            $id
         );
         
         if (!$stmt->execute()) {
@@ -288,7 +307,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
         // Delete existing line items
         $delete_query = "DELETE FROM stroki_dokumentov WHERE id_dokumenta = ?";
         $stmt = $mysqli->prepare($delete_query);
-        $stmt->bind_param('i', $zakaz_id);
+        $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
         
@@ -328,7 +347,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
             
             $stmt->bind_param(
                 'iiiiididdd',
-                $zakaz_id,
+                $id,
                 $product_id,
                 $unit_id,
                 $warehouse_id,
@@ -350,7 +369,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
         
         return [
             'success' => true,
-            'zakaz_id' => $zakaz_id
+            'id' => $id
         ];
         
     } catch (Exception $e) {
@@ -383,7 +402,7 @@ function deleteOrderDocument($mysqli, $zakaz_id) {
         $stmt->close();
         
         // Delete the order header
-        $delete_order_query = "DELETE FROM zakazy_pokupatelei WHERE id = ?";
+        $delete_order_query = "DELETE FROM scheta_na_oplatu_pokupatelyam WHERE id = ?";
         $stmt = $mysqli->prepare($delete_order_query);
         if (!$stmt) {
             throw new Exception('Ошибка подготовки запроса удаления заказа: ' . $mysqli->error);
