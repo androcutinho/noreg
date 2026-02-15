@@ -1,7 +1,9 @@
 <?php
 
+require_once 'id_index_helper.php';
+
 function getOrdersCount($mysqli) {
-    $query = "SELECT COUNT(*) as total FROM zakazy_postavshchikam";
+    $query = "SELECT COUNT(*) as total FROM zakazy_postavshchikam WHERE zakryt = 0 OR zakryt IS NULL";
     $result = $mysqli->query($query);
     if ($result) {
         $row = $result->fetch_assoc();
@@ -24,6 +26,7 @@ function getAllOrders($mysqli, $limit, $offset) {
         LEFT JOIN kontragenti k ON zp.id_kontragenti_pokupatel = k.id
         LEFT JOIN organizacii o ON zp.id_organizacii = o.id
         LEFT JOIN users u ON zp.id_otvetstvennyj = u.user_id
+        WHERE zp.zakryt = 0 OR zp.zakryt IS NULL
         ORDER BY zp.data_dokumenta DESC
         LIMIT ? OFFSET ?
     ";
@@ -46,13 +49,16 @@ function fetchOrderHeader($mysqli, $zakaz_id) {
     $query = "
         SELECT 
             zp.id,
+            zp.id_index,
             zp.data_dokumenta,
             zp.nomer,
             zp.id_kontragenti_pokupatel,
             zp.id_organizacii,
             zp.id_otvetstvennyj,
             zp.utverzhden,
+            zp.zakryt,
             zp.id_sklada,
+            zp.id_scheta_na_oplatu_pokupatelyam,
             sl.id AS warehouse_id,
             sl.naimenovanie AS warehouse_name,
             k.naimenovanie AS vendor_name,
@@ -82,16 +88,16 @@ function fetchOrderHeader($mysqli, $zakaz_id) {
 }
 
 
-function fetchOrderLineItems($mysqli, $zakaz_id) {
+function fetchOrderLineItems($mysqli, $id_index) {
     $query = "
         SELECT 
             sd.id,
-            sd.id_dokumenta,
+            sd.id_index,
             sd.id_tovary_i_uslugi,
             t.naimenovanie AS product_name,
             sd.id_edinicy_izmereniya,
             e.naimenovanie AS unit_name,
-            sd.id_sklada,
+            sd.id_sklada AS warehouse_id,
             s.naimenovanie AS warehouse_name,
             sd.kolichestvo AS quantity,
             sd.cena AS unit_price,
@@ -104,12 +110,12 @@ function fetchOrderLineItems($mysqli, $zakaz_id) {
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
         LEFT JOIN sklady s ON sd.id_sklada = s.id
         LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
-        WHERE sd.id_dokumenta = ?
+        WHERE sd.id_index = ?
         ORDER BY sd.id ASC
     ";
     
     $stmt = $mysqli->prepare($query);
-    $stmt->bind_param('i', $zakaz_id);
+    $stmt->bind_param('i', $id_index);
     $stmt->execute();
     $result = $stmt->get_result();
     $items = $result->fetch_all(MYSQLI_ASSOC);
@@ -130,6 +136,9 @@ function createOrderDocument($mysqli, $data) {
             throw new Exception('Недостаточно данных для создания заказа');
         }
         
+        // Get next id_index
+        $id_index = getNextIdIndex($mysqli);
+        
         // Insert order header
         $query = "
             INSERT INTO zakazy_pokupatelei (
@@ -138,8 +147,9 @@ function createOrderDocument($mysqli, $data) {
                 id_kontragenti_pokupatel,
                 id_organizacii,
                 id_otvetstvennyj,
-                utverzhden
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                utverzhden,
+                id_index
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ";
         
         $stmt = $mysqli->prepare($query);
@@ -147,16 +157,17 @@ function createOrderDocument($mysqli, $data) {
             throw new Exception('Ошибка подготовки запроса: ' . $mysqli->error);
         }
         
-        $utverzhden = isset($data['utverzhden']) && $data['utverzhden'] == 1 ? 1 : 0;
+        $utverzhden = 0;
         
         $stmt->bind_param(
-            'ssiiii',
+            'ssiiiii',
             $data['order_date'],
             $data['order_number'],
             $data['vendor_id'],
             $data['organization_id'],
             $data['responsible_id'],
-            $utverzhden
+            $utverzhden,
+            $id_index
         );
         
         if (!$stmt->execute()) {
@@ -166,7 +177,7 @@ function createOrderDocument($mysqli, $data) {
         $zakaz_id = $mysqli->insert_id;
         $stmt->close();
         
-        // Insert line items
+        // Insert line items with id_index
         foreach ($data['products'] as $index => $product) {
             if (empty($product['product_name']) || empty($product['quantity'])) {
                 continue;
@@ -181,6 +192,7 @@ function createOrderDocument($mysqli, $data) {
             $line_query = "
                 INSERT INTO stroki_dokumentov (
                     id_dokumenta,
+                    id_index,
                     id_tovary_i_uslugi,
                     id_edinicy_izmereniya,
                     id_sklada,
@@ -189,7 +201,7 @@ function createOrderDocument($mysqli, $data) {
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -201,8 +213,9 @@ function createOrderDocument($mysqli, $data) {
             $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
             
             $stmt->bind_param(
-                'iiiiididd',
+                'iiiiiddidd',
                 $zakaz_id,
+                $id_index,
                 $product_id,
                 $unit_id,
                 $warehouse_id,
@@ -236,19 +249,32 @@ function createOrderDocument($mysqli, $data) {
     }
 }
 
-/**
- * Update existing order document
- */
+
 function updateOrderDocument($mysqli, $zakaz_id, $data) {
     try {
         $mysqli->begin_transaction();
         
-        // Validate required fields
+        
         if (empty($data['order_date']) || empty($data['order_number']) || 
             empty($data['vendor_id']) || empty($data['organization_id']) || 
             empty($data['responsible_id']) || empty($data['products'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
         }
+        
+        
+        $get_index_query = "SELECT id_index FROM zakazy_pokupatelei WHERE id = ?";
+        $stmt = $mysqli->prepare($get_index_query);
+        $stmt->bind_param('i', $zakaz_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $doc = $result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$doc) {
+            throw new Exception('Документ не найден');
+        }
+        
+        $id_index = $doc['id_index'];
         
         // Update order header
         $query = "
@@ -257,8 +283,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
                 nomer = ?,
                 id_kontragenti_pokupatel = ?,
                 id_organizacii = ?,
-                id_otvetstvennyj = ?,
-                utverzhden = ?
+                id_otvetstvennyj = ?
             WHERE id = ?
         ";
         
@@ -267,8 +292,6 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
             throw new Exception('Ошибка подготовки запроса: ' . $mysqli->error);
         }
         
-        $utverzhden = isset($data['utverzhden']) && $data['utverzhden'] == 1 ? 1 : 0;
-        
         $stmt->bind_param(
             'ssiiii',
             $data['order_date'],
@@ -276,7 +299,6 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
             $data['vendor_id'],
             $data['organization_id'],
             $data['responsible_id'],
-            $utverzhden,
             $zakaz_id
         );
         
@@ -286,14 +308,14 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
         
         $stmt->close();
         
-        // Delete existing line items
-        $delete_query = "DELETE FROM stroki_dokumentov WHERE id_dokumenta = ?";
+        // Delete existing line items using id_index
+        $delete_query = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $stmt = $mysqli->prepare($delete_query);
-        $stmt->bind_param('i', $zakaz_id);
+        $stmt->bind_param('i', $id_index);
         $stmt->execute();
         $stmt->close();
         
-        // Insert updated line items
+        // Insert updated line items with id_index
         foreach ($data['products'] as $index => $product) {
             if (empty($product['product_name']) || empty($product['quantity'])) {
                 continue;
@@ -308,6 +330,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
             $line_query = "
                 INSERT INTO stroki_dokumentov (
                     id_dokumenta,
+                    id_index,
                     id_tovary_i_uslugi,
                     id_edinicy_izmereniya,
                     id_sklada,
@@ -316,7 +339,7 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -328,8 +351,9 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
             $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
             
             $stmt->bind_param(
-                'iiiiididdd',
+                'iiiiidiidd',
                 $zakaz_id,
+                $id_index,
                 $product_id,
                 $unit_id,
                 $warehouse_id,
@@ -363,27 +387,40 @@ function updateOrderDocument($mysqli, $zakaz_id, $data) {
     }
 }
 
-/**
- * Delete an order and its line items
- */
+
 function deleteOrderDocument($mysqli, $zakaz_id) {
     try {
         $mysqli->begin_transaction();
         
-        // Delete line items first (foreign key dependency)
-        $delete_items_query = "DELETE FROM stroki_dokumentov WHERE id_dokumenta = ?";
+        // Get the id_index first
+        $get_index_query = "SELECT id_index FROM zakazy_pokupatelei WHERE id = ?";
+        $stmt = $mysqli->prepare($get_index_query);
+        $stmt->bind_param('i', $zakaz_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $doc = $result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$doc) {
+            throw new Exception('Документ не найден');
+        }
+        
+        $id_index = $doc['id_index'];
+        
+        
+        $delete_items_query = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $stmt = $mysqli->prepare($delete_items_query);
         if (!$stmt) {
             throw new Exception('Ошибка подготовки запроса удаления строк: ' . $mysqli->error);
         }
         
-        $stmt->bind_param('i', $zakaz_id);
+        $stmt->bind_param('i', $id_index);
         if (!$stmt->execute()) {
             throw new Exception('Ошибка при удалении строк товара: ' . $stmt->error);
         }
         $stmt->close();
         
-        // Delete the order header
+        
         $delete_order_query = "DELETE FROM zakazy_pokupatelei WHERE id = ?";
         $stmt = $mysqli->prepare($delete_order_query);
         if (!$stmt) {

@@ -57,4 +57,49 @@ function getUserRole($mysqli, $user_id) {
     return $user ? $user['user_role'] : null;
 }
 
+function updateDocumentField($mysqli, $table_name, $field_name, $document_id, $value) {
+    try {
+        $field_value = $value ? 1 : 0;
+        $document_id = intval($document_id);
+        
+        // Validate field name to prevent SQL injection
+        $allowed_fields = ['utverzhden', 'zakryt'];
+        if (!in_array($field_name, $allowed_fields)) {
+            return array(
+                'success' => false,
+                'message' => 'Недопустимое имя поля'
+            );
+        }
+        
+        $sql = "UPDATE {$table_name} SET {$field_name} = ? WHERE id = ?";
+        $stmt = $mysqli->stmt_init();
+        
+        if (!$stmt->prepare($sql)) {
+            return array(
+                'success' => false,
+                'message' => 'Ошибка подготовки запроса: ' . $mysqli->error
+            );
+        }
+        
+        $stmt->bind_param("ii", $field_value, $document_id);
+        
+        if (!$stmt->execute()) {
+            return array(
+                'success' => false,
+                'message' => 'Ошибка обновления документа: ' . $stmt->error
+            );
+        }
+        
+        return array(
+            'success' => true,
+            'message' => 'Статус документа обновлен'
+        );
+    } catch (Exception $e) {
+        return array(
+            'success' => false,
+            'message' => 'Ошибка: ' . $e->getMessage()
+        );
+    }
+}
+
 ?>

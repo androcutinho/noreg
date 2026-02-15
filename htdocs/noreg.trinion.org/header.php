@@ -76,6 +76,7 @@ if (isset($_SESSION['user_id'])) {
                         <a class="dropdown-item" href="/zakaz_postavschiku/">Заказы поставщикам</a>
                         <a class="dropdown-item" href="/zakaz_pokupatelya/">Заказы покупателей</a>
                         <a class="dropdown-item" href="/schet_na_oplatu/">Счета на оплату</a>
+                        <a class="dropdown-item" href="/otgruzki_tovarov_pokupatelyam/">Отгрузки товаров</a>
                       </div>
                     </li>
                     <li class="nav-item dropdown">

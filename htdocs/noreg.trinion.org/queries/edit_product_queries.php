@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/id_index_helper.php';
 require_once __DIR__ . '/entity_helpers.php';
 
 function fetchDocumentHeader($mysqli, $document_id) {
@@ -7,10 +8,12 @@ function fetchDocumentHeader($mysqli, $document_id) {
         pt.id,
         pt.data_dokumenta,
         pt.utverzhden,
+        pt.zakryt,
         pt.id_organizacii,
         pt.id_postavshchika,
         pt.id_sklada,
         pt.id_otvetstvennyj,
+        pt.id_index,
         org.naimenovanie as organization_name,
         org.id as organization_id,
         ps.naimenovanie as vendor_name,
@@ -39,7 +42,7 @@ function fetchDocumentHeader($mysqli, $document_id) {
 }
 
 
-function fetchDocumentLineItems($mysqli, $document_id) {
+function fetchDocumentLineItems($mysqli, $id_index) {
     $sql = "SELECT 
         sd.id,
         sd." . COL_LINE_PRODUCT_ID . " as product_id,
@@ -62,7 +65,7 @@ function fetchDocumentLineItems($mysqli, $document_id) {
     LEFT JOIN serii ser ON ser.id = sd." . COL_LINE_SERIES_ID . " AND ser." . serii_id_tovary_i_uslugi . " = sd." . COL_LINE_PRODUCT_ID . "
     LEFT JOIN stavki_nds sn ON sd." . COL_LINE_NDS_ID . " = sn.id
     LEFT JOIN edinicy_izmereniya eu ON sd." . COL_LINE_UNIT_ID . " = eu.id
-    WHERE sd." . COL_LINE_DOCUMENT_ID . " = ?
+    WHERE sd.id_index = ?
     ORDER BY sd.id ASC";
 
     $stmt = $mysqli->stmt_init();
@@ -70,7 +73,7 @@ function fetchDocumentLineItems($mysqli, $document_id) {
         die("SQL error: " . $mysqli->error);
     }
 
-    $stmt->bind_param("i", $document_id);
+    $stmt->bind_param("i", $id_index);
     $stmt->execute();
     $result = $stmt->get_result();
     $line_items = array();
@@ -108,7 +111,6 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         $warehouse_id = intval($data['warehouse_id']);
         $organization_id = intval($data['organization_id']);
         $vendor_id = intval($data['vendor_id']);
-        $utverzhden = isset($data['utverzhden']) ? 1 : 0;
         
         // Update document header
         $doc_sql = "UPDATE " . postupleniya_tovarov . " SET 
@@ -116,8 +118,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             " . COL_ARRIVAL_WAREHOUSE_ID . " = ?,
             " . COL_ARRIVAL_VENDOR_ID . " = ?,
             " . COL_ARRIVAL_ORG_ID . " = ?,
-            " . COL_ARRIVAL_RESPONSIBLE_ID . " = ?,
-            utverzhden = ?
+            " . COL_ARRIVAL_RESPONSIBLE_ID . " = ?
         WHERE " . COL_ARRIVAL_ID . " = ?";
         
         $doc_stmt = $mysqli->stmt_init();
@@ -126,13 +127,12 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         }
         
         $doc_stmt->bind_param(
-            "siiiiii",
+            "siiiii",
             $data['product_date'],
             $data['warehouse_id'],
             $data['vendor_id'],
             $data['organization_id'],
             $responsible_id,
-            $utverzhden,
             $document_id
         );
         
@@ -140,14 +140,30 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             throw new Exception("Ошибка обновления документа: " . $doc_stmt->error);
         }
         
-        // Delete old line items
-        $delete_sql = "DELETE FROM " . stroki_dokumentov . " WHERE " . COL_LINE_DOCUMENT_ID . " = ?";
+        // Get the id_index from the document
+        $get_index_query = "SELECT id_index FROM postupleniya_tovarov WHERE id = ?";
+        $get_stmt = $mysqli->stmt_init();
+        $get_stmt->prepare($get_index_query);
+        $get_stmt->bind_param('i', $document_id);
+        $get_stmt->execute();
+        $get_result = $get_stmt->get_result();
+        $doc_data = $get_result->fetch_assoc();
+        $get_stmt->close();
+        
+        if (!$doc_data) {
+            throw new Exception("Документ больше не существует");
+        }
+        
+        $id_index = $doc_data['id_index'];
+        
+        // Delete old line items by id_index
+        $delete_sql = "DELETE FROM " . stroki_dokumentov . " WHERE id_index = ?";
         $delete_stmt = $mysqli->stmt_init();
         if (!$delete_stmt->prepare($delete_sql)) {
             throw new Exception("Ошибка подготовки удаления строк: " . $mysqli->error);
         }
         
-        $delete_stmt->bind_param("i", $document_id);
+        $delete_stmt->bind_param("i", $id_index);
         if (!$delete_stmt->execute()) {
             throw new Exception("Ошибка удаления старых строк: " . $delete_stmt->error);
         }
@@ -187,7 +203,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : 0;
             $unit_id = !empty($product['unit_id']) ? intval($product['unit_id']) : 0;
             
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -195,8 +211,9 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
             }
             
             $line_stmt->bind_param(
-                "iiidddiid",
+                "iiiidddiid",
                 $document_id,
+                $id_index,
                 $goods_id,
                 $nds_id,
                 $price,

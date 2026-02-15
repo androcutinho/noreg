@@ -8,16 +8,16 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Счета на оплату покупателям';
+$page_title = 'Заказы поставщикам';
 
 $mysqli = require '../config/database.php';
-require '../queries/schet_na_oplatu_query.php';
+require '../queries/zakaz_query.php';
 
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
 // Get total count of orders
-$total_orders = getSchetovCount($mysqli);
+$total_orders = getOrdersCount($mysqli);
 $total_pages = ceil($total_orders / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
@@ -26,7 +26,7 @@ if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pag
 $offset = ($current_page - 1) * $items_per_page;
 
 // Get orders for current page
-$schetov = getAllschetov($mysqli, $items_per_page, $offset);
+$orders = getAllOrders($mysqli, $items_per_page, $offset);
 
 include '../header.php';
 ?>
@@ -36,8 +36,8 @@ include '../header.php';
             <div class="card-header">
               <div class="row w-full">
                 <div class="col">
-                  <h3 class="card-title mb-0">Счета на оплату покупателям</h3>
-                  <p class="text-secondary m-0">Всего счетов: <?= $total_orders ?> штук.</p>
+                  <h3 class="card-title mb-0">Заказы поставщикам</h3>
+                  <p class="text-secondary m-0">Всего заказов: <?= $total_orders ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -69,10 +69,10 @@ include '../header.php';
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($schetov)): ?>
-                    <?php foreach ($schetov as $order): ?>
+                  <?php if (!empty($orders)): ?>
+                    <?php foreach ($orders as $order): ?>
                       <tr>
-                        <td><a href="schet.php?id=<?= htmlspecialchars($order['id']) ?>" class="text-primary"><?= htmlspecialchars($order['nomer']) ?></a></td>
+                        <td><a href="zakaz.php?zakaz_id=<?= htmlspecialchars($order['id']) ?>" class="text-primary"><?= htmlspecialchars($order['nomer']) ?></a></td>
                         <td class="text-secondary"><?= htmlspecialchars($order['data_dokumenta']) ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($order['vendor_name'] ?? 'N/A') ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($order['organization_name'] ?? 'N/A') ?></td>

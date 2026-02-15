@@ -10,16 +10,18 @@ if (!isset($_SESSION['user_id'])) {
 $mysqli = require '../config/database.php';
 require '../queries/schet_na_oplatu_query.php';
 
-$zakaz_id = isset($_GET['id']) ? intval($_GET['id']) : null;
+$page_title = 'Счет на оплату';
+
+$id = isset($_GET['id']) ? intval($_GET['id']) : null;
 $error = '';
 
-if (!$zakaz_id) {
+if (!$id) {
     die("Счет не найден.");
 }
 
 
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    $result = deleteOrderDocument($mysqli, $zakaz_id);
+    $result = deleteSchetDocument($mysqli, $id);
     if ($result['success']) {
         header('Location: index.php');
         exit;
@@ -28,13 +30,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     }
 }
 
-$schet = fetchSchetHeader($mysqli, $zakaz_id);
+$schet = fetchSchetHeader($mysqli, $id);
 
 if (!$schet) {
     die("Счет не найден.");
 }
 
-$line_items = fetchSchetLineItems($mysqli, $zakaz_id);
+$line_items = fetchSchetLineItems($mysqli, $schet['id_index']);
 
 // Calculate totals
 $total_sum = 0;
@@ -78,7 +80,25 @@ include '../header.php';
                             </svg>
                             Печать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='form.php?id=<?= htmlspecialchars($zakaz_id) ?>';">
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 6l7 7l-4 4"></path>
+                                <path d="M5.828 18.172a2.828 2.828 0 0 0 4 0l10.586 -10.586a2 2 0 0 0 0 -2.829l-1.171 -1.171a2 2 0 0 0 -2.829 0l-10.586 10.586a2.828 2.828 0 0 0 0 4z"></path>
+                                <path d="M4 20l1.768 -1.768"></path>
+                              </svg>
+                            Утвердить
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 6l7 7l-2 2"></path>
+                                <path d="M10 10l-4.172 4.172a2.828 2.828 0 1 0 4 4l4.172 -4.172"></path>
+                                <path d="M16 12l4.414 -4.414a2 2 0 0 0 0 -2.829l-1.171 -1.171a2 2 0 0 0 -2.829 0l-4.414 4.414"></path>
+                                <path d="M4 20l1.768 -1.768"></path>
+                                <path d="M3 3l18 18"></path>
+                              </svg>
+                            Отменить утверждение
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='form.php?id=<?= htmlspecialchars($id) ?>';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -87,7 +107,16 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Этот заказ будет удален.')) window.location.href='schet.php?id=<?= htmlspecialchars($zakaz_id) ?>&action=delete';">
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                                <path d="M10.507 10.498l-1.507 1.502v3h3l1.493 -1.498m2 -2.01l4.89 -4.907a2.1 2.1 0 0 0 -2.97 -2.97l-4.913 4.896"></path>
+                                <path d="M16 5l3 3"></path>
+                                <path d="M3 3l18 18"></path>
+                              </svg>
+                            Закрить
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Этот заказ будет удален.')) window.location.href='schet.php?id=<?= htmlspecialchars($id) ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
@@ -253,5 +282,37 @@ include '../header.php';
         </div>
     </div>
 </div>
+
+<script>
+function editDocument() {
+    const isClosed = <?= json_encode((bool)$schet['zakryt']) ?>;
+    if (isClosed) {
+        alert('Этот документ закрыт и не может быть отредактирован.');
+        return;
+    }
+    window.location.href = 'form.php?id=<?= json_encode($id) ?>';
+}
+
+function updateDocumentField(fieldName, value) {
+    const documentId = <?= json_encode($id) ?>;
+    const tableName = 'scheta_na_oplatu_pokupatelyam';
+    
+    fetch('../api/toggle_field.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            table_name: tableName,
+            document_id: documentId,
+            field_name: fieldName,
+            value: value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
 
 <?php include '../footer.php'; ?>

@@ -8,25 +8,25 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Счета на оплату покупателям';
+$page_title = 'Спецификации к договору';
 
 $mysqli = require '../config/database.php';
-require '../queries/schet_na_oplatu_query.php';
+require '../queries/noreg_specifikacii_k_dogovoru_queries.php';
 
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-// Get total count of orders
-$total_orders = getSchetovCount($mysqli);
-$total_pages = ceil($total_orders / $items_per_page);
+
+$total_specs = getSpecificationsCount($mysqli);
+$total_pages = ceil($total_specs / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
 if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pages;
 
 $offset = ($current_page - 1) * $items_per_page;
 
-// Get orders for current page
-$schetov = getAllschetov($mysqli, $items_per_page, $offset);
+
+$specifications = getAllSpecifications($mysqli, $items_per_page, $offset);
 
 include '../header.php';
 ?>
@@ -36,8 +36,8 @@ include '../header.php';
             <div class="card-header">
               <div class="row w-full">
                 <div class="col">
-                  <h3 class="card-title mb-0">Счета на оплату покупателям</h3>
-                  <p class="text-secondary m-0">Всего счетов: <?= $total_orders ?> штук.</p>
+                  <h3 class="card-title mb-0">Спецификации к договору</h3>
+                  <p class="text-secondary m-0">Всего спецификаций: <?= $total_specs ?> штук.</p>
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
@@ -61,28 +61,28 @@ include '../header.php';
               <table class="table table-vcenter card-table">
                 <thead>
                   <tr>
-                    <th>№ заказа</th>
-                    <th>Дата</th>
-                    <th>Поставщик</th>
-                    <th>Организация</th>
+                    <th>№ спецификации</th>
+                    <th>Дата договора</th>
                     <th>Ответственный</th>
+                    <th>Организация</th>
+                    <th>Поставщик</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($schetov)): ?>
-                    <?php foreach ($schetov as $order): ?>
+                  <?php if (!empty($specifications)): ?>
+                    <?php foreach ($specifications as $spec): ?>
                       <tr>
-                        <td><a href="schet.php?id=<?= htmlspecialchars($order['id']) ?>" class="text-primary"><?= htmlspecialchars($order['nomer']) ?></a></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['data_dokumenta']) ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['vendor_name'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['organization_name'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['responsible_name'] ?? 'N/A') ?></td>
+                        <td><a href="specifikacii.php?id=<?= htmlspecialchars($spec['id']) ?>" class="text-primary"><?= htmlspecialchars($spec['nomer_specifikacii']) ?></a></td>
+                        <td class="text-secondary"><?= htmlspecialchars($spec['data_dogovora']) ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($spec['employee_name'] ?? 'N/A') ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($spec['org_short_name'] ?? 'N/A') ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($spec['kon_short_name'] ?? 'N/A') ?></td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>
                       <td colspan="5" class="text-center text-secondary p-4">
-                        Заказы еще не добавлены. <a href="form.php">Добавьте первый заказ</a>
+                        Спецификации еще не добавлены. <a href="form.php">Добавьте первую спецификацию</a>
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -107,7 +107,6 @@ include '../header.php';
                       </a>
                     </li>
                     <?php
-                    
                     $start_page = max(1, $current_page - 2);
                     $end_page = min($total_pages, $current_page + 2);
                     

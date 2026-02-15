@@ -39,7 +39,6 @@ $document = null;
 $line_items = [];
 $vetis_data_loaded = false;
 $vetis_error = '';
-$utverzhden = false;
 
 
 if ($is_edit) {
@@ -49,7 +48,7 @@ if ($is_edit) {
         die("Документ не найден.");
     }
     
-    $line_items = fetchDocumentLineItems($mysqli, $product_id);
+    $line_items = fetchDocumentLineItems($mysqli, $document['id_index']);
     $date_issued = $document['data_dokumenta'];
     $shipper_name = $document['vendor_name'] ?? '';
     $organization_name = $document['organization_name'] ?? '';
@@ -59,7 +58,6 @@ if ($is_edit) {
     $organization_id = $document['organization_id'] ?? '';
     $vendor_id = $document['vendor_id'] ?? '';
     $responsible_id = $document['responsible_id'] ?? '';
-    $utverzhden = $document['utverzhden'] ?? false;
 } else {
     
     $uuid = isset($_GET['uuid']) ? $_GET['uuid'] : null;
@@ -342,15 +340,6 @@ include '../header.php';
                         </div>    
                     </div>
                 <?php endif; ?>
-
-                <div class="row" style="margin-top: 20px;">
-                    <div class="col-12">
-                        <label class="form-check">
-                            <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= (isset($_POST['utverzhden']) || ($is_edit && $utverzhden)) ? 'checked' : '' ?>>
-                            <span class="form-check-label">Утведить в документах</span>
-                        </label>
-                    </div>
-                </div>
                 
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">

@@ -39,7 +39,7 @@ if ($is_edit) {
         die("Заказ не найден.");
     }
     
-    $line_items = fetchOrderLineItems($mysqli, $zakaz_id);
+    $line_items = fetchOrderLineItems($mysqli, $document['id_index']);
     $date_issued = $document['data_dokumenta'];
     $order_number = $document['nomer'] ?? '';
     $vendor_name = $document['vendor_name'] ?? '';
@@ -221,7 +221,7 @@ include '../header.php';
                             <td>
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][unit_name]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_name'] ?? ($item['unit_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['id_edinicy_izmenereniya'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['id_edinicy_izmereniya'] ?? '')) ?>\">
                                 </div>
                             </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['quantity'] ?? ($item['quantity'] ?? '')) ?>"></td>
@@ -289,15 +289,6 @@ include '../header.php';
 
                 <button type="button" class="btn mt-3 btn-primary" onclick="addRow()">Добавить строку</button>
                 
-                <div class="row" style="margin-top: 20px;">
-                    <div class="col-12">
-                        <label class="form-check">
-                            <input class="form-check-input" type="checkbox" name="utverzhden" value="1" <?= (isset($_POST['utverzhden']) || ($is_edit && $utverzhden)) ? 'checked' : '' ?>>
-                            <span class="form-check-label">Утведить в документах</span>
-                        </label>
-                    </div>
-                </div>
-
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">

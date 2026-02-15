@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/id_index_helper.php';
 require_once __DIR__ . '/entity_helpers.php';
 
 function createArrivalDocument($mysqli, $data) {
@@ -27,9 +28,11 @@ function createArrivalDocument($mysqli, $data) {
         $datetime = $data['product_date'];
         $datetime = str_replace('T', ' ', $datetime) . ':00';
         
-        $utverzhden = isset($data['utverzhden']) ? 1 : 0;
+        $utverzhden = 0;
         
-        $arrival_sql = "INSERT INTO " . postupleniya_tovarov . "(" . COL_ARRIVAL_VENDOR_ID . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_WAREHOUSE_ID . ", " . COL_ARRIVAL_RESPONSIBLE_ID . ", " . COL_ARRIVAL_DATE . ", utverzhden) VALUES (?, ?, ?, ?, ?, ?)";
+        $id_index = getNextIdIndex($mysqli);
+        
+        $arrival_sql = "INSERT INTO " . postupleniya_tovarov . "(" . COL_ARRIVAL_VENDOR_ID . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_WAREHOUSE_ID . ", " . COL_ARRIVAL_RESPONSIBLE_ID . ", " . COL_ARRIVAL_DATE . ", utverzhden, id_index) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $arrival_stmt = $mysqli->stmt_init();
         
         if (!$arrival_stmt->prepare($arrival_sql)) {
@@ -37,13 +40,14 @@ function createArrivalDocument($mysqli, $data) {
         }
         
         $arrival_stmt->bind_param(
-            "iiiisi",
+            "iiiisii",
             $vendor_id,
             $organization_id,
             $warehouse_id,
             $responsible_id,
             $datetime,
-            $utverzhden
+            $utverzhden,
+            $id_index
         );
         
         if (!$arrival_stmt->execute()) {
@@ -95,7 +99,7 @@ function createArrivalDocument($mysqli, $data) {
             }
             
             // Insert line item with id_serii and id_edinicy_izmereniya
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -103,8 +107,9 @@ function createArrivalDocument($mysqli, $data) {
             }
             
             $line_stmt->bind_param(
-                "iiidddiid",
+                "iiiidddiid",
                 $document_id,
+                $id_index,
                 $goods_id,
                 $nds_id,
                 $price,
