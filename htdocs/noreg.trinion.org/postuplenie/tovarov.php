@@ -2,64 +2,59 @@
 
 session_start();
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../log_in.php');
     exit;
 }
 
-// Handle document deletion if delete action is requested
+$mysqli = require '../config/database.php';
+require '../queries/postuplenie_queries.php';
+
+$product_id = isset($_GET['product_id']) ? intval($_GET['product_id']) : null;
+$error = '';
+
+if (!$product_id) {
+    die("Документ не найден.");
+}
+
+$page_title = 'Поступление товара';
+
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    require '../config/database_config.php';
-    require '../queries/delete_product_queries.php';
-    
-    if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
-        die("ID документа не предоставлен.");
-    }
-    
-    $mysqli = require '../config/database.php';
-    $document_id = intval($_GET['product_id']);
-    
-    $result = deleteArrivalDocument($mysqli, $document_id);
-    
+    $result = deleteArrivalDocument($mysqli, $product_id);
     if ($result['success']) {
         header('Location: index.php');
         exit;
     } else {
-        die("Error: " . $result['message']);
+        $error = $result['message'];
     }
 }
 
-$mysqli = require '../config/database.php';
-
-require '../queries/view_product_queries.php';
-
-
-if (!isset($_GET['product_id']) || empty($_GET['product_id'])) {
-    die("ID документа не предоставлен.");
-}
-
-$document_id = intval($_GET['product_id']);
-
-$document = fetchDocumentHeader($mysqli, $document_id);
+$document = fetchDocumentHeader($mysqli, $product_id);
 
 if (!$document) {
     die("Документ не найден.");
 }
 
 $line_items = fetchDocumentLineItems($mysqli, $document['id_index']);
-
 $totals = calculateTotals($line_items);
-$subtotal = $totals['subtotal'];
-$vat_total = $totals['vat_total'];
-$total_due = $totals['total_due'];
+$total_sum = $totals['subtotal'];
+$total_nds = $totals['vat_total'];
 
-$page_title = 'Детали документа поступлення';
+$russian_months = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+$date = DateTime::createFromFormat('Y-m-d', $document['data_dokumenta']);
+$formatted_date = $date ? $date->format('j') . ' ' . $russian_months[(int)$date->format('n')] . ' ' . $date->format('Y') . ' г.' : $document['data_dokumenta'];
 
 include '../header.php';
 ?>
-        <div class="container-fluid">
-                     <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+
+<?php if ($error): ?>
+    <div class="alert alert-danger" role="alert">
+        <?= htmlspecialchars($error) ?>
+    </div>
+<?php endif; ?>
+
+<div class="container-fluid">
+        <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
@@ -69,7 +64,8 @@ include '../header.php';
                             </svg>
                             Печать
                         </button>
-                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true)">
+                         <?php if (!$document['utverzhden']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-4 4"></path>
                                 <path d="M5.828 18.172a2.828 2.828 0 0 0 4 0l10.586 -10.586a2 2 0 0 0 0 -2.829l-1.171 -1.171a2 2 0 0 0 -2.829 0l-10.586 10.586a2.828 2.828 0 0 0 0 4z"></path>
@@ -77,6 +73,8 @@ include '../header.php';
                               </svg>
                             Утвердить
                         </button>
+                        <?php endif; ?>
+                        <?php if ($document['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-2 2"></path>
@@ -85,8 +83,9 @@ include '../header.php';
                                 <path d="M4 20l1.768 -1.768"></path>
                                 <path d="M3 3l18 18"></path>
                               </svg>
-                            Отменить утверждение
+                            Разутвердить
                         </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-primary" onclick="editDocument();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -96,7 +95,8 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true)">
+                       <?php if (!$document['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
                                 <path d="M10.507 10.498l-1.507 1.502v3h3l1.493 -1.498m2 -2.01l4.89 -4.907a2.1 2.1 0 0 0 -2.97 -2.97l-4.913 4.896"></path>
@@ -105,7 +105,19 @@ include '../header.php';
                               </svg>
                             Закрить
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='tovarov.php?product_id=<?= $document_id ?>&action=delete';">
+                        <?php endif; ?>
+                        <?php if ($document['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', false);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                <path d="M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0z"></path>
+                                <path d="M12.5 11.5l-4 4l1.5 1.5"></path>
+                                <path d="M12 15l-1.5 -1.5"></path>
+                              </svg>
+                            Открыть
+                        </button>
+                        <?php endif; ?>
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='tovarov.php?product_id=<?= htmlspecialchars($product_id) ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
@@ -118,104 +130,109 @@ include '../header.php';
                         </button>
                     </div>
                 </div>
-        <div class="card card-lg">
+        <div class="card">
             <div class="card-body">
-                <div class="row" style="position: relative;">
-                    <div class="col-4">
-                        <p class="h3">Организация</p>
-                        <address>
-                            <?= htmlspecialchars($document['organization'] ?? 'N/A') ?><br>
-                        </address>
-                    </div>
-                    <div class="col-4 text-center">
-                        <p class="h3">Дата оформления</p>
-                        <address>
-                            <?= htmlspecialchars($document['data_dokumenta']) ?><br>
-                        </address>
-                    </div>
-                    <div class="col-4 text-end">
-                        <p class="h3">Поставщик</p>
-                        <address>
-                            <?= htmlspecialchars($document['vendor'] ?? 'N/A') ?><br>
-                        </address>
-                    </div>
-                    <div style="position: absolute; right: -55px; bottom: 90px;">
+                <!-- Header -->
+                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                    <h2 style="margin: 0; font-weight: bold;">
+                        Поступление товара № <?= htmlspecialchars($product_id) ?> от <?= htmlspecialchars($formatted_date) ?>
+                    </h2>
+                </div>
+
+                <div style="position: absolute; right: 0px;">
                         <?php if ($document['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
                             <div class="ribbon bg-secondary">Черновик</div>
                         <?php endif; ?>
                     </div>
-                    <div class="col-12 my-5">
-                        <h1>Документ поступлення №<?= htmlspecialchars($document['id']) ?></h1>
+
+                <!-- Organization and Warehouse Info -->
+                <div style="margin-bottom: 30px;">
+                    <div style="margin-bottom: 15px;">
+                        <span>Поставщик<br/>(Исполнитель):</span>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($document['vendor_name'] ?? '') ?>, ИНН <?= htmlspecialchars($document['vendor_inn'] ?? '') ?>, КПП <?= htmlspecialchars($document['vendor_kpp'] ?? '') ?></span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <span>Покупатель<br/>(Заказчик):</span>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($document['org_name'] ?? '') ?>, ИНН <?= htmlspecialchars($document['org_inn'] ?? '') ?>, КПП <?= htmlspecialchars($document['org_kpp'] ?? '') ?></span>
+                    </div>
+                    <div>
+                        <span>Склад:</span>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($document['warehouse_name'] ?? '') ?></span>
                     </div>
                 </div>
-                <table class="table table-transparent table-responsive">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 5%"></th>
-                            <th style="width: 45%">Товар</th>
-                            <th style="width: 15%">Серия</th>
-                            <th class="text-center" style="width: 5%">Кол-во</th>
-                            <th class="text-end" style="width: 15%">Цена</th>
-                            <th class="text-end" style="width: 15%">Сумма</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $item_num = 1;
-                        foreach ($line_items as $item): 
-                        ?>
-                            <tr>
-                                <td class="text-center"><?= $item_num ?></td>
-                                <td>
-                                    <p class="strong mb-1"><?= htmlspecialchars($item['product_name']) ?></p>
-                                </td>
-                                <td>
-                                    <?= htmlspecialchars($item['seria_name'] ?? '-') ?>
-                                    <?php if (!empty($item['data_izgotovleniya']) || !empty($item['srok_godnosti'])): ?>
-                                        <small class="text-muted d-block">
-                                            <?php if (!empty($item['data_izgotovleniya'])): ?>
-                                                Дата изготовления: <?= htmlspecialchars(date('d/m/Y', strtotime($item['data_izgotovleniya']))) ?><br>
-                                            <?php endif; ?>
-                                            <?php if (!empty($item['srok_godnosti'])): ?>
-                                                Срок годности: <?= htmlspecialchars(date('d/m/Y', strtotime($item['srok_godnosti']))) ?>
-                                            <?php endif; ?>
-                                        </small>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-center"><?= htmlspecialchars($item['quantity']) ?> <?= htmlspecialchars($item['unit_name'] ?? '') ?></td>
-                                <td class="text-end"><?= number_format($item['unit_price'], 2, ',', ' ') ?></td>
-                                <td class="text-end"><?= number_format($item['total_amount'], 2, ',', ' ') ?></td>
+
+                <!-- Products Table -->
+                <div style="margin-bottom: 30px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="border: 1px solid #000;">
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Серия</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Кол-во</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Ед.</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Цена</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Сумма</th>
                             </tr>
-                        <?php 
-                        $item_num++;
-                        endforeach; 
-                        ?>
-                        <tr style="height: 50px;"><td colspan="6"></td></tr>
-                        <tr style="height: 50px;"><td colspan="6"></td></tr>
-                        <tr>
-                            <td colspan="5" class="strong text-end">Промежуточный итог</td>
-                            <td class="text-end"><?= number_format($subtotal, 2, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="5" class="strong text-end">Ставка НДС</td>
-                            <td class="text-end"><?= htmlspecialchars(!empty($line_items) ? $line_items[0]['vat_rate'] : 0) ?>%</td>
-                        </tr>
-                        <tr>
-                            <td colspan="5" class="strong text-end">НДС к оплате</td>
-                            <td class="text-end"><?= number_format($vat_total, 2, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="5" class="font-weight-bold text-uppercase text-end">Итого к оплате</td>
-                            <td class="font-weight-bold text-end"><?= number_format($total_due, 2, ',', '.') ?></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="text-secondary text-center mt-5">Благодарим вас за сотрудничество. Мы надеемся на продолжение работы с вами!</p>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($line_items)): ?>
+                                <?php $row_num = 1; ?>
+                                <?php foreach ($line_items as $item): ?>
+                                    <tr style="border: 1px solid #000;">
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['product_name'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['seria_name'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['quantity'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['unit_name'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['unit_price'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['total_amount'] ?? 0), 2, '.', ' ') ?></td>
+                                    </tr>
+                                    <?php $row_num++; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals -->
+                <div style="margin-bottom: 30px; text-align: right;">
+                    <div>
+                        <strong>Подитог:</strong> <span><?= number_format($total_sum, 2, '.', ' ') ?></span>
+                    </div>
+                     <div>
+                        <strong>НДС:</strong> <span><?= number_format($total_nds, 2, '.', ' ') ?></span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Итого:</strong> <span><?= number_format($total_sum + $total_nds, 2, '.', ' ') ?></span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                </div>
+
+                <div style="margin-bottom: 40px; padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+                        <div style="text-align: center;">
+                            <p style="margin-bottom: 30px;">Поставщик _______________________________________</p>
+                            <p style="margin: 0; margin-right: -90px;">м.п.</p>
+                        </div>
+                         <div style="text-align: center;">
+                            <p style="margin-bottom: 30px;">Покупатель ______________________________________</p>
+                           
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        </div>
+    </div>
+</div>
 
 <script>
 function editDocument() {
@@ -224,18 +241,16 @@ function editDocument() {
         alert('Этот документ закрыт и не может быть отредактирован.');
         return;
     }
-    window.location.href = 'form.php?product_id=<?= json_encode($document_id) ?>';
+    window.location.href = 'form.php?product_id=<?= json_encode($product_id) ?>';
 }
 
 function updateDocumentField(fieldName, value) {
-    const documentId = <?= json_encode($document_id) ?>;
+    const documentId = <?= json_encode($product_id) ?>;
     const tableName = 'postupleniya_tovarov';
     
     fetch('../api/toggle_field.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             table_name: tableName,
             document_id: documentId,
@@ -245,16 +260,10 @@ function updateDocumentField(fieldName, value) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            location.reload();
-        }
+        if (data.success) location.reload();
     })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+    .catch(error => console.error('Error:', error));
 }
 </script>
 
-<?php
-include '../footer.php';
-?>
+<?php include '../footer.php'; ?>

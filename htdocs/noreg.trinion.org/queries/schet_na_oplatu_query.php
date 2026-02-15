@@ -3,7 +3,7 @@
 require_once 'id_index_helper.php';
 
 function getSchetovCount($mysqli) {
-    $query = "SELECT COUNT(*) as total FROM scheta_na_oplatu_pokupatelyam WHERE zakryt = 0 OR zakryt IS NULL";
+    $query = "SELECT COUNT(*) as total FROM scheta_na_oplatu WHERE zakryt = 0 OR zakryt IS NULL";
     $result = $mysqli->query($query);
     if ($result) {
         $row = $result->fetch_assoc();
@@ -22,7 +22,7 @@ function getAllschetov($mysqli, $limit, $offset) {
             k.naimenovanie AS vendor_name,
             o.naimenovanie AS organization_name,
             u.user_name AS responsible_name
-        FROM  scheta_na_oplatu_pokupatelyam sp
+        FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
         LEFT JOIN organizacii o ON sp.id_organizacii = o.id
         LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
@@ -72,7 +72,7 @@ function fetchSchetHeader($mysqli, $id) {
             rs2.BIK_banka AS bik_bank,
             rs2.nomer_korrespondentskogo_scheta AS correspondent_account,
             rs2.nomer AS account_number
-        FROM  scheta_na_oplatu_pokupatelyam sp
+        FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
         LEFT JOIN organizacii o ON sp.id_organizacii = o.id
         LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
@@ -150,7 +150,7 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         
         
         $query = "
-            INSERT INTO scheta_na_oplatu_pokupatelyam (
+            INSERT INTO scheta_na_oplatu (
                 data_dokumenta,
                 id_kontragenti_pokupatel,
                 id_organizacii,
@@ -358,7 +358,7 @@ function updateSchetDocument($mysqli, $id, $data) {
         
         
         $query = "
-            UPDATE scheta_na_oplatu_pokupatelyam SET
+            UPDATE scheta_na_oplatu SET
                 data_dokumenta = ?,
                 id_kontragenti_pokupatel = ?,
                 id_organizacii = ?,

@@ -11,8 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $mysqli = require '../config/database.php';
 require '../config/database_config.php';
 require '../queries/database_queries.php';
-require '../queries/add_product_queries.php';
-require '../queries/edit_product_queries.php';
+require '../queries/postuplenie_queries.php';
 
 
 $is_edit = isset($_GET['product_id']) && !empty($_GET['product_id']);

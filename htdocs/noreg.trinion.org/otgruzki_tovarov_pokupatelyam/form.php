@@ -222,6 +222,7 @@ include '../header.php';
                         <tr>
                             <th>№</th>
                             <th>Товар</th>
+                            <th>Серия</th>
                             <th>Ед</th>
                             <th>Кол-во</th>
                             <th>Цена</th>
@@ -243,6 +244,12 @@ include '../header.php';
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][product_name]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($_POST['products'][$row_index]['product_name'] ?? ($item['product_name'] ?? '')) ?>">
                                     <input type="hidden" name="products[<?= $row_index ?>][product_id]" class="product-id" value="<?= htmlspecialchars($item['id_tovary_i_uslugi'] ?? '') ?>">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_name'] ?? ($item['seria_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_id'] ?? ($item['id_serii'] ?? '')) ?>">
                                 </div>
                             </td>
                             <td>
@@ -285,6 +292,12 @@ include '../header.php';
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
+                                    <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td>
@@ -340,6 +353,7 @@ include '../header.php';
             const formConfig = {
                 columns: [
                     { key: 'product', label: 'Товар', type: 'autocomplete' },
+                    { key: 'seria', label: 'Серия', type: 'autocomplete' },
                     { key: 'unit', label: 'Ед', type: 'autocomplete' },
                     { key: 'quantity', label: 'Кол-во', type: 'text' },
                     { key: 'price', label: 'Цена', type: 'text' },

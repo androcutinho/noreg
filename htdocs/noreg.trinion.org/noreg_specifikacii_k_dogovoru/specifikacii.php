@@ -38,6 +38,7 @@ include '../header.php';
                 </svg>
                 Печать
             </button>
+            <?php if (!$spec_info['utverzhden']): ?>
             <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-4 4"></path>
@@ -46,6 +47,8 @@ include '../header.php';
                               </svg>
                             Утвердить
                         </button>
+            <?php endif; ?>
+                        <?php if ($spec_info['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-2 2"></path>
@@ -54,8 +57,9 @@ include '../header.php';
                                 <path d="M4 20l1.768 -1.768"></path>
                                 <path d="M3 3l18 18"></path>
                               </svg>
-                            Отменить утверждение
+                            Разутвердить
                         </button>
+                        <?php endif; ?>
             <button type="button" class="btn btn-primary" onclick="editDocument();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -65,7 +69,8 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true)">
+                        <?php if (!$spec_info['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
                                 <path d="M10.507 10.498l-1.507 1.502v3h3l1.493 -1.498m2 -2.01l4.89 -4.907a2.1 2.1 0 0 0 -2.97 -2.97l-4.913 4.896"></path>
@@ -74,6 +79,18 @@ include '../header.php';
                               </svg>
                             Закрить
                         </button>
+                        <?php endif; ?>
+                        <?php if ($spec_info['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', false);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                <path d="M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0z"></path>
+                                <path d="M12.5 11.5l-4 4l1.5 1.5"></path>
+                                <path d="M12 15l-1.5 -1.5"></path>
+                              </svg>
+                            Открыть
+                        </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='form.php?id=<?= htmlspecialchars($_GET['id']) ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>

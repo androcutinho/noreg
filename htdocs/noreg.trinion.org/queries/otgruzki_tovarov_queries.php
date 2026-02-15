@@ -96,6 +96,8 @@ function fetchOtgruzkiLineItems($mysqli, $id_index) {
             sd.id_index,
             sd.id_tovary_i_uslugi,
             t.naimenovanie AS product_name,
+            sd.id_serii,
+            ser.nomer AS seria_name,
             sd.id_edinicy_izmereniya,
             e.naimenovanie AS unit_name,
             sd.id_sklada AS warehouse_id,
@@ -108,6 +110,7 @@ function fetchOtgruzkiLineItems($mysqli, $id_index) {
             sd.summa AS total_amount
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
+        LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
         LEFT JOIN sklady s ON sd.id_sklada = s.id
         LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
@@ -137,7 +140,6 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             throw new Exception('Недостаточно данных для создания заказа');
         }
         
-        // Get next id_index
         $id_index = getNextIdIndex($mysqli);
         
         if (!$zakaz_pokupatelya_id && !empty($data['zakaz_id'])) {
@@ -197,7 +199,6 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         }
         $update_stmt->close();
         
-        // Insert line items with id_index
         foreach ($data['products'] as $index => $product) {
             if (empty($product['product_name']) || empty($product['quantity'])) {
                 continue;
@@ -209,11 +210,46 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             $unit_price = !empty($product['price']) ? $product['price'] : 0;
             $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
             
+            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
+            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $seria_id = !empty($product['seria_id']) ? $product['seria_id'] : null;
+            $seria_name = !empty($product['seria_name']) ? $product['seria_name'] : null;
+            
+            // Handle series: if seria_name provided but no seria_id, check if it exists or create it
+            if ($seria_name && !$seria_id && $product_id) {
+                // Check if series with this name already exists for this product
+                $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
+                $stmt_check = $mysqli->prepare($check_seria);
+                if ($stmt_check) {
+                    $stmt_check->bind_param('si', $seria_name, $product_id);
+                    $stmt_check->execute();
+                    $result_check = $stmt_check->get_result();
+                    $existing_seria = $result_check->fetch_assoc();
+                    $stmt_check->close();
+                    
+                    if ($existing_seria) {
+                        $seria_id = $existing_seria['id'];
+                    } else {
+                        // Create new series
+                        $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
+                        $stmt_seria = $mysqli->prepare($insert_seria);
+                        if ($stmt_seria) {
+                            $stmt_seria->bind_param('si', $seria_name, $product_id);
+                            if ($stmt_seria->execute()) {
+                                $seria_id = $mysqli->insert_id;
+                            }
+                            $stmt_seria->close();
+                        }
+                    }
+                }
+            }
+            
             $line_query = "
                 INSERT INTO stroki_dokumentov (
                     id_dokumenta,
                     id_index,
                     id_tovary_i_uslugi,
+                    id_serii,
                     id_edinicy_izmereniya,
                     id_sklada,
                     kolichestvo,
@@ -221,7 +257,7 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -229,14 +265,12 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
-            
             $stmt->bind_param(
-                'iiiiidiidd',
+                'iiiiiidiidd',
                 $schet_id,
                 $id_index,
                 $product_id,
+                $seria_id,
                 $unit_id,
                 $warehouse_id,
                 $product['quantity'],
@@ -329,14 +363,12 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
     try {
         $mysqli->begin_transaction();
         
-        // Validate required fields
         if (empty($data['otgruzki_date']) || 
             empty($data['vendor_id']) || empty($data['organization_id']) || 
             empty($data['responsible_id']) || empty($data['products'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
         }
         
-        // Get existing id_index
         $get_index_query = "SELECT id_index FROM  otgruzki_tovarov_pokupatelyam WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $id);
@@ -408,11 +440,46 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
             $unit_price = !empty($product['price']) ? $product['price'] : 0;
             $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
             
+            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
+            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $seria_id = !empty($product['seria_id']) ? $product['seria_id'] : null;
+            $seria_name = !empty($product['seria_name']) ? $product['seria_name'] : null;
+            
+            // Handle series: if seria_name provided but no seria_id, check if it exists or create it
+            if ($seria_name && !$seria_id && $product_id) {
+                // Check if series with this name already exists for this product
+                $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
+                $stmt_check = $mysqli->prepare($check_seria);
+                if ($stmt_check) {
+                    $stmt_check->bind_param('si', $seria_name, $product_id);
+                    $stmt_check->execute();
+                    $result_check = $stmt_check->get_result();
+                    $existing_seria = $result_check->fetch_assoc();
+                    $stmt_check->close();
+                    
+                    if ($existing_seria) {
+                        $seria_id = $existing_seria['id'];
+                    } else {
+                        // Create new series
+                        $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
+                        $stmt_seria = $mysqli->prepare($insert_seria);
+                        if ($stmt_seria) {
+                            $stmt_seria->bind_param('si', $seria_name, $product_id);
+                            if ($stmt_seria->execute()) {
+                                $seria_id = $mysqli->insert_id;
+                            }
+                            $stmt_seria->close();
+                        }
+                    }
+                }
+            }
+            
             $line_query = "
                 INSERT INTO stroki_dokumentov (
                     id_dokumenta,
                     id_index,
                     id_tovary_i_uslugi,
+                    id_serii,
                     id_edinicy_izmereniya,
                     id_sklada,
                     kolichestvo,
@@ -420,7 +487,7 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -428,14 +495,12 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
-            
             $stmt->bind_param(
-                'iiiiiddidd',
+                'iiiiiiddidd',
                 $id,
                 $id_index,
                 $product_id,
+                $seria_id,
                 $unit_id,
                 $warehouse_id,
                 $product['quantity'],
@@ -489,7 +554,6 @@ function deleteOtgruzkiDocument($mysqli, $id) {
         $id_index = $doc['id_index'];
         $zakaz_pokupatelya_id = $doc['id_zakazy_pokupatelei'];
         
-        // Delete line items using id_index
         $delete_items_query = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $stmt = $mysqli->prepare($delete_items_query);
         if (!$stmt) {
@@ -502,7 +566,6 @@ function deleteOtgruzkiDocument($mysqli, $id) {
         }
         $stmt->close();
         
-        // Delete the order header
         $delete_order_query = "DELETE FROM otgruzki_tovarov_pokupatelyam WHERE id = ?";
         $stmt = $mysqli->prepare($delete_order_query);
         if (!$stmt) {

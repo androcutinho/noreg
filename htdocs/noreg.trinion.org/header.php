@@ -109,14 +109,8 @@ if (isset($_SESSION['user_id'])) {
                               </svg></span>
                         <span class="nav-link-title"> Cкрипты </span>
                       </a>
-                      <div class="dropdown-menu" data-bs-popper="static" style="width: 350px;">
-                        <div style="padding: 12px 16px;">
-                          <label class="form-label" style="margin-bottom: 8px; font-weight: 500;">Загрузить серию из Ветис</label>
-                          <div class="input-group mb-3">
-                            <input type="text" id="vsd-uuid-input" class="form-control" placeholder="Введите UUID документа">
-                            <button class="btn" type="button" onclick="loadVSDSeries()">Загрузить</button>
-                          </div>
-                        </div>
+                      <div class="dropdown-menu" data-bs-popper="static">
+                        <a class="dropdown-item" href="/zagruzit_vsd/">Загрузить серию из Ветис</a>
                       </div>
                     </li>
       <!-- END NAVBAR  -->
@@ -148,31 +142,4 @@ if (isset($_SESSION['user_id'])) {
       </header>
       <!-- END NAVBAR  -->
 
-        <script>
-            // Function to load VSD series
-            function loadVSDSeries() {
-                const uuidInput = document.getElementById('vsd-uuid-input');
-                const uuid = uuidInput.value.trim();
-                
-                if (uuid.length === 0) {
-                    alert('Пожалуйста, введите UUID');
-                    return;
-                }
-                
-                
-                window.location.href = 'https://noreg.trinion.org/postuplenie/vetis.php?uuid=' + encodeURIComponent(uuid);
-            }
-
-            // Allow Enter key to trigger the actions
-            document.addEventListener('DOMContentLoaded', function() {
-                const uuidInput = document.getElementById('vsd-uuid-input');
-                
-                if (uuidInput) {
-                    uuidInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            loadVSDSeries();
-                        }
-                    });
-                }
-            });
-        </script>
+        <script></script>

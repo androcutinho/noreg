@@ -99,7 +99,8 @@ include '../header.php';
                               </svg>
                             Создать счет
                         </button>
-                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true);">
+                         <?php if (!$order['utverzhden']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-4 4"></path>
                                 <path d="M5.828 18.172a2.828 2.828 0 0 0 4 0l10.586 -10.586a2 2 0 0 0 0 -2.829l-1.171 -1.171a2 2 0 0 0 -2.829 0l-10.586 10.586a2.828 2.828 0 0 0 0 4z"></path>
@@ -107,7 +108,9 @@ include '../header.php';
                               </svg>
                             Утвердить
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false);">
+                        <?php endif; ?>
+                        <?php if ($order['utverzhden']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-2 2"></path>
                                 <path d="M10 10l-4.172 4.172a2.828 2.828 0 1 0 4 4l4.172 -4.172"></path>
@@ -115,8 +118,9 @@ include '../header.php';
                                 <path d="M4 20l1.768 -1.768"></path>
                                 <path d="M3 3l18 18"></path>
                               </svg>
-                            Отменить утверждение
+                            Разутвердить
                         </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-primary" onclick="editDocument();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -126,6 +130,7 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
+                        <?php if (!$order['zakryt']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -135,6 +140,18 @@ include '../header.php';
                               </svg>
                             Закрить
                         </button>
+                        <?php endif; ?>
+                        <?php if ($order['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', false);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                <path d="M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0z"></path>
+                                <path d="M12.5 11.5l-4 4l1.5 1.5"></path>
+                                <path d="M12 15l-1.5 -1.5"></path>
+                              </svg>
+                            Открыть
+                        </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Этот заказ будет удален.')) window.location.href='zakaz.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -217,12 +234,13 @@ include '../header.php';
 
                 <!-- Totals -->
                 <div style="margin-bottom: 30px; text-align: right;">
+                     <div>
+                        <strong>НДС (<?= htmlspecialchars($nds_rate_text) ?>):</strong> <span><?= number_format($total_nds, 2, '.', ' ') ?></span>
+                    </div>
                     <div style="margin-bottom: 10px;">
                         <strong>Итого:</strong> <span><?= number_format($total_sum, 2, '.', ' ') ?></span>
                     </div>
-                    <div>
-                        <strong>НДС (<?= htmlspecialchars($nds_rate_text) ?>):</strong> <span><?= number_format($total_nds, 2, '.', ' ') ?></span>
-                    </div>
+                   
                 </div>
 
                 
