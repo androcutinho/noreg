@@ -38,7 +38,7 @@ if (!$schet) {
 
 $line_items = fetchSchetLineItems($mysqli, $schet['id_index']);
 
-// Calculate totals
+
 $total_sum = 0;
 $total_nds = 0;
 $nds_rates_used = [];

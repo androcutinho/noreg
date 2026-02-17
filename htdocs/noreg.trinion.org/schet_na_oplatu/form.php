@@ -52,7 +52,7 @@ if ($zakaz_id && !$is_edit) {
         $vendor_name = $zakaz['vendor_name'] ?? '';
         $vendor_id = $zakaz['id_kontragenti_pokupatel'] ?? '';
         $organization_name = $zakaz['organization_name'] ?? '';
-        $organization_id = $zakaz['id_organizacii'] ?? '';
+        $organization_id = $zakaz['id_kontragenti_postavshik'] ?? '';
         $responsible_name = $zakaz['responsible_name'] ?? '';
         $responsible_id = $zakaz['id_otvetstvennyj'] ?? '';
         $zakaz_line_items = fetchOrderLineItems($mysqli, $zakaz['id_index']);
@@ -72,7 +72,7 @@ if ($is_edit) {
     $vendor_name = $document['vendor_name'] ?? '';
     $vendor_id = $document['id_kontragenti_pokupatel'] ?? '';
     $organization_name = $document['organization_name'] ?? '';
-    $organization_id = $document['id_organizacii'] ?? '';
+    $organization_id = $document['id_kontragenti_postavshik'] ?? '';
     $responsible_name = $document['responsible_name'] ?? '';
     $responsible_id = $document['id_otvetstvennyj'] ?? '';
     $schet_pokupatelya_id = $document['Id_raschetnye_scheta_kontragenti_pokupatel'] ?? '';
@@ -181,6 +181,16 @@ include '../header.php';
                         <input class="form-control" type="date" id="schet_date" name="schet_date"
                         value="<?= htmlspecialchars($_POST['schet_date'] ?? $date_issued) ?>">
                     </div>
+                    <div class="col-md-6 mb-3 mt-5">
+                                <label class="form-check form-check-inline">
+                                  <input class="form-check-input" type="radio" name="radios-inline" checked="">
+                                  <span class="form-check-label">От постовщика</span>
+                                </label>
+                                <label class="form-check form-check-inline">
+                                  <input class="form-check-input" type="radio" name="radios-inline">
+                                  <span class="form-check-label">Покупателя</span>
+                                </label>
+                              </div>
                 </div>
 
                 <div class="row">
@@ -192,7 +202,7 @@ include '../header.php';
                     </div>
 
                     <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="organization_id">Организация</label>
+                        <label class="form-label" for="organization_id">Поставщик</label>
                         <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['organization_name'] ?? $organization_name) ?>">
                         <input type="hidden" name="organization_id" class="organization-id" value="<?= htmlspecialchars($_POST['organization_id'] ?? $organization_id) ?>">

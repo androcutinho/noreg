@@ -70,12 +70,12 @@ if (isset($_SESSION['user_id'])) {
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"></path></svg></span>
                         <span class="nav-link-title"> Документы </span>
                       </a>
-                      <div class="dropdown-menu" data-bs-popper="static" style="width: 175px;">
+                      <div class="dropdown-menu" data-bs-popper="static" style="width: 210px;">
                         <a class="dropdown-item" href="/noreg_specifikacii_k_dogovoru">Поступление товаров</a>
                         <a class="dropdown-item" href="./">Перемещение товаров</a>
                         <a class="dropdown-item" href="/zakaz_postavschiku/">Заказы поставщикам</a>
                         <a class="dropdown-item" href="/zakaz_pokupatelya/">Заказы покупателей</a>
-                        <a class="dropdown-item" href="/schet_na_oplatu/">Счета на оплату</a>
+                        <a class="dropdown-item" href="/schet_na_oplatu/">Счета на оплату покупателям</a>
                         <a class="dropdown-item" href="/otgruzki_tovarov_pokupatelyam/">Отгрузки товаров</a>
                       </div>
                     </li>

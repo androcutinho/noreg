@@ -24,7 +24,7 @@ function getAllschetov($mysqli, $limit, $offset) {
             u.user_name AS responsible_name
         FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
-        LEFT JOIN organizacii o ON sp.id_organizacii = o.id
+        LEFT JOIN kontragenti o ON sp.id_kontragenti_postavshik = o.id
         LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
         WHERE sp.zakryt = 0 OR sp.zakryt IS NULL
         ORDER BY sp.data_dokumenta DESC
@@ -53,7 +53,7 @@ function fetchSchetHeader($mysqli, $id) {
             sp.data_dokumenta,
             sp.nomer,
             sp.id_kontragenti_pokupatel,
-            sp.id_organizacii,
+            sp.id_kontragenti_postavshik,
             sp.id_otvetstvennyj,
             sp.utverzhden,
             sp.zakryt,
@@ -74,7 +74,7 @@ function fetchSchetHeader($mysqli, $id) {
             rs2.nomer AS account_number
         FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
-        LEFT JOIN organizacii o ON sp.id_organizacii = o.id
+        LEFT JOIN kontragenti o ON sp.id_kontragenti_postavshik = o.id
         LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
         LEFT JOIN raschetnye_scheta rs1 ON sp.Id_raschetnye_scheta_kontragenti_pokupatel = rs1.id
         LEFT JOIN raschetnye_scheta rs2 ON sp.Id_raschetnye_scheta_organizacii = rs2.id
@@ -153,7 +153,7 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             INSERT INTO scheta_na_oplatu (
                 data_dokumenta,
                 id_kontragenti_pokupatel,
-                id_organizacii,
+                id_kontragenti_postavshik,
                 id_otvetstvennyj,
                 utverzhden,
                 Id_raschetnye_scheta_kontragenti_pokupatel,
@@ -191,7 +191,7 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         $stmt->close();
         
         
-        $update_nomer_query = "UPDATE scheta_na_oplatu_pokupatelyam SET nomer = id WHERE id = ?";
+        $update_nomer_query = "UPDATE scheta_na_oplatu SET nomer = id WHERE id = ?";
         $update_stmt = $mysqli->prepare($update_nomer_query);
         if (!$update_stmt) {
             throw new Exception('Ошибка при обновлении номера: ' . $mysqli->error);
@@ -342,7 +342,7 @@ function updateSchetDocument($mysqli, $id, $data) {
         }
         
        
-        $get_index_query = "SELECT id_index FROM scheta_na_oplatu_pokupatelyam WHERE id = ?";
+        $get_index_query = "SELECT id_index FROM scheta_na_oplatu WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -361,7 +361,7 @@ function updateSchetDocument($mysqli, $id, $data) {
             UPDATE scheta_na_oplatu SET
                 data_dokumenta = ?,
                 id_kontragenti_pokupatel = ?,
-                id_organizacii = ?,
+                id_kontragenti_postavshik = ?,
                 id_otvetstvennyj = ?,
                 Id_raschetnye_scheta_kontragenti_pokupatel = ?,
                 Id_raschetnye_scheta_organizacii = ?
@@ -478,7 +478,7 @@ function deleteSchetDocument($mysqli, $id) {
         $mysqli->begin_transaction();
         
         
-        $get_index_query = "SELECT id_index FROM scheta_na_oplatu_pokupatelyam WHERE id = ?";
+        $get_index_query = "SELECT id_index FROM scheta_na_oplatu WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -506,7 +506,7 @@ function deleteSchetDocument($mysqli, $id) {
         $stmt->close();
         
         
-        $delete_order_query = "DELETE FROM scheta_na_oplatu_pokupatelyam WHERE id = ?";
+        $delete_order_query = "DELETE FROM scheta_na_oplatu WHERE id = ?";
         $stmt = $mysqli->prepare($delete_order_query);
         if (!$stmt) {
             throw new Exception('Ошибка подготовки запроса удаления заказа: ' . $mysqli->error);
