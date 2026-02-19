@@ -12,7 +12,7 @@ $mysqli = require '../config/database.php';
 require '../config/database_config.php';
 require_once '../queries/id_index_helper.php';
 require '../queries/database_queries.php';
-require '../queries/schet_na_oplatu_query.php';
+require '../queries/otgruzki_tovarov_queries.php';
 require '../queries/zakaz_pokupatelya_query.php';
 require '../queries/zakaz_query.php';
 
@@ -28,7 +28,11 @@ $id = $is_edit ? intval($_GET['id']) : null;
 $zakaz_id = isset($_GET['zakaz_id']) ? intval($_GET['zakaz_id']) : (isset($_POST['zakaz_id']) ? intval($_POST['zakaz_id']) : null);
 
 
-$page_title = $is_edit ? 'Редактировать cчет на оплату' : 'Новый cчет на оплату';
+$ot_postavshchika = isset($_GET['ot_postavshchika']) ? (bool)intval($_GET['ot_postavshchika']) : (isset($_POST['ot_postavshchika']) ? (bool)intval($_POST['ot_postavshchika']) : false);
+$pokupatelya = isset($_GET['pokupatelya']) ? (bool)intval($_GET['pokupatelya']) : (isset($_POST['pokupatelya']) ? (bool)intval($_POST['pokupatelya']) : false);
+
+
+$page_title = $is_edit ? 'Редактировать отгрузки товаров' : 'Новый отгрузки товаров';
 $date_issued = date('Y-m-d');
 $vendor_name = '';
 $vendor_id = '';
@@ -36,98 +40,65 @@ $organization_name = '';
 $organization_id = '';
 $responsible_name = '';
 $responsible_id = '';
-$schet_pokupatelya_id = '';
-$schet_pokupatelya_naimenovanie = '';
-$schet_postavschika_id = '';
-$schet_postavschika_naimenovanie = '';
+$warehouse_name = '';
+$warehouse_id = '';
 $utverzhden = '';
-$invoice_type = 'supplier';
 $document = null;
 $line_items = [];
 
 
 if ($zakaz_id && !$is_edit) {
-
-    $order_source = 'buyer'; 
     
-    
-    $supplier_verif_query = "SELECT id FROM zakazy_postavshchikam WHERE id = ?";
-    $supplier_stmt = $mysqli->prepare($supplier_verif_query);
-    if ($supplier_stmt) {
-        $supplier_stmt->bind_param('i', $zakaz_id);
-        $supplier_stmt->execute();
-        $supplier_result = $supplier_stmt->get_result();
-        if ($supplier_result->num_rows > 0) {
-            $order_source = 'supplier';
-        }
-        $supplier_stmt->close();
-    }
-    
-    
-    if ($order_source === 'supplier') {
-        $zakaz = fetchZakazHeader($mysqli, $zakaz_id); 
-    } else {
-        $zakaz = fetchOrderHeader($mysqli, $zakaz_id); 
-    }
-    
-    if ($zakaz) {
-        $date_issued = date('Y-m-d');
-        $vendor_name = $zakaz['vendor_name'] ?? '';
-        $organization_name = $zakaz['organization_name'] ?? '';
-        $responsible_name = $zakaz['responsible_name'] ?? '';
-        $responsible_id = $zakaz['id_otvetstvennyj'] ?? '';
+    if ($ot_postavshchika) {
         
-        
-        if ($order_source === 'supplier') {
-            
-            $vendor_id = $zakaz['id_kontragenti_postavshchik'] ?? '';
-            $organization_id = $zakaz['id_kontragenti_pokupatel'] ?? '';
-            $invoice_type = 'supplier'; 
-        } else {
-        
+        $zakaz = fetchZakazHeader($mysqli, $zakaz_id);
+        if ($zakaz) {
+            $date_issued = date('Y-m-d');
+            $vendor_name = $zakaz['vendor_name'] ?? ''; 
             $vendor_id = $zakaz['id_kontragenti_pokupatel'] ?? '';
-            $organization_id = $zakaz['id_kontragenti_postavshik'] ?? '';
-            $invoice_type = 'buyer'; 
-        }
-        
-        if ($order_source === 'supplier') {
+            $organization_name = $zakaz['organization_name'] ?? ''; 
+            $organization_id = $zakaz['id_kontragenti_postavshchik'] ?? '';
+            $responsible_name = $zakaz['responsible_name'] ?? '';
+            $responsible_id = $zakaz['id_otvetstvennyj'] ?? '';
             $zakaz_line_items = fetchZakazLineItems($mysqli, $zakaz['id_index']);
-        } else {
-            $zakaz_line_items = fetchOrderLineItems($mysqli, $zakaz['id_index']);
+            $line_items = getTovaryZakazasostatkom($mysqli, $zakaz, $zakaz_line_items, 'shipment');
         }
-        $line_items = $zakaz_line_items;
+    } else {
+        
+        $zakaz = fetchOrderHeader($mysqli, $zakaz_id);
+        if ($zakaz) {
+            $date_issued = date('Y-m-d');
+            $vendor_name = $zakaz['vendor_name'] ?? '';
+            $vendor_id = $zakaz['id_kontragenti_pokupatel'] ?? '';
+            $organization_name = $zakaz['organization_name'] ?? '';
+            $organization_id = $zakaz['id_kontragenti_postavshik'] ?? '';
+            $responsible_name = $zakaz['responsible_name'] ?? '';
+            $responsible_id = $zakaz['id_otvetstvennyj'] ?? '';
+            $zakaz_line_items = fetchOrderLineItems($mysqli, $zakaz['id_index']);
+            $line_items = getTovaryZakazasostatkom($mysqli, $zakaz, $zakaz_line_items, 'shipment');
+        }
     }
 }
 
 if ($is_edit) {
-    $document = fetchSchetHeader($mysqli, $id);
+    $document = fetchOtgruzkiHeader($mysqli, $id);
     
     if (!$document) {
-        die("Заказ не найден.");
+        die("Документ не найден.");
     }
     
-    $line_items = fetchSchetLineItems($mysqli, $document['id_index']);
+    $line_items = fetchOtgruzkiLineItems($mysqli, $document['id_index']);
     $date_issued = $document['data_dokumenta'];
     $vendor_name = $document['vendor_name'] ?? '';
-    $vendor_id = $document['id_kontragenti_pokupatel'] ?? '';
+    $vendor_id = $document['id_kontragenti'] ?? '';
     $organization_name = $document['organization_name'] ?? '';
     $organization_id = $document['id_kontragenti_postavshik'] ?? '';
     $responsible_name = $document['responsible_name'] ?? '';
     $responsible_id = $document['id_otvetstvennyj'] ?? '';
-    $schet_pokupatelya_id = $document['Id_raschetnye_scheta_kontragenti_pokupatel'] ?? '';
-    $schet_postavschika_id = $document['Id_raschetnye_scheta_organizacii'] ?? '';
-    $schet_pokupatelya_naimenovanie = $document['schet_pokupatelya_naimenovanie'] ?? '';
-    $schet_postavschika_naimenovanie = $document['schet_postavschika_naimenovanie'] ?? '';
+    $warehouse_name = $document['warehouse_name'] ?? '';
+    $warehouse_id = $document['id_sklada'] ?? '';
+    $zakaz_id = $document['id_zakazy_pokupatelei'] ?? '';
     $utverzhden = $document['utverzhden'] ?? 0;
-    
-    // Determine invoice type based on database values
-    if (!empty($document['pokupatelya'])) {
-        $invoice_type = 'buyer';
-    } elseif (!empty($document['ot_postavshchika'])) {
-        $invoice_type = 'supplier';
-    } else {
-        $invoice_type = 'supplier'; // default to supplier if neither is set
-    }
 }
 
 $nds_rates = [];
@@ -143,9 +114,9 @@ $success = false;
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validation
     $validations = array(
-        'schet_date' => 'Требуется дата заказа',
-        'organization_name' => 'Требуется указать организацию',
-        'vendor_name' => 'Требуется указать поставщика',
+        'otgruzki_date' => 'Требуется дата',
+        'organization_name' => 'Требуется указать поставщик',
+        'vendor_name' => 'Требуется указать покупатель',
         'responsible_name' => 'Требуется указать ответственного'
     );
     
@@ -157,11 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     
     if (!$error && empty($_POST['organization_id'])) {
-        $error = 'Пожалуйста, выберите организацию из списка';
-    }
-    
-    if (!$error && empty($_POST['vendor_id'])) {
-        $error = 'Пожалуйста, выберите поставщика из списка';
+        $error = 'Пожалуйста, выберите поставщик из списка';
     }
     
     if (!$error && empty($_POST['responsible_id'])) {
@@ -179,17 +146,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
             if ($is_edit) {
-                $result = updateSchetDocument($mysqli, $id, $_POST);
+                $result = updateOtgruzkiDocument($mysqli, $id, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: schet.php?id=" . $id);
+                    header("Location: otgruzki.php?id=" . $id);
                     exit;
                 } else {
                     $error = $result['error'];
                 }
             } else {
                 $zakaz_id_for_create = $zakaz_id ?? ($_POST['zakaz_id'] ?? null);
-                $result = createSchetDocument($mysqli, $_POST, $zakaz_id_for_create);
+                $result = createOtgruzkiDocument($mysqli, $_POST, $zakaz_id_for_create);
                 
                 if ($result['success']) {
                     header("Location: index.php");
@@ -223,22 +190,20 @@ include '../header.php';
         <div class="card-body">
             <form method="POST" id="documentForm">
                 <input type="hidden" name="zakaz_id" value="<?= htmlspecialchars($zakaz_id ?? '') ?>">
+                <input type="hidden" name="ot_postavshchika" value="<?= $ot_postavshchika ? '1' : '0' ?>">
+                <input type="hidden" name="pokupatelya" value="<?= $pokupatelya ? '1' : '0' ?>">
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="schet_date">Дата</label>
-                        <input class="form-control" type="date" id="schet_date" name="schet_date"
-                        value="<?= htmlspecialchars($_POST['schet_date'] ?? $date_issued) ?>">
+                        <input class="form-control" type="date" id="otgruzki_date" name="otgruzki_date"
+                        value="<?= htmlspecialchars($_POST['otgruzki_date'] ?? $date_issued) ?>">
                     </div>
-                    <div class="col-md-6 mb-3 mt-5">
-                                <label class="form-check form-check-inline">
-                                  <input class="form-check-input" type="radio" name="invoice_type" value="supplier" <?= ($invoice_type === 'supplier') ? 'checked' : '' ?>>
-                                  <span class="form-check-label">От поставщика</span>
-                                </label>
-                                <label class="form-check form-check-inline">
-                                  <input class="form-check-input" type="radio" name="invoice_type" value="buyer" <?= ($invoice_type === 'buyer') ? 'checked' : '' ?>>
-                                  <span class="form-check-label">Покупателя</span>
-                                </label>
-                              </div>
+                     <div class="col-md-6 mb-3" style="position: relative;">
+                        <label class="form-label" for="warehouse_id">Склад</label>
+                        <input type="text" class="form-control" id="warehouse_id" name="warehouse_name" placeholder="- Выберите склад -" autocomplete="off"
+                        value="<?= htmlspecialchars($_POST['warehouse_name'] ?? $warehouse_name) ?>">
+                        <input type="hidden" name="warehouse_id" class="warehouse-id" value="<?= htmlspecialchars($_POST['warehouse_id'] ?? $warehouse_id) ?>">
+                    </div>
                 </div>
 
                 <div class="row">
@@ -257,21 +222,7 @@ include '../header.php';
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="schet_pokupatelya_id">Расчетный счет покупателя</label>
-                        <input class="form-control" type="text" id="schet_pokupatelya_id" name="schet_pokupatelya_naimenovanie" placeholder="- Выберите расчетный счет покупателя -" autocomplete="off" 
-                        value="<?= htmlspecialchars($_POST['schet_pokupatelya_naimenovanie'] ?? $schet_pokupatelya_naimenovanie) ?>">
-                        <input type="hidden" name="schet_pokupatelya_id" class="schet-pokupatelya-id" value="<?= htmlspecialchars($_POST['schet_pokupatelya_id'] ?? $schet_pokupatelya_id) ?>">
-                    </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="schet_postavschika_id">Расчетный счет поставщика</label>
-                        <input class="form-control" type="text" id="schet_postavschika_id" name="schet_postavschika_naimenovanie" placeholder="- Выберите расчетный счет поставщика -" autocomplete="off"
-                        value="<?= htmlspecialchars($_POST['schet_postavschika_naimenovanie'] ?? $schet_postavschika_naimenovanie) ?>">
-                        <input type="hidden" name="schet_postavschika_id" class="schet-postavschika-id" value="<?= htmlspecialchars($_POST['schet_postavschika_id'] ?? $schet_postavschika_id) ?>">
-                    </div>
-                </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3" style="position: relative;">
@@ -291,12 +242,16 @@ include '../header.php';
                         <tr>
                             <th>№</th>
                             <th>Товар</th>
+                            <th>Серия</th>
                             <th>Ед</th>
                             <th>Кол-во</th>
                             <th>Цена</th>
                             <th>НДС</th>
                             <th>Сумма НДС</th>
                             <th>Сумма</th>
+                            <?php if (!$ot_postavshchika): ?>
+                            <th>Склад</th>
+                            <?php endif; ?>
                             <th></th>
                         </tr>
                     </thead>
@@ -315,11 +270,22 @@ include '../header.php';
                             </td>
                             <td>
                                 <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_name'] ?? ($item['seria_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['seria_id'] ?? ($item['id_serii'] ?? '')) ?>">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[<?= $row_index ?>][unit_name]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_name'] ?? ($item['unit_name'] ?? '')) ?>">
                                     <input type="hidden" name="products[<?= $row_index ?>][unit_id]" class="unit-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['unit_id'] ?? ($item['id_edinicy_izmereniya'] ?? '')) ?>">
                                 </div>
                             </td>
-                            <td><input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['quantity'] ?? (isset($item['kolichestvo_ostatka']) && $item['kolichestvo_ostatka'] > 0 ? $item['kolichestvo_ostatka'] : (isset($item['quantity']) ? $item['quantity'] : '0'))) ?>"></td>
+                            <td>
+                                <?php 
+                                    $field_qty_value = $_POST['products'][$row_index]['quantity'] ?? (isset($item['kolichestvo_ostatka']) && $item['kolichestvo_ostatka'] > 0 ? $item['kolichestvo_ostatka'] : (isset($item['quantity']) ? $item['quantity'] : '0'));
+                                ?>
+                                <input class="form-control" type="text" name="products[<?= $row_index ?>][quantity]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($field_qty_value) ?>">
+                            </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][price]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['price'] ?? ($item['unit_price'] ?? '')) ?>"></td>
                             <td>
                                 <select class="form-control" name="products[<?= $row_index ?>][nds_id]">
@@ -331,6 +297,14 @@ include '../header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa_stavka'] ?? ($item['nds_amount'] ?? '')) ?>"></td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa'] ?? (isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['total_amount']) ? $item['total_amount'] : '0'))) ?>"></td>
+                            <?php if (!$ot_postavshchika): ?>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][warehouse_name]" placeholder="Введите склад" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['warehouse_name'] ?? ($item['warehouse_name'] ?? '')) ?>">
+                                    <input type="hidden" name="products[<?= $row_index ?>][warehouse_id]" class="warehouse-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['warehouse_id'] ?? ($item['warehouse_id'] ?? '')) ?>">
+                                </div>
+                            </td>
+                            <?php endif; ?>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
@@ -342,6 +316,12 @@ include '../header.php';
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="products[0][product_name]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="products[0][product_id]" class="product-id">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
+                                    <input type="hidden" name="products[0][seria_id]" class="seria-id">
                                 </div>
                             </td>
                             <td>
@@ -362,6 +342,14 @@ include '../header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[0][summa_stavka]" placeholder="0" autocomplete="off"></td>
                             <td><input class="form-control" type="text" name="products[0][summa]" placeholder="0" autocomplete="off"></td>
+                            <?php if (!$ot_postavshchika): ?>
+                            <td>
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="products[0][warehouse_name]" placeholder="Введите склад" autocomplete="off">
+                                    <input type="hidden" name="products[0][warehouse_id]" class="warehouse-id">
+                                </div>
+                            </td>
+                            <?php endif; ?>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                         <?php endif; ?>
@@ -391,10 +379,12 @@ include '../header.php';
             const formConfig = {
                 columns: [
                     { key: 'product', label: 'Товар', type: 'autocomplete' },
+                    { key: 'seria', label: 'Серия', type: 'autocomplete' },
                     { key: 'unit', label: 'Ед', type: 'autocomplete' },
                     { key: 'quantity', label: 'Кол-во', type: 'text' },
                     { key: 'price', label: 'Цена', type: 'text' },
-                    { key: 'nds_id', label: 'НДС', type: 'select' }
+                    { key: 'nds_id', label: 'НДС', type: 'select' },
+                    { key: 'warehouse', label: 'Склад', type: 'autocomplete' }
                 ]
             };
                         let ndsOptionsTemplate = '<option value="">--</option>';
@@ -412,55 +402,6 @@ include '../header.php';
             ?>
                 unitsData = <?= json_encode($units_data) ?>;
             <?php } ?>
-            
-            // Initialize hidden ID fields on page load for edit mode
-            // This ensures that pre-filled visible fields have their corresponding IDs populated
-            document.addEventListener('DOMContentLoaded', function() {
-                // If vendor_name has a value but vendor_id is empty, use the existing value
-                const vendorName = document.querySelector('input[name="vendor_name"]');
-                const vendorIdField = document.querySelector('input[name="vendor_id"][class="vendor-id"]');
-                if (vendorName && vendorIdField && vendorName.value && !vendorIdField.value) {
-                    <?php if ($is_edit && $vendor_id): ?>
-                        vendorIdField.value = <?= json_encode($vendor_id) ?>;
-                    <?php endif; ?>
-                }
-                
-                // Same for organization
-                const orgName = document.querySelector('input[name="organization_name"]');
-                const orgIdField = document.querySelector('input[name="organization_id"][class="organization-id"]');
-                if (orgName && orgIdField && orgName.value && !orgIdField.value) {
-                    <?php if ($is_edit && $organization_id): ?>
-                        orgIdField.value = <?= json_encode($organization_id) ?>;
-                    <?php endif; ?>
-                }
-                
-                // Same for responsible
-                const respName = document.querySelector('input[name="responsible_name"]');
-                const respIdField = document.querySelector('input[name="responsible_id"][class="responsible-id"]');
-                if (respName && respIdField && respName.value && !respIdField.value) {
-                    <?php if ($is_edit && $responsible_id): ?>
-                        respIdField.value = <?= json_encode($responsible_id) ?>;
-                    <?php endif; ?>
-                }
-                
-                // Same for schet_pokupatelya
-                const schetPokupName = document.querySelector('input[name="schet_pokupatelya_naimenovanie"]');
-                const schetPokupIdField = document.querySelector('input[name="schet_pokupatelya_id"][class="schet-pokupatelya-id"]');
-                if (schetPokupName && schetPokupIdField && schetPokupName.value && !schetPokupIdField.value) {
-                    <?php if ($is_edit && !empty($schet_pokupatelya_id)): ?>
-                        schetPokupIdField.value = <?= json_encode($schet_pokupatelya_id) ?>;
-                    <?php endif; ?>
-                }
-                
-                // Same for schet_postavschika
-                const schetPostName = document.querySelector('input[name="schet_postavschika_naimenovanie"]');
-                const schetPostIdField = document.querySelector('input[name="schet_postavschika_id"][class="schet-postavschika-id"]');
-                if (schetPostName && schetPostIdField && schetPostName.value && !schetPostIdField.value) {
-                    <?php if ($is_edit && !empty($schet_postavschika_id)): ?>
-                        schetPostIdField.value = <?= json_encode($schet_postavschika_id) ?>;
-                    <?php endif; ?>
-                }
-            });
         </script>
         <script src="../js/schet.js"></script>
         <script src="../js/add_product.js"></script>

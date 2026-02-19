@@ -31,7 +31,7 @@ $utverzhden = '';
 $document = null;
 $line_items = [];
 
-// Load existing document if editing
+
 if ($is_edit) {
     $document = fetchZakazHeader($mysqli, $zakaz_id);
     
@@ -51,7 +51,7 @@ if ($is_edit) {
     $utverzhden = $document['utverzhden'] ?? 0;
 }
 
-// Fetch NDS rates
+
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
 $nds_result = $mysqli->query($nds_query);
@@ -63,7 +63,7 @@ $error = '';
 $success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Validation
+    
     $validations = array(
         'order_date' => 'Требуется дата заказа',
         'order_number' => 'Требуется указать номер заказа',
@@ -201,7 +201,6 @@ include '../header.php';
                             <th>НДС</th>
                             <th>Сумма НДС</th>
                             <th>Сумма</th>
-                            <th>Склад</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -236,12 +235,6 @@ include '../header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa_stavka'] ?? ($item['nds_amount'] ?? '')) ?>"></td>
                             <td><input class="form-control" type="text" name="products[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['summa'] ?? ($item['total_amount'] ?? '')) ?>"></td>
-                            <td>
-                                <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[<?= $row_index ?>][warehouse_name]" placeholder="Введите склад" autocomplete="off" value="<?= htmlspecialchars($_POST['products'][$row_index]['warehouse_name'] ?? ($item['warehouse_name'] ?? '')) ?>">
-                                    <input type="hidden" name="products[<?= $row_index ?>][warehouse_id]" class="warehouse-id" value="<?= htmlspecialchars($_POST['products'][$row_index]['warehouse_id'] ?? ($item['warehouse_id'] ?? '')) ?>">
-                                </div>
-                            </td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
@@ -273,12 +266,6 @@ include '../header.php';
                             </td>
                             <td><input class="form-control" type="text" name="products[0][summa_stavka]" placeholder="0" autocomplete="off"></td>
                             <td><input class="form-control" type="text" name="products[0][summa]" placeholder="0" autocomplete="off"></td>
-                            <td>
-                                <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="products[0][warehouse_name]" placeholder="Введите склад" autocomplete="off">
-                                    <input type="hidden" name="products[0][warehouse_id]" class="warehouse-id">
-                                </div>
-                            </td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                         <?php endif; ?>
@@ -304,15 +291,14 @@ include '../header.php';
 </div>
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
-        <script>            // Form configuration for zakaz_postavschiku
+        <script>            
             const formConfig = {
                 columns: [
                     { key: 'product', label: 'Товар', type: 'autocomplete' },
                     { key: 'unit', label: 'Ед', type: 'autocomplete' },
                     { key: 'quantity', label: 'Кол-во', type: 'text' },
                     { key: 'price', label: 'Цена', type: 'text' },
-                    { key: 'nds_id', label: 'НДС', type: 'select' },
-                    { key: 'warehouse', label: 'Склад', type: 'autocomplete' }
+                    { key: 'nds_id', label: 'НДС', type: 'select' }
                 ]
             };
                         let ndsOptionsTemplate = '<option value="">--</option>';

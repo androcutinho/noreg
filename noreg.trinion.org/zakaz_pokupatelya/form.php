@@ -31,7 +31,7 @@ $utverzhden = '';
 $document = null;
 $line_items = [];
 
-// Load existing document if editing
+
 if ($is_edit) {
     $document = fetchOrderHeader($mysqli, $zakaz_id);
     
@@ -51,7 +51,7 @@ if ($is_edit) {
     $utverzhden = $document['utverzhden'] ?? 0;
 }
 
-// Fetch NDS rates
+
 $nds_rates = [];
 $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
 $nds_result = $mysqli->query($nds_query);
@@ -67,8 +67,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $validations = array(
         'order_date' => 'Требуется дата заказа',
         'order_number' => 'Требуется указать номер заказа',
-        'organization_name' => 'Требуется указать организацию',
-        'vendor_name' => 'Требуется указать поставщика',
+        'organization_name' => 'Требуется указать поставщика',
+        'vendor_name' => 'Требуется указать покупателю',
         'responsible_name' => 'Требуется указать ответственного'
     );
     
@@ -81,11 +81,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
    
     if (!$error && empty($_POST['organization_id'])) {
-        $error = 'Пожалуйста, выберите организацию из списка';
+        $error = 'Пожалуйста, выберите поставщика из списка';
     }
     
     if (!$error && empty($_POST['vendor_id'])) {
-        $error = 'Пожалуйста, выберите поставщика из списка';
+        $error = 'Пожалуйста, выберите  покупателю из списка';
     }
     
     if (!$error && empty($_POST['responsible_id'])) {
@@ -170,7 +170,7 @@ include '../header.php';
                     </div>
 
                     <div class="col-md-6 mb-3" style="position: relative;">
-                        <label class="form-label" for="organization_id">Организация</label>
+                        <label class="form-label" for="organization_id">Поставщик</label>
                         <input class="form-control" type="text" id="organization_id" name="organization_name" placeholder="- Выберите организацию -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['organization_name'] ?? $organization_name) ?>">
                         <input type="hidden" name="organization_id" class="organization-id" value="<?= htmlspecialchars($_POST['organization_id'] ?? $organization_id) ?>">
@@ -304,7 +304,7 @@ include '../header.php';
 </div>
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
-        <script>            // Form configuration for zakaz_postavschiku
+        <script>            
             const formConfig = {
                 columns: [
                     { key: 'product', label: 'Товар', type: 'autocomplete' },
@@ -320,7 +320,7 @@ include '../header.php';
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
             
-            // Load units data for autocomplete
+            
             let unitsData = [];
             <?php
             $units_query = "SELECT id, naimenovanie FROM edinicy_izmereniya ORDER BY naimenovanie ASC";

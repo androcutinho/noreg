@@ -11,6 +11,7 @@ $mysqli = require '../config/database.php';
 require '../queries/zakaz_pokupatelya_query.php';
 require '../queries/schet_na_oplatu_query.php';
 require '../queries/otgruzki_tovarov_queries.php';
+require '../queries/zosdat_edit_specifikatsiu.php';
 
 $zakaz_id = isset($_GET['zakaz_id']) ? intval($_GET['zakaz_id']) : null;
 $error = '';
@@ -81,7 +82,16 @@ include '../header.php';
                             </svg>
                             Печать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='../otgruzki_tovarov_pokupatelyam/form.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>';">
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='../noreg_specifikacii/form.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&pokupatelya=1';">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
+                                <path d="M7 8h10"></path>
+                                <path d="M7 12h10"></path>
+                                <path d="M7 16h10"></path>
+                              </svg>
+                            Создать спецификацию
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='../otgruzki_tovarov/form.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&pokupatelya=1';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
                                 <path d="M7 8h10"></path>
@@ -138,7 +148,7 @@ include '../header.php';
                                 <path d="M16 5l3 3"></path>
                                 <path d="M3 3l18 18"></path>
                               </svg>
-                            Закрить
+                            Закрыть
                         </button>
                         <?php endif; ?>
                         <?php if ($order['zakryt']): ?>
@@ -299,6 +309,12 @@ include '../header.php';
                                     $doc['document_type'] = 'shipment';
                                     $related_documents[] = $doc;
                                 }
+                            } elseif ($doc_type === 'specification') {
+                                $doc = fetchSpecificationHeader($mysqli, intval($doc_id));
+                                if ($doc) {
+                                    $doc['document_type'] = 'specification';
+                                    $related_documents[] = $doc;
+                                }
                             } else {
         
                                 $doc = fetchSchetHeader($mysqli, intval($doc_id));
@@ -331,13 +347,25 @@ include '../header.php';
                                 <?php foreach ($related_documents as $doc): ?>
                                 <tr>
                                     <td>
-                                        <?= ($doc['document_type'] === 'shipment') ? 'Отгрузка' : 'Счет' ?>
+                                        <?php 
+                                        if ($doc['document_type'] === 'shipment') {
+                                            echo 'Отгрузка';
+                                        } elseif ($doc['document_type'] === 'specification') {
+                                            echo 'Спецификация';
+                                        } else {
+                                            echo 'Счет';
+                                        }
+                                        ?>
                                     </td>
                                     <td>
                                         <?php 
-                                        $link = ($doc['document_type'] === 'shipment') 
-                                            ? "../otgruzki_tovarov_pokupatelyam/otgruzki.php?id=" 
-                                            : "../schet_na_oplatu/schet.php?id=";
+                                        if ($doc['document_type'] === 'shipment') {
+                                            $link = "../otgruzki_tovarov/otgruzki.php?id=";
+                                        } elseif ($doc['document_type'] === 'specification') {
+                                            $link = "../noreg_specifikacii/specifikacii.php?id=";
+                                        } else {
+                                            $link = "../schet_na_oplatu/schet.php?id=";
+                                        }
                                         ?>
                                         <a href="<?= $link . htmlspecialchars($doc['id']) ?>" class="text-primary">
                                             <?= htmlspecialchars($doc['nomer'] ?? '') ?>

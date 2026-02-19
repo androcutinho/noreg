@@ -8,10 +8,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $mysqli = require '../config/database.php';
-require '../queries/schet_na_oplatu_query.php';
-require '../queries/platezhi_queries.php';
+require '../queries/otgruzki_tovarov_queries.php';
 
-$page_title = 'Счет на оплату';
+$page_title = 'Отгрузки товаров';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 $error = '';
@@ -22,7 +21,7 @@ if (!$id) {
 
 
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    $result = deleteSchetDocument($mysqli, $id);
+    $result = deleteOtgruzkiDocument($mysqli, $id);
     if ($result['success']) {
         header('Location: index.php');
         exit;
@@ -31,18 +30,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     }
 }
 
-$schet = fetchSchetHeader($mysqli, $id);
+$otgruzki = fetchOtgruzkiHeader($mysqli, $id);
 
-if (!$schet) {
-    die("Счет не найден.");
+if (!$otgruzki) {
+    die("Отгрузка не найдена.");
 }
 
-$line_items = fetchSchetLineItems($mysqli, $schet['id_index']);
+$line_items = fetchOtgruzkiLineItems($mysqli, $otgruzki['id_index']);
 
-// Get related payments
-$related_payments = getPaymentsBySchetId($mysqli, $id);
 
-// Calculate totals
+$total_sum = 0;
 $total_nds = 0;
 $nds_rates_used = [];
 
@@ -60,8 +57,8 @@ $nds_rate_text = !empty($nds_rates_used) ? implode(', ', $nds_rates_used) : '0%'
 
 
 $russian_months = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-$date = DateTime::createFromFormat('Y-m-d', $schet['data_dokumenta']);
-$formatted_date = $date ? $date->format('j') . ' ' . $russian_months[(int)$date->format('n')] . ' ' . $date->format('Y') . ' г.' : $schet['data_dokumenta'];
+$date = DateTime::createFromFormat('Y-m-d', $otgruzki['data_dokumenta']);
+$formatted_date = $date ? $date->format('j') . ' ' . $russian_months[(int)$date->format('n')] . ' ' . $date->format('Y') . ' г.' : $otgruzki['data_dokumenta'];
 
 include '../header.php';
 ?>
@@ -83,16 +80,7 @@ include '../header.php';
                             </svg>
                             Печать
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='../platezhi/form.php?schet_id=<?= htmlspecialchars($id) ?>';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
-                                <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
-                                <path d="M7 8h10"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M7 16h10"></path>
-                              </svg>
-                            Создать платеж
-                        </button>
-                         <?php if (!$schet['utverzhden']): ?>
+                        <?php if (!$otgruzki['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', true)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-4 4"></path>
@@ -102,7 +90,7 @@ include '../header.php';
                             Утвердить
                         </button>
                         <?php endif; ?>
-                        <?php if ($schet['utverzhden']): ?>
+                        <?php if ($otgruzki['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('utverzhden', false)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-2 2"></path>
@@ -114,7 +102,7 @@ include '../header.php';
                             Разутвердить
                         </button>
                         <?php endif; ?>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='form.php?id=<?= htmlspecialchars($id) ?>';">
+                        <button type="button" class="btn btn-primary" onclick="window.location.href='form.php?id=<?= htmlspecialchars($id) ?>&ot_postavshchika=<?= $otgruzki['ot_postavshchika'] ? '1' : '0' ?>';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -123,7 +111,7 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
-                       <?php if (!$schet['zakryt']): ?>
+                        <?php if (!$otgruzki['zakryt']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', true);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -134,7 +122,7 @@ include '../header.php';
                             Закрыть
                         </button>
                         <?php endif; ?>
-                        <?php if ($schet['zakryt']): ?>
+                        <?php if ($otgruzki['zakryt']): ?>
                         <button type="button" class="btn btn-primary" onclick="updateDocumentField('zakryt', false);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
@@ -145,8 +133,8 @@ include '../header.php';
                             Открыть
                         </button>
                         <?php endif; ?>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Этот заказ будет удален.')) window.location.href='schet.php?id=<?= htmlspecialchars($id) ?>&action=delete';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Отгрузка будет удалена.')) window.location.href='otgruzki.php?id=<?= htmlspecialchars($id) ?>&action=delete';">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler;"
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
                                 <path d="M10 11l0 6"></path>
@@ -160,58 +148,8 @@ include '../header.php';
                 </div>
         <div class="card">
             <div class="card-body">
-                <!-- Bank Account Info Table -->
-                <div style="margin-bottom: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                        <tbody>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px; width: 40%; vertical-align: top;">
-                                    <div style="margin-bottom: 4px;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['bank_name1'] : $schet['bank_name']) ?? '') ?></div>
-                                    <div style="font-size: 10px; color: #999;">Банк получателя</div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; width: 10%; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">БИК</div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; width: 25%; text-align: left; vertical-align: middle;">
-                                    <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['bik_bank1'] : $schet['bik_bank']) ?? '') ?></div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 0; width: 50%; vertical-align: middle;">
-                                    <div style="display: flex; height: 100%;">
-                                        <div style="flex: 1; padding: 8px; display: flex; align-items: center;">
-                                            <div >ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_inn'] : $schet['organization_inn']) ?? '') ?></div>
-                                        </div>
-                                        <div style="flex: 1; border-left: 1px solid #000; padding: 8px; display: flex; align-items: center;">
-                                            <div>КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_kpp'] : $schet['organization_kpp']) ?? '') ?></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">Сч. №</div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['correspondent_account1'] : $schet['correspondent_account']) ?? '') ?></div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="border: 1px solid #000; padding: 8px; vertical-align: top;">
-                                    <div style="margin-bottom: 4px;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_name'] : $schet['organization_name']) ?? '') ?></div>
-                                    <div style="font-size: 10px; color: #999;">Получатель</div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">Сч. №</div>
-                                </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['account_number1'] : $schet['account_number']) ?? '') ?></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
                 <div style="position: absolute; right: 0px; top: 160px;">
-                        <?php if ($schet['utverzhden']): ?>
+                        <?php if ($otgruzki['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
                             <div class="ribbon bg-secondary">Черновик</div>
@@ -221,34 +159,60 @@ include '../header.php';
                 <!-- Header -->
                 <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
                     <h2 style="margin: 0; font-weight: bold;">
-                        Счет на оплату № <?= htmlspecialchars($schet['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
+                        Отгрузка № <?= htmlspecialchars($otgruzki['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
                     </h2>
                 </div>
 
-                <!-- Organization and Vendor Info -->
+                
                 <div style="margin-bottom: 30px;">
+                    <?php if ($otgruzki['ot_postavshchika']): ?>
+            
+                        <div style="margin-bottom: 15px;">
+                            <span>Поставщик<br/>(Исполнитель):</span>
+                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['organization_name'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['organization_inn'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['organization_kpp'] ?? '') ?></span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span>Покупатель<br/>(Получатель):</span>
+                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['vendor_name'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['vendor_inn'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['vendor_kpp'] ?? '') ?></span>
+                        </div>
+                    <?php else: ?>
+                        <div style="margin-bottom: 15px;">
+                            <span>Поставщик<br/>(Исполнитель):</span>
+                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['organization_name'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['organization_inn'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['organization_kpp'] ?? '') ?></span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <span>Покупатель<br/>(Получатель):</span>
+                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['vendor_name'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['vendor_inn'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['vendor_kpp'] ?? '') ?></span>
+                        </div>
+                    <?php endif; ?>
                     <div style="margin-bottom: 15px;">
-                        <span >Поставщик<br/>(Исполнитель):</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_name'] : $schet['organization_name']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_inn'] : $schet['organization_inn']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['vendor_kpp'] : $schet['organization_kpp']) ?? '') ?></span>
+                        <span>Склад отгрузки:</span>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['warehouse_name'] ?? 'Не указан') ?></span>
                     </div>
                     <div>
-                        <span>Покупатель<br/>(Заказчик):</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['organization_name'] : $schet['vendor_name']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['organization_inn'] : $schet['vendor_inn']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['organization_kpp'] : $schet['vendor_kpp']) ?? '') ?></span>
+                        <span><?= $otgruzki['ot_postavshchika'] ? 'Заказ поставщику' : 'Заказ покупателя' ?>:</span>
+                        <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['customer_order_nomer'] ?? 'Не указан') ?></span>
                     </div>
                 </div>
 
                 
 
-                <!-- Products Table -->
+                
                 <div style="margin-bottom: 30px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                         <thead>
                             <tr style="border: 1px solid #000;">
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары (работы, услуги)</th>
+                                <?php if (!$otgruzki['ot_postavshchika']): ?>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Серия</th>
+                                <?php endif; ?>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Кол-во</th>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Ед.</th>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Цена</th>
+                                <?php if (!$otgruzki['ot_postavshchika']): ?>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Склад</th>
+                                <?php endif; ?>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Сумма</th>
                             </tr>
                         </thead>
@@ -259,16 +223,22 @@ include '../header.php';
                                     <tr style="border: 1px solid #000;">
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['product_name'] ?? '') ?></td>
+                                        <?php if (!$otgruzki['ot_postavshchika']): ?>
+                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
+                                        <?php endif; ?>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['quantity'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['unit_name'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['unit_price'] ?? 0), 2, '.', ' ') ?></td>
+                                        <?php if (!$otgruzki['ot_postavshchika']): ?>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['warehouse_name'] ?? 'Не указан') ?></td>
+                                        <?php endif; ?>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['total_amount'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                    <td colspan="8" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -296,69 +266,16 @@ include '../header.php';
                 <div style="margin-bottom: 40px; padding: 15px;">
                     <div style="display: flex; justify-content: space-between; margin-top: 40px;">
                         <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Руководитель _______________________________________</p>
+                            <p style="margin-bottom: 30px;">Поставащик _______________________________________</p>
                             <p style="margin: 0; margin-right: -90px;">м.п.</p>
                         </div>
                         <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Бухгалтер ______________________________________</p>
+                            <p style="margin-bottom: 30px;">Покупатель ______________________________________</p>
                            
                         </div>
                     </div>
                 </div>
 
-                <?php if (!empty($related_payments)): ?>
-                <div>    
-                <div style="margin-top: 40px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные платежи</h3>
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Тип</th>
-                                    <th>Номер</th>
-                                    <th>Дата</th>
-                                    <th>Плательщик</th>
-                                    <th>Получатель</th>
-                                    <th>Сумма</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($related_payments as $payment): ?>
-                                <tr>
-                                    <td class="text-center text-secondary">
-                                        <?php 
-                                        if ($payment['iskhodyashchij']) {
-                                            echo 'Исходящий';
-                                        } else {
-                                            echo 'Входящий';
-                                        }
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <a href="../platezhi/platezh.php?id=<?= htmlspecialchars($payment['id']) ?>" class="text-primary">
-                                            <?= htmlspecialchars($payment['nomer']) ?>
-                                        </a>
-                                    </td>
-                                    <td class="text-secondary">
-                                        <?php 
-                                        $payment_date = DateTime::createFromFormat('Y-m-d H:i:s', $payment['data_dokumenta']);
-                                        if (!$payment_date) {
-                                            $payment_date = DateTime::createFromFormat('Y-m-d', $payment['data_dokumenta']);
-                                        }
-                                        echo $payment_date ? $payment_date->format('d.m.Y H:i') : htmlspecialchars($payment['data_dokumenta']);
-                                        ?>
-                                    </td>
-                                    <td class="text-secondary"><?= htmlspecialchars($payment['payer_name'] ?? 'N/A') ?></td>
-                                    <td class="text-secondary"><?= htmlspecialchars($payment['recipient_name'] ?? 'N/A') ?></td>
-                                    <td class="text-secondary"><?= number_format(floatval($payment['summa'] ?? 0), 2, '.', ' ') ?> </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </div>
-                <?php endif; ?>
                 
             </div>
         </div>
@@ -367,7 +284,7 @@ include '../header.php';
 
 <script>
 function editDocument() {
-    const isClosed = <?= json_encode((bool)$schet['zakryt']) ?>;
+    const isClosed = <?= json_encode((bool)$otgruzki['zakryt']) ?>;
     if (isClosed) {
         alert('Этот документ закрыт и не может быть отредактирован.');
         return;
@@ -377,7 +294,7 @@ function editDocument() {
 
 function updateDocumentField(fieldName, value) {
     const documentId = <?= json_encode($id) ?>;
-    const tableName = 'scheta_na_oplatu';
+    const tableName = 'otgruzki_tovarov_pokupatelyam';
     
     fetch('../api/toggle_field.php', {
         method: 'POST',

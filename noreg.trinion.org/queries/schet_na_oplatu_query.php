@@ -123,8 +123,6 @@ function fetchSchetLineItems($mysqli, $id_index) {
             t.naimenovanie AS product_name,
             sd.id_edinicy_izmereniya,
             e.naimenovanie AS unit_name,
-            sd.id_sklada AS warehouse_id,
-            s.naimenovanie AS warehouse_name,
             sd.kolichestvo AS quantity,
             sd.cena AS unit_price,
             sd.id_stavka_nds,
@@ -134,7 +132,6 @@ function fetchSchetLineItems($mysqli, $id_index) {
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
-        LEFT JOIN sklady s ON sd.id_sklada = s.id
         LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
         WHERE sd.id_index = ?
         ORDER BY sd.id ASC
@@ -241,7 +238,6 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
             $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
             $unit_price = !empty($product['price']) ? $product['price'] : 0;
-            $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -249,13 +245,12 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                     id_index,
                     id_tovary_i_uslugi,
                     id_edinicy_izmereniya,
-                    id_sklada,
                     kolichestvo,
                     cena,
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -267,12 +262,11 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
             
             $stmt->bind_param(
-                'iiiiidiidd',
+                'iiiidiidd',
                 $schet_id,
                 $id_index,
                 $product_id,
                 $unit_id,
-                $warehouse_id,
                 $product['quantity'],
                 $unit_price,
                 $nds_id,
@@ -461,7 +455,6 @@ function updateSchetDocument($mysqli, $id, $data) {
             $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
             $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
             $unit_price = !empty($product['price']) ? $product['price'] : 0;
-            $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -469,13 +462,12 @@ function updateSchetDocument($mysqli, $id, $data) {
                     id_index,
                     id_tovary_i_uslugi,
                     id_edinicy_izmereniya,
-                    id_sklada,
                     kolichestvo,
                     cena,
                     id_stavka_nds,
                     summa_nds,
                     summa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
             
             $stmt = $mysqli->prepare($line_query);
@@ -487,12 +479,11 @@ function updateSchetDocument($mysqli, $id, $data) {
             $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
             
             $stmt->bind_param(
-                'iiiiiddidd',
+                'iiiiddidd',
                 $id,
                 $id_index,
                 $product_id,
                 $unit_id,
-                $warehouse_id,
                 $product['quantity'],
                 $unit_price,
                 $nds_id,
