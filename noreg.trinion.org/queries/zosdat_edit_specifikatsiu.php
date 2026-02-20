@@ -315,7 +315,7 @@ function fetchSpecificationHeader($mysqli, $spec_id) {
         nsk.nomer_specifikacii as nomer, 
         nsk.data_dogovora AS data_dokumenta, 
         nsk.utverzhden,
-        so.familiya AS responsible_name
+        CONCAT(COALESCE(so.familiya, ''), ' ', COALESCE(so.imya, ''), ' ', COALESCE(so.otchestvo, '')) AS responsible_name
         FROM noreg_specifikacii_k_dogovoru nsk
         LEFT JOIN sotrudniki so ON nsk.id_sotrudniki = so.id
         WHERE nsk.id = ?

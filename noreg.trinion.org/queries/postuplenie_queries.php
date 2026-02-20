@@ -9,7 +9,7 @@ function createArrivalDocument($mysqli, $data) {
     try {
         $mysqli->begin_transaction();
         
-        // Get or create warehouse, vendor, organization
+        
         $warehouse_id_input = isset($data['warehouse_id']) ? $data['warehouse_id'] : null;
         $warehouse_name_input = isset($data['warehouse_name']) ? $data['warehouse_name'] : null;
         $data['warehouse_id'] = getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_input);

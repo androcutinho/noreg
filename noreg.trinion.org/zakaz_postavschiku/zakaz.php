@@ -196,12 +196,12 @@ include '../header.php';
                 <!-- Organization and Vendor Info -->
                 <div style="margin-bottom: 30px;">
                     <div style="margin-bottom: 15px;">
-                        <span style="font-weight: bold;">Исполнитель:</span>
-                        <span><?= htmlspecialchars($order['organization_name'] ?? '') ?>, ИНН <?= htmlspecialchars($order['organization_inn'] ?? '') ?>, КПП <?= htmlspecialchars($order['organization_kpp'] ?? '') ?></span>
+                        <span style="font-weight: bold;">Поставщик<br/>(Исполнитель):</span>
+                        <span><?= htmlspecialchars($order['vendor_name'] ?? '') ?>, ИНН <?= htmlspecialchars($order['vendor_inn'] ?? '') ?>, КПП <?= htmlspecialchars($order['vendor_kpp'] ?? '') ?></span>
                     </div>
                     <div>
-                        <span style="font-weight: bold;">Заказчик:</span>
-                        <span><?= htmlspecialchars($order['vendor_name'] ?? '') ?>, ИНН <?= htmlspecialchars($order['vendor_inn'] ?? '') ?>, КПП <?= htmlspecialchars($order['vendor_kpp'] ?? '') ?></span>
+                        <span style="font-weight: bold;">Покупатель<br/>(Заказчик):</span>
+                        <span><?= htmlspecialchars($order['organization_name'] ?? '') ?>, ИНН <?= htmlspecialchars($order['organization_inn'] ?? '') ?>, КПП <?= htmlspecialchars($order['organization_kpp'] ?? '') ?></span>
                     </div>
                 </div>
 

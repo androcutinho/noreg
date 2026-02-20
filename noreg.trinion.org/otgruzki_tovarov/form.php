@@ -159,7 +159,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = createOtgruzkiDocument($mysqli, $_POST, $zakaz_id_for_create);
                 
                 if ($result['success']) {
-                    header("Location: index.php");
+                    $redirect_type = (!empty($_POST['ot_postavshchika']) && $_POST['ot_postavshchika'] === '1') ? 'postavschik' : 'pokupatel';
+                    header("Location: index.php?type=" . $redirect_type);
                     exit;
                 } else {
                     $error = $result['error'];

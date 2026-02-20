@@ -21,11 +21,11 @@ function getAllZakazy($mysqli, $limit, $offset) {
             zp.nomer,
             k.naimenovanie AS vendor_name,
             o.naimenovanie AS organization_name,
-            u.user_name AS responsible_name
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
         FROM zakazy_postavshchikam zp
         LEFT JOIN kontragenti k ON zp.id_kontragenti_postavshchik = k.id
         LEFT JOIN kontragenti o ON zp.id_kontragenti_pokupatel = o.id
-        LEFT JOIN users u ON zp.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki s ON zp.id_otvetstvennyj = s.id
         WHERE zp.zakryt = 0 OR zp.zakryt IS NULL
         ORDER BY zp.data_dokumenta DESC
         LIMIT ? OFFSET ?
@@ -64,11 +64,11 @@ function fetchZakazHeader($mysqli, $zakaz_id) {
             o.naimenovanie AS organization_name,
             o.INN AS organization_inn,
             o.KPP AS organization_kpp,
-            u.user_name AS responsible_name
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
         FROM zakazy_postavshchikam zp
         LEFT JOIN kontragenti k ON zp.id_kontragenti_postavshchik = k.id
         LEFT JOIN kontragenti o ON zp.id_kontragenti_pokupatel = o.id
-        LEFT JOIN users u ON zp.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki s ON zp.id_otvetstvennyj = s.id
         WHERE zp.id = ?
     ";
     

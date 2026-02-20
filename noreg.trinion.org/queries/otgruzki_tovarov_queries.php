@@ -42,7 +42,7 @@ function resolveKontragenteId($mysqli, $id, $name) {
 function resolveUserId($mysqli, $id, $name) {
     if (!empty($id)) {
        
-        $check_query = "SELECT user_id FROM users WHERE user_id = ?";
+        $check_query = "SELECT id FROM sotrudniki WHERE id = ?";
         $stmt = $mysqli->prepare($check_query);
         if ($stmt) {
             $stmt->bind_param('i', $id);
@@ -58,7 +58,7 @@ function resolveUserId($mysqli, $id, $name) {
     
     if (!empty($name)) {
         
-        $lookup_query = "SELECT user_id FROM users WHERE user_name = ? LIMIT 1";
+        $lookup_query = "SELECT id FROM sotrudniki WHERE CONCAT(COALESCE(familiya, ''), ' ', COALESCE(imya, ''), ' ', COALESCE(otchestvo, '')) = ? LIMIT 1";
         $stmt = $mysqli->prepare($lookup_query);
         if ($stmt) {
             $stmt->bind_param('s', $name);
@@ -67,12 +67,12 @@ function resolveUserId($mysqli, $id, $name) {
             $found = $result->fetch_assoc();
             $stmt->close();
             if ($found) {
-                return ['success' => true, 'id' => $found['user_id']];
+                return ['success' => true, 'id' => $found['id']];
             }
         }
     }
     
-    return ['success' => false, 'error' => 'Пользователь не найден'];
+    return ['success' => false, 'error' => 'Сотрудник не найден'];
 }
 
 function getOtgruzkiCount($mysqli, $type = 'pokupatel') {
@@ -104,11 +104,11 @@ function getAllOtgruzki($mysqli, $limit, $offset, $type = 'pokupatel') {
             op.nomer,
             k.naimenovanie AS vendor_name,
             o.naimenovanie AS organization_name,
-            u.user_name AS responsible_name
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
         FROM  otgruzki_tovarov_pokupatelyam op
         LEFT JOIN kontragenti k ON op.id_kontragenti_pokupatel = k.id
         LEFT JOIN kontragenti o ON op.id_kontragenti_postavshik = o.id
-        LEFT JOIN users u ON op.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki s ON op.id_otvetstvennyj = s.id
         $where
         ORDER BY op.data_dokumenta DESC
         LIMIT ? OFFSET ?
@@ -151,13 +151,13 @@ function fetchOtgruzkiHeader($mysqli, $id) {
             o.naimenovanie AS organization_name,
             o.INN AS organization_inn,
             o.KPP AS organization_kpp,
-            u.user_name AS responsible_name,
+            CONCAT(COALESCE(sr.familiya, ''), ' ', COALESCE(sr.imya, ''), ' ', COALESCE(sr.otchestvo, '')) AS responsible_name,
             COALESCE(zp.nomer, zs.nomer) AS customer_order_nomer
         FROM  otgruzki_tovarov_pokupatelyam op
         LEFT JOIN sklady s ON op.id_sklada = s.id
         LEFT JOIN kontragenti k ON op.id_kontragenti_pokupatel  = k.id
         LEFT JOIN kontragenti o ON op.id_kontragenti_postavshik = o.id
-        LEFT JOIN users u ON op.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki sr ON op.id_otvetstvennyj = sr.id
         LEFT JOIN zakazy_pokupatelei zp ON op.id_zakazy_pokupatelei = zp.id
         LEFT JOIN zakazy_postavshchikam zs ON op.id_zakazy_pokupatelei = zs.id
         

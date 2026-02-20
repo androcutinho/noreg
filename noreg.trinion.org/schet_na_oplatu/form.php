@@ -192,7 +192,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = createSchetDocument($mysqli, $_POST, $zakaz_id_for_create);
                 
                 if ($result['success']) {
-                    header("Location: index.php");
+                    $redirect_type = isset($_POST['invoice_type']) && $_POST['invoice_type'] === 'buyer' ? 'pokupatel' : 'postavschik';
+                    header("Location: index.php?type=" . $redirect_type);
                     exit;
                 } else {
                     $error = $result['error'];

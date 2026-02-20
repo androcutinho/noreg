@@ -3,7 +3,7 @@ const autocompleteFields = [
     { inputId: 'warehouse_id', table: 'sklady', col: 'naimenovanie' },
     { inputId: 'vendor_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
     { inputId: 'organization_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },
-    { inputId: 'responsible_id', table: 'users', col: 'user_name', idCol: 'user_id' }
+    { inputId: 'responsible_id', table: 'sotrudniki', col: 'fio' }
 ];
 
 

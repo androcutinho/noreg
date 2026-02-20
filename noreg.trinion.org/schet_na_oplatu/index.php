@@ -66,8 +66,8 @@ include '../header.php';
                   <tr>
                     <th>№ заказа</th>
                     <th>Дата</th>
+                    <th>Покупатель</th>
                     <th>Поставщик</th>
-                    <th>Организация</th>
                     <th>Ответственный</th>
                   </tr>
                 </thead>
@@ -77,8 +77,8 @@ include '../header.php';
                       <tr>
                         <td><a href="schet.php?id=<?= htmlspecialchars($order['id']) ?>" class="text-primary"><?= htmlspecialchars($order['nomer']) ?></a></td>
                         <td class="text-secondary"><?= htmlspecialchars($order['data_dokumenta']) ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['vendor_name'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($order['organization_name'] ?? 'N/A') ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars(($type === 'postavschik' ? $order['organization_name'] : $order['vendor_name']) ?? 'N/A') ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars(($type === 'postavschik' ? $order['vendor_name'] : $order['organization_name']) ?? 'N/A') ?></td>
                         <td class="text-secondary"><?= htmlspecialchars($order['responsible_name'] ?? 'N/A') ?></td>
                       </tr>
                     <?php endforeach; ?>

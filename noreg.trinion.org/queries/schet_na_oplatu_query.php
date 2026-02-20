@@ -29,11 +29,11 @@ function getAllschetov($mysqli, $limit, $offset, $type = 'pokupatel') {
             sp.nomer,
             k.naimenovanie AS vendor_name,
             o.naimenovanie AS organization_name,
-            u.user_name AS responsible_name
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
         FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
         LEFT JOIN kontragenti o ON sp.id_kontragenti_postavshik = o.id
-        LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki s ON sp.id_otvetstvennyj = s.id
         WHERE (sp.zakryt = 0 OR sp.zakryt IS NULL)";
     
     if ($type === 'postavschik') {
@@ -82,7 +82,7 @@ function fetchSchetHeader($mysqli, $id) {
             o.naimenovanie AS organization_name,
             o.INN AS organization_inn,
             o.KPP AS organization_kpp,
-            u.user_name AS responsible_name,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name,
             rs1.naimenovanie AS schet_pokupatelya_naimenovanie,
             rs1.naimenovanie_banka AS bank_name1,
             rs1.BIK_banka AS bik_bank1,
@@ -96,7 +96,7 @@ function fetchSchetHeader($mysqli, $id) {
         FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
         LEFT JOIN kontragenti o ON sp.id_kontragenti_postavshik = o.id
-        LEFT JOIN users u ON sp.id_otvetstvennyj = u.user_id
+        LEFT JOIN sotrudniki s ON sp.id_otvetstvennyj = s.id
         LEFT JOIN raschetnye_scheta rs1 ON sp.Id_raschetnye_scheta_kontragenti_pokupatel = rs1.id
         LEFT JOIN raschetnye_scheta rs2 ON sp.Id_raschetnye_scheta_organizacii = rs2.id
         
