@@ -1,9 +1,8 @@
 <?php
 
-// Get cutoff date
 $cutoff_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 
-// Get specification ID from parameter
+
 $spec_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 
@@ -30,25 +29,25 @@ if ($spec_id) {
             nsk.dlya_zakaza_pokupatelya,
             nsk.dlya_zakaza_postavshiku,
             nsk.id_index,
-            org.polnoe_naimenovanie_organizacii AS org_full_name,
-            org.sokrashchyonnoe_naimenovanie AS org_short_name,
+            org.polnoe_naimenovanie_organizacii AS org_polnoe_naimenovanie,
+            org.sokrashchyonnoe_naimenovanie AS org_sokrashchyonnoe_naimenovanie,
             org.OGRN AS org_ogrn,
             org.INN AS org_inn,
             org.KPP AS org_kpp,
-            org.pochtovyj_adress AS org_address,
-            org.v_lice_dlya_documentov AS org_representative,
-            kon.polnoe_naimenovanie_organizacii AS kon_full_name,
-            kon.sokrashchyonnoe_naimenovanie AS kon_short_name,
+            org.pochtovyj_adress AS org_adress,
+            org.v_lice_dlya_documentov AS org_v_lice_dlya_documentov,
+            kon.polnoe_naimenovanie_organizacii AS kon_polnoe_naimenovanie,
+            kon.sokrashchyonnoe_naimenovanie AS kon_sokrashchyonnoe_naimenovanie,
             kon.OGRN AS kon_ogrn,
             kon.INN AS kon_inn,
             kon.KPP AS kon_kpp,
-            kon.pochtovyj_adress AS kon_address,
-            kon.v_lice_dlya_documentov AS kon_representative,
+            kon.pochtovyj_adress AS kon_adress,
+            kon.v_lice_dlya_documentov AS kon_v_lice_dlya_documentov,
             sr.dolgnost AS sotrudnik_dolgnost,
             sr.familiya AS sotrudnik_familiya,
             sr.imya AS sotrudnik_imya,
             sr.otchestvo AS sotrudnik_otchestvo
-        FROM noreg_specifikacii_k_dogovoru nsk
+        FROM noreg_specifikacii_k_zakazam  nsk
         LEFT JOIN kontragenti org ON nsk.id_kontragenti_postavshik = org.id
         LEFT JOIN kontragenti kon ON nsk.id_kontragenti_pokupatel  = kon.id
         LEFT JOIN sotrudniki sr ON nsk.id_sotrudniki = sr.id
@@ -65,19 +64,19 @@ if ($spec_id) {
 $stmt = $mysqli->prepare("
     SELECT
         sd.id AS line_id,
-        p.naimenovanie AS product_name,
-        sd.planiruemaya_data_postavki AS planned_date,
-        sd.kolichestvo AS quantity,
-        u.naimenovanie AS unit_name,
-        sd.cena AS price,
-        sd.summa AS amount,
+        p.naimenovanie AS naimenovanie_tovara,
+        sd.planiruemaya_data_postavki AS planiruemaya_data_postavki,
+        sd.kolichestvo AS kolichestvo,
+        u.naimenovanie AS naimenovanie_serii,
+        sd.cena AS cena,
+        sd.summa AS kolichestvo,
         sd.summa_nds  AS summa_nds,
         sn.stavka_nds AS stavka
     FROM stroki_dokumentov sd
     JOIN tovary_i_uslugi p ON sd.id_tovary_i_uslugi = p.id
     JOIN edinicy_izmereniya u ON sd.id_edinicy_izmereniya = u.id
     JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
-    WHERE sd.id_index = (SELECT id_index FROM noreg_specifikacii_k_dogovoru WHERE id = ?)
+    WHERE sd.id_index = (SELECT id_index FROM noreg_specifikacii_k_zakazam  WHERE id = ?)
     ORDER BY YEAR(sd.planiruemaya_data_postavki), MONTH(sd.planiruemaya_data_postavki), p.naimenovanie
 ");
 $stmt->bind_param('i', $spec_id);
@@ -86,18 +85,18 @@ $result = $stmt->get_result();
 
 $items = [];
 while ($row = $result->fetch_assoc()) {
-    $month = strftime('%B %Y', strtotime($row['planned_date']));
-    $items[$month][] = $row;
+    $mesyats = strftime('%B %Y', strtotime($row['planiruemaya_data_postavki']));
+    $items[$mesyats][] = $row;
 }
 
 
 function getSpecificationsCount($mysqli, $type = null) {
     if ($type === 'postavschik') {
-        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_dogovoru WHERE (zakryt = 0 OR zakryt IS NULL) AND dlya_zakaza_postavshiku = 1");
+        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_zakazam  WHERE (zakryt = 0 OR zakryt IS NULL) AND dlya_zakaza_postavshiku = 1");
     } elseif ($type === 'pokupatel') {
-        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_dogovoru WHERE (zakryt = 0 OR zakryt IS NULL) AND dlya_zakaza_pokupatelya = 1");
+        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_zakazam  WHERE (zakryt = 0 OR zakryt IS NULL) AND dlya_zakaza_pokupatelya = 1");
     } else {
-        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_dogovoru WHERE zakryt = 0 OR zakryt IS NULL");
+        $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM noreg_specifikacii_k_zakazam  WHERE zakryt = 0 OR zakryt IS NULL");
     }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -121,10 +120,10 @@ function getAllSpecifications($mysqli, $limit = 8, $offset = 0, $type = null) {
             nsk.id,
             nsk.nomer_specifikacii,
             nsk.data_dogovora,
-            org.sokrashchyonnoe_naimenovanie AS org_short_name,
-            kon.sokrashchyonnoe_naimenovanie AS kon_short_name,
+            org.sokrashchyonnoe_naimenovanie AS org_sokrashchyonnoe_naimenovanie,
+            kon.sokrashchyonnoe_naimenovanie AS kon_sokrashchyonnoe_naimenovanie,
             CONCAT_WS(' ', COALESCE(sr.familiya, NULL), COALESCE(sr.imya, NULL), COALESCE(sr.otchestvo, NULL)) AS employee_name
-        FROM noreg_specifikacii_k_dogovoru nsk
+        FROM noreg_specifikacii_k_zakazam  nsk
         LEFT JOIN kontragenti org ON nsk.id_kontragenti_postavshik = org.id
         LEFT JOIN kontragenti kon ON nsk.id_kontragenti_pokupatel = kon.id
         LEFT JOIN sotrudniki sr ON nsk.id_sotrudniki = sr.id

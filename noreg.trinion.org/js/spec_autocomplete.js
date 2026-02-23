@@ -1,8 +1,8 @@
 // Autocomplete for form fields (organization, vendor, employee)
 const specAutocompleteFields = [
-    { inputId: 'organization_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },
-    { inputId: 'kontragenti_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
-    { inputId: 'sotrudniki_id', table: 'sotrudniki', col: 'fio' }
+    { inputId: 'id_organizacii', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },
+    { inputId: 'id_kontragenta', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
+    { inputId: 'id_sotrudnika', table: 'sotrudniki', col: 'fio' }
 ];
 
 

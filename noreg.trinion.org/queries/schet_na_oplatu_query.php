@@ -2,7 +2,7 @@
 
 require_once 'id_index_helper.php';
 
-function getSchetovCount($mysqli, $type = 'pokupatel') {
+function getSummaSchetov($mysqli, $type = 'pokupatel') {
     $where = "(sp.zakryt = 0 OR sp.zakryt IS NULL)";
     
     if ($type === 'postavschik') {
@@ -27,9 +27,9 @@ function getAllschetov($mysqli, $limit, $offset, $type = 'pokupatel') {
             sp.id,
             sp.data_dokumenta,
             sp.nomer,
-            k.naimenovanie AS vendor_name,
-            o.naimenovanie AS organization_name,
-            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
+            k.naimenovanie AS naimenovanie_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
         FROM  scheta_na_oplatu sp
         LEFT JOIN kontragenti k ON sp.id_kontragenti_pokupatel = k.id
         LEFT JOIN kontragenti o ON sp.id_kontragenti_postavshik = o.id
@@ -54,10 +54,10 @@ function getAllschetov($mysqli, $limit, $offset, $type = 'pokupatel') {
     $stmt->bind_param('ii', $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
-    $orders = $result->fetch_all(MYSQLI_ASSOC);
+    $zakazy = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    return $orders;
+    return $zakazy;
 }
 
 function fetchSchetHeader($mysqli, $id) {
@@ -76,13 +76,13 @@ function fetchSchetHeader($mysqli, $id) {
             sp.Id_raschetnye_scheta_organizacii,
             sp.ot_postavshchika,
             sp.pokupatelya,
-            k.naimenovanie AS vendor_name,
-            k.INN AS vendor_inn,
-            k.KPP AS vendor_kpp,
-            o.naimenovanie AS organization_name,
-            o.INN AS organization_inn,
-            o.KPP AS organization_kpp,
-            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name,
+            k.naimenovanie AS naimenovanie_postavschika,
+            k.INN AS inn_postavschika,
+            k.KPP AS kpp_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            o.INN AS inn_organizacii,
+            o.KPP AS kpp_organizacii,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo,
             rs1.naimenovanie AS schet_pokupatelya_naimenovanie,
             rs1.naimenovanie_banka AS bank_name1,
             rs1.BIK_banka AS bik_bank1,
@@ -114,21 +114,21 @@ function fetchSchetHeader($mysqli, $id) {
 }
 
 
-function fetchSchetLineItems($mysqli, $id_index) {
+function getSchetStrokiItems($mysqli, $id_index) {
     $query = "
         SELECT 
             sd.id,
             sd.id_index,
             sd.id_tovary_i_uslugi,
-            t.naimenovanie AS product_name,
+            t.naimenovanie AS naimenovanie_tovara,
             sd.id_edinicy_izmereniya,
-            e.naimenovanie AS unit_name,
-            sd.kolichestvo AS quantity,
-            sd.cena AS unit_price,
+            e.naimenovanie AS naimenovanie_edinitsii,
+            sd.kolichestvo AS kolichestvo,
+            sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS nds_amount,
-            sd.summa AS total_amount
+            sd.summa_nds AS obshchaya_summa,
+            sd.summa AS obshchaya_summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
@@ -148,14 +148,14 @@ function fetchSchetLineItems($mysqli, $id_index) {
 }
 
 
-function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
+function sozdatSchetDokument($mysqli, $data, $zakaz_pokupatelya_id = null) {
     try {
         $mysqli->begin_transaction();
         
     
         if (empty($data['schet_date']) || 
-            empty($data['vendor_id']) || empty($data['organization_id']) || 
-            empty($data['responsible_id']) || empty($data['products'])) {
+            empty($data['id_postavschika']) || empty($data['id_organizacii']) || 
+            empty($data['id_otvetstvennogo']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для создания заказа');
         }
         
@@ -198,9 +198,9 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         $stmt->bind_param(
             'siiiiiiiii',
             $data['schet_date'],
-            $data['vendor_id'],
-            $data['organization_id'],
-            $data['responsible_id'],
+            $data['id_postavschika'],
+            $data['id_organizacii'],
+            $data['id_otvetstvennogo'],
             $utverzhden,
             $schet_pokupatelya_id,
             $schet_postavschika_id,
@@ -229,15 +229,15 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         $update_stmt->close();
         
         
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -258,20 +258,20 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
             
             $stmt->bind_param(
                 'iiiidiidd',
                 $schet_id,
                 $id_index,
-                $product_id,
-                $unit_id,
-                $product['quantity'],
-                $unit_price,
+                $id_tovara,
+                $id_edinitsii,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {
@@ -367,14 +367,14 @@ function createSchetDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
 }
 
 
-function updateSchetDocument($mysqli, $id, $data) {
+function obnovitSchetDokument($mysqli, $id, $data) {
     try {
         $mysqli->begin_transaction();
         
         
         if (empty($data['schet_date']) || 
-            empty($data['vendor_id']) || empty($data['organization_id']) || 
-            empty($data['responsible_id']) || empty($data['products'])) {
+            empty($data['id_postavschika']) || empty($data['id_organizacii']) || 
+            empty($data['id_otvetstvennogo']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
         }
         
@@ -422,9 +422,9 @@ function updateSchetDocument($mysqli, $id, $data) {
         $stmt->bind_param(
             'siiiiiiii',
             $data['schet_date'],
-            $data['vendor_id'],
-            $data['organization_id'],
-            $data['responsible_id'],
+            $data['id_postavschika'],
+            $data['id_organizacii'],
+            $data['id_otvetstvennogo'],
             $schet_pokupatelya_id,
             $schet_postavschika_id,
             $ot_postavshchika,
@@ -446,15 +446,15 @@ function updateSchetDocument($mysqli, $id, $data) {
         $stmt->close();
         
         
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -475,20 +475,20 @@ function updateSchetDocument($mysqli, $id, $data) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
             
             $stmt->bind_param(
                 'iiiiddidd',
                 $id,
                 $id_index,
-                $product_id,
-                $unit_id,
-                $product['quantity'],
-                $unit_price,
+                $id_tovara,
+                $id_edinitsii,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {
@@ -571,8 +571,8 @@ function deleteSchetDocument($mysqli, $id) {
             $orders_result = $stmt->get_result();
             $stmt->close();
             
-            while ($order = $orders_result->fetch_assoc()) {
-                $order_id = $order['id'];
+            while ($zakaz = $orders_result->fetch_assoc()) {
+                $order_id = $zakaz['id'];
                 
                 $get_refs_query = "SELECT id_scheta_na_oplatu_pokupatelyam FROM zakazy_pokupatelei WHERE id = ?";
                 $stmt = $mysqli->prepare($get_refs_query);
@@ -580,11 +580,11 @@ function deleteSchetDocument($mysqli, $id) {
                     $stmt->bind_param('i', $order_id);
                     $stmt->execute();
                     $refs_result = $stmt->get_result();
-                    $order_data = $refs_result->fetch_assoc();
+                    $info_zakaza = $refs_result->fetch_assoc();
                     $stmt->close();
                     
-                    if ($order_data && !empty($order_data['id_scheta_na_oplatu_pokupatelyam'])) {
-                        $schet_ids = json_decode($order_data['id_scheta_na_oplatu_pokupatelyam'], true);
+                    if ($info_zakaza && !empty($info_zakaza['id_scheta_na_oplatu_pokupatelyam'])) {
+                        $schet_ids = json_decode($info_zakaza['id_scheta_na_oplatu_pokupatelyam'], true);
                         if (is_array($schet_ids)) {
                             $schet_ids = array_filter($schet_ids, function($val) use ($id) {
                                 
@@ -628,11 +628,11 @@ function deleteSchetDocument($mysqli, $id) {
                     $stmt->bind_param('i', $supplier_order_id);
                     $stmt->execute();
                     $refs_result = $stmt->get_result();
-                    $order_data = $refs_result->fetch_assoc();
+                    $info_zakaza = $refs_result->fetch_assoc();
                     $stmt->close();
                     
-                    if ($order_data && !empty($order_data['id_scheta_na_oplatu_postavshchikam'])) {
-                        $schet_ids = json_decode($order_data['id_scheta_na_oplatu_postavshchikam'], true);
+                    if ($info_zakaza && !empty($info_zakaza['id_scheta_na_oplatu_postavshchikam'])) {
+                        $schet_ids = json_decode($info_zakaza['id_scheta_na_oplatu_postavshchikam'], true);
                         if (is_array($schet_ids)) {
                             $schet_ids = array_filter($schet_ids, function($val) use ($id) {
                                 

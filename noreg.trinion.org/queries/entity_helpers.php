@@ -2,17 +2,17 @@
 
 require_once __DIR__ . '/../config/database_config.php';
 
-// Get or create warehouse
+// Get or create sklad
 function getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_input) {
     if (!empty($warehouse_id_input)) {
         return $warehouse_id_input;
     }
     
     if (empty($warehouse_name_input)) {
-        throw new Exception("Warehouse name is required");
+        throw new Exception("sklad name is required");
     }
     
-    // Check if warehouse exists
+    // Check if sklad exists
     $stmt = $mysqli->prepare("SELECT id FROM sklady WHERE naimenovanie = ?");
     $stmt->bind_param("s", $warehouse_name_input);
     $stmt->execute();
@@ -22,12 +22,12 @@ function getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_inpu
         return $row['id'];
     }
     
-    // Create new warehouse
+    // Create new sklad
     $insert_stmt = $mysqli->prepare("INSERT INTO sklady (naimenovanie) VALUES (?)");
     $insert_stmt->bind_param("s", $warehouse_name_input);
     
     if (!$insert_stmt->execute()) {
-        throw new Exception("Error creating warehouse: " . $insert_stmt->error);
+        throw new Exception("Error creating sklad: " . $insert_stmt->error);
     }
     
     return $mysqli->insert_id;
@@ -95,17 +95,17 @@ function getOrCreateOrganization($mysqli, $org_id_input, $org_name_input) {
     return $mysqli->insert_id;
 }
 
-// Get or create product
+// Get or create tovar
 function getOrCreateProduct($mysqli, $product_id_input, $product_name_input) {
     if (!empty($product_id_input)) {
         return $product_id_input;
     }
     
     if (empty($product_name_input)) {
-        throw new Exception("Product name is required");
+        throw new Exception("tovar name is required");
     }
     
-    // Check if product exists
+    // Check if tovar exists
     $stmt = $mysqli->prepare("SELECT id FROM tovary_i_uslugi WHERE naimenovanie = ?");
     $stmt->bind_param("s", $product_name_input);
     $stmt->execute();
@@ -115,18 +115,18 @@ function getOrCreateProduct($mysqli, $product_id_input, $product_name_input) {
         return $row['id'];
     }
     
-    // Create new product
+    // Create new tovar
     $insert_stmt = $mysqli->prepare("INSERT INTO tovary_i_uslugi (naimenovanie) VALUES (?)");
     $insert_stmt->bind_param("s", $product_name_input);
     
     if (!$insert_stmt->execute()) {
-        throw new Exception("Error creating product: " . $insert_stmt->error);
+        throw new Exception("Error creating tovar: " . $insert_stmt->error);
     }
     
     return $mysqli->insert_id;
 }
 
-// Get or create unit
+// Get or create edinitsa
 function getOrCreateUnit($mysqli, $unit_id_input, $unit_name_input) {
     if (!empty($unit_id_input)) {
         return $unit_id_input;
@@ -136,7 +136,7 @@ function getOrCreateUnit($mysqli, $unit_id_input, $unit_name_input) {
         return null;
     }
     
-    // Check if unit exists
+    // Check if edinitsa exists
     $stmt = $mysqli->prepare("SELECT id FROM edinicy_izmereniya WHERE naimenovanie = ?");
     $stmt->bind_param("s", $unit_name_input);
     $stmt->execute();
@@ -146,19 +146,19 @@ function getOrCreateUnit($mysqli, $unit_id_input, $unit_name_input) {
         return $row['id'];
     }
     
-    // Create new unit
+    // Create new edinitsa
     $insert_stmt = $mysqli->prepare("INSERT INTO edinicy_izmereniya (naimenovanie) VALUES (?)");
     $insert_stmt->bind_param("s", $unit_name_input);
     
     if (!$insert_stmt->execute()) {
-        throw new Exception("Error creating unit: " . $insert_stmt->error);
+        throw new Exception("Error creating edinitsa: " . $insert_stmt->error);
     }
     
     return $mysqli->insert_id;
 }
 
 // Get or create series
-function getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product_id, $prod_date, $exp_date, $should_update = false) {
+function getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $id_tovara, $prod_date, $exp_date, $should_update = false) {
     if (!empty($seria_id_input)) {
         return $seria_id_input;
     }
@@ -167,16 +167,16 @@ function getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product
         return null;
     }
     
-    // Check if series exists for this product
-    if (!empty($product_id)) {
+    // Check if series exists for this tovar
+    if (!empty($id_tovara)) {
         $stmt = $mysqli->prepare("SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?");
-        $stmt->bind_param("si", $seria_name_input, $product_id);
+        $stmt->bind_param("si", $seria_name_input, $id_tovara);
         $stmt->execute();
         $result = $stmt->get_result();
         
         if ($row = $result->fetch_assoc()) {
             if ($should_update && ($prod_date || $exp_date)) {
-                updateSeriesData($mysqli, $row['id'], $product_id, $prod_date, $exp_date);
+                updateSeriesData($mysqli, $row['id'], $id_tovara, $prod_date, $exp_date);
             }
             return $row['id'];
         }
@@ -184,7 +184,7 @@ function getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product
     
     // Create new series
     $insert_stmt = $mysqli->prepare("INSERT INTO serii (nomer, id_tovary_i_uslugi, data_izgotovleniya, srok_godnosti) VALUES (?, ?, ?, ?)");
-    $insert_stmt->bind_param("siss", $seria_name_input, $product_id, $prod_date, $exp_date);
+    $insert_stmt->bind_param("siss", $seria_name_input, $id_tovara, $prod_date, $exp_date);
     
     if (!$insert_stmt->execute()) {
         throw new Exception("Error creating series: " . $insert_stmt->error);
@@ -194,9 +194,9 @@ function getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product
 }
 
 // Update series data
-function updateSeriesData($mysqli, $seria_id, $product_id, $prod_date, $exp_date) {
+function updateSeriesData($mysqli, $seria_id, $id_tovara, $prod_date, $exp_date) {
     $update_stmt = $mysqli->prepare("UPDATE serii SET data_izgotovleniya = ?, srok_godnosti = ? WHERE id = ? AND id_tovary_i_uslugi = ?");
-    $update_stmt->bind_param("ssii", $prod_date, $exp_date, $seria_id, $product_id);
+    $update_stmt->bind_param("ssii", $prod_date, $exp_date, $seria_id, $id_tovara);
     
     if (!$update_stmt->execute()) {
         throw new Exception("Error updating series: " . $update_stmt->error);

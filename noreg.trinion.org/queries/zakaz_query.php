@@ -3,7 +3,7 @@
 require_once 'id_index_helper.php';
 
 
-function getZakazCount($mysqli) {
+function getKolichestvoZakazov($mysqli) {
     $query = "SELECT COUNT(*) as total FROM zakazy_postavshchikam WHERE zakryt = 0 OR zakryt IS NULL";
     $result = $mysqli->query($query);
     if ($result) {
@@ -13,15 +13,15 @@ function getZakazCount($mysqli) {
     return 0;
 }
 
-function getAllZakazy($mysqli, $limit, $offset) {
+function getVceZakazy($mysqli, $limit, $offset) {
     $query = "
         SELECT 
             zp.id,
             zp.data_dokumenta,
             zp.nomer,
-            k.naimenovanie AS vendor_name,
-            o.naimenovanie AS organization_name,
-            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
+            k.naimenovanie AS naimenovanie_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
         FROM zakazy_postavshchikam zp
         LEFT JOIN kontragenti k ON zp.id_kontragenti_postavshchik = k.id
         LEFT JOIN kontragenti o ON zp.id_kontragenti_pokupatel = o.id
@@ -39,10 +39,10 @@ function getAllZakazy($mysqli, $limit, $offset) {
     $stmt->bind_param('ii', $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
-    $orders = $result->fetch_all(MYSQLI_ASSOC);
+    $zakazy = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    return $orders;
+    return $zakazy;
 }
 
 function fetchZakazHeader($mysqli, $zakaz_id) {
@@ -58,13 +58,13 @@ function fetchZakazHeader($mysqli, $zakaz_id) {
             zp.utverzhden,
             zp.zakryt,
             zp.id_scheta_na_oplatu_postavshchikam,
-            k.naimenovanie AS vendor_name,
-            k.INN AS vendor_inn,
-            k.KPP AS vendor_kpp,
-            o.naimenovanie AS organization_name,
-            o.INN AS organization_inn,
-            o.KPP AS organization_kpp,
-            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
+            k.naimenovanie AS naimenovanie_postavschika,
+            k.INN AS inn_postavschika,
+            k.KPP AS kpp_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            o.INN AS inn_organizacii,
+            o.KPP AS kpp_organizacii,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
         FROM zakazy_postavshchikam zp
         LEFT JOIN kontragenti k ON zp.id_kontragenti_postavshchik = k.id
         LEFT JOIN kontragenti o ON zp.id_kontragenti_pokupatel = o.id
@@ -83,21 +83,21 @@ function fetchZakazHeader($mysqli, $zakaz_id) {
 }
 
 
-function fetchZakazLineItems($mysqli, $id_index) {
+function getZakazStrokiItems($mysqli, $id_index) {
     $query = "
         SELECT 
             sd.id,
             sd.id_index,
             sd.id_tovary_i_uslugi,
-            t.naimenovanie AS product_name,
+            t.naimenovanie AS naimenovanie_tovara,
             sd.id_edinicy_izmereniya,
-            e.naimenovanie AS unit_name,
-            sd.kolichestvo AS quantity,
-            sd.cena AS unit_price,
+            e.naimenovanie AS naimenovanie_edinitsii,
+            sd.kolichestvo AS kolichestvo,
+            sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS nds_amount,
-            sd.summa AS total_amount
+            sd.summa_nds AS obshchaya_summa,
+            sd.summa AS obshchaya_summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
@@ -117,21 +117,19 @@ function fetchZakazLineItems($mysqli, $id_index) {
 }
 
 
-function createZakazDocument($mysqli, $data, $document_id = null) {
+function sozdatDokumentZakaza($mysqli, $data, $document_id = null) {
     try {
         $mysqli->begin_transaction();
         
         
-        if (empty($data['order_date']) || empty($data['order_number']) || 
-            empty($data['vendor_id']) || empty($data['organization_id']) || 
-            empty($data['responsible_id']) || empty($data['products'])) {
+        if (empty($data['data_zakaza']) || empty($data['nomer_zakaza']) || 
+            empty($data['id_postavschika']) || empty($data['id_organizacii']) || 
+            empty($data['id_otvetstvennogo']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для создания заказа');
         }
         
-        // Get next id_index
         $id_index = getNextIdIndex($mysqli);
         
-        // Insert order header
         $query = "
             INSERT INTO zakazy_postavshchikam (
                 data_dokumenta,
@@ -153,11 +151,11 @@ function createZakazDocument($mysqli, $data, $document_id = null) {
         
         $stmt->bind_param(
             'ssiiiii',
-            $data['order_date'],
-            $data['order_number'],
-            $data['vendor_id'],
-            $data['organization_id'],
-            $data['responsible_id'],
+            $data['data_zakaza'],
+            $data['nomer_zakaza'],
+            $data['id_postavschika'],
+            $data['id_organizacii'],
+            $data['id_otvetstvennogo'],
             $utverzhden,
             $id_index
         );
@@ -169,7 +167,7 @@ function createZakazDocument($mysqli, $data, $document_id = null) {
         $zakaz_id = $mysqli->insert_id;
         $stmt->close();
         
-        // Handle document linking if provided
+        
         if ($document_id) {
             $linked_docs = [['id' => $document_id, 'type' => 'invoice']];
             $linked_docs_json = json_encode($linked_docs);
@@ -187,16 +185,16 @@ function createZakazDocument($mysqli, $data, $document_id = null) {
             $link_stmt->close();
         }
         
-        // Insert line items
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+    
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -217,20 +215,20 @@ function createZakazDocument($mysqli, $data, $document_id = null) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
             
             $stmt->bind_param(
                 'iiiidiidd',
                 $zakaz_id,
                 $id_index,
-                $product_id,
-                $unit_id,
-                $product['quantity'],
-                $unit_price,
+                $id_tovara,
+                $id_edinitsii,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {
@@ -257,18 +255,18 @@ function createZakazDocument($mysqli, $data, $document_id = null) {
 }
 
 
-function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
+function obnovitZakazDokument($mysqli, $zakaz_id, $data, $document_id = null) {
     try {
         $mysqli->begin_transaction();
         
-        // Validate required fields
-        if (empty($data['order_date']) || empty($data['order_number']) || 
-            empty($data['vendor_id']) || empty($data['organization_id']) || 
-            empty($data['responsible_id']) || empty($data['products'])) {
+        
+        if (empty($data['data_zakaza']) || empty($data['nomer_zakaza']) || 
+            empty($data['id_postavschika']) || empty($data['id_organizacii']) || 
+            empty($data['id_otvetstvennogo']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
         }
         
-        // Get existing id_index
+        
         $get_index_query = "SELECT id_index FROM zakazy_postavshchikam WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $zakaz_id);
@@ -283,7 +281,7 @@ function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
         
         $id_index = $doc['id_index'];
         
-        // Update order header
+        
         $query = "
             UPDATE zakazy_postavshchikam SET
                 data_dokumenta = ?,
@@ -301,11 +299,11 @@ function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
         
         $stmt->bind_param(
             'ssiiii',
-            $data['order_date'],
-            $data['order_number'],
-            $data['vendor_id'],
-            $data['organization_id'],
-            $data['responsible_id'],
+            $data['data_zakaza'],
+            $data['nomer_zakaza'],
+            $data['id_postavschika'],
+            $data['id_organizacii'],
+            $data['id_otvetstvennogo'],
             $zakaz_id
         );
         
@@ -315,7 +313,7 @@ function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
         
         $stmt->close();
         
-        // Handle document linking if provided
+        
         if ($document_id) {
             $select_query = "SELECT id_scheta_na_oplatu_postavshchikam FROM zakazy_postavshchikam WHERE id = ?";
             $doc_stmt = $mysqli->prepare($select_query);
@@ -361,23 +359,23 @@ function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
             $link_stmt->close();
         }
         
-        // Delete existing line items using id_index
+        
         $delete_query = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $stmt = $mysqli->prepare($delete_query);
         $stmt->bind_param('i', $id_index);
         $stmt->execute();
         $stmt->close();
         
-        // Insert updated line items with id_index
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+        
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
                 INSERT INTO stroki_dokumentov (
@@ -398,20 +396,20 @@ function updateZakazDocument($mysqli, $zakaz_id, $data, $document_id = null) {
                 throw new Exception('Ошибка подготовки запроса строки: ' . $mysqli->error);
             }
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
             
             $stmt->bind_param(
                 'iiiidiidd',
                 $zakaz_id,
                 $id_index,
-                $product_id,
-                $unit_id,
-                $product['quantity'],
-                $unit_price,
+                $id_tovara,
+                $id_edinitsii,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {
@@ -442,7 +440,7 @@ function deleteZakazDocument($mysqli, $zakaz_id) {
     try {
         $mysqli->begin_transaction();
         
-        // Get the id_index first
+        
         $get_index_query = "SELECT id_index FROM zakazy_postavshchikam WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $zakaz_id);
@@ -457,7 +455,7 @@ function deleteZakazDocument($mysqli, $zakaz_id) {
         
         $id_index = $doc['id_index'];
         
-        // Delete line items using id_index
+        
         $delete_items_query = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $stmt = $mysqli->prepare($delete_items_query);
         if (!$stmt) {
@@ -470,7 +468,7 @@ function deleteZakazDocument($mysqli, $zakaz_id) {
         }
         $stmt->close();
         
-        // Delete the order header
+        
         $delete_order_query = "DELETE FROM zakazy_postavshchikam WHERE id = ?";
         $stmt = $mysqli->prepare($delete_order_query);
         if (!$stmt) {
@@ -483,7 +481,7 @@ function deleteZakazDocument($mysqli, $zakaz_id) {
         }
         $stmt->close();
         
-        // Remove references from related invoices if they exist
+        
         $select_related_query = "SELECT id FROM scheta_na_oplatu WHERE id_scheta_na_oplatu_postavshchikam LIKE ?";
         $rel_stmt = $mysqli->prepare($select_related_query);
         if ($rel_stmt) {

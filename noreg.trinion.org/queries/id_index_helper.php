@@ -31,8 +31,8 @@ function getTovaryZakazasostatkom($mysqli, $zakaz, $original_items, $document_ty
     
     if (empty($zakaz['id_scheta_na_oplatu_pokupatelyam'])) {
         foreach ($original_items as $item) {
-            $item['kolichestvo_ostatka'] = floatval($item['quantity']);
-            $item['summa_ostatka'] = floatval($item['total_amount']);
+            $item['kolichestvo_ostatka'] = floatval($item['kolichestvo']);
+            $item['summa_ostatka'] = floatval($item['obshchaya_summa']);
             $result_items[] = $item;
         }
         return $result_items;
@@ -78,8 +78,8 @@ function getTovaryZakazasostatkom($mysqli, $zakaz, $original_items, $document_ty
     
     if (empty($doc_ids)) {
         foreach ($original_items as $item) {
-            $item['kolichestvo_ostatka'] = floatval($item['quantity']);
-            $item['summa_ostatka'] = floatval($item['total_amount']);
+            $item['kolichestvo_ostatka'] = floatval($item['kolichestvo']);
+            $item['summa_ostatka'] = floatval($item['obshchaya_summa']);
             $result_items[] = $item;
         }
         return $result_items;
@@ -122,8 +122,8 @@ function getTovaryZakazasostatkom($mysqli, $zakaz, $original_items, $document_ty
     
     if (empty($id_indexes)) {
         foreach ($original_items as $item) {
-            $item['kolichestvo_ostatka'] = floatval($item['quantity']);
-            $item['summa_ostatka'] = floatval($item['total_amount']);
+            $item['kolichestvo_ostatka'] = floatval($item['kolichestvo']);
+            $item['summa_ostatka'] = floatval($item['obshchaya_summa']);
             $result_items[] = $item;
         }
         return $result_items;
@@ -156,26 +156,26 @@ function getTovaryZakazasostatkom($mysqli, $zakaz, $original_items, $document_ty
     
     $used_by_product = [];
     while ($row = $used_result->fetch_assoc()) {
-        $product_id = $row['id_tovary_i_uslugi'];
+        $id_tovara = $row['id_tovary_i_uslugi'];
         
-        if (!isset($used_by_product[$product_id])) {
-            $used_by_product[$product_id] = [
-                'quantity' => 0,
+        if (!isset($used_by_product[$id_tovara])) {
+            $used_by_product[$id_tovara] = [
+                'kolichestvo' => 0,
                 'summa' => 0
             ];
         }
         
-        $used_by_product[$product_id]['quantity'] += floatval($row['used_quantity']);
-        $used_by_product[$product_id]['summa'] += floatval($row['used_summa']);
+        $used_by_product[$id_tovara]['kolichestvo'] += floatval($row['used_quantity']);
+        $used_by_product[$id_tovara]['summa'] += floatval($row['used_summa']);
     }
     
     foreach ($original_items as $item) {
-        $product_id = $item['id_tovary_i_uslugi'];
-        $used_quantity = isset($used_by_product[$product_id]) ? floatval($used_by_product[$product_id]['quantity']) : 0;
-        $used_summa = isset($used_by_product[$product_id]) ? floatval($used_by_product[$product_id]['summa']) : 0;
+        $id_tovara = $item['id_tovary_i_uslugi'];
+        $used_quantity = isset($used_by_product[$id_tovara]) ? floatval($used_by_product[$id_tovara]['kolichestvo']) : 0;
+        $used_summa = isset($used_by_product[$id_tovara]) ? floatval($used_by_product[$id_tovara]['summa']) : 0;
         
-        $item['kolichestvo_ostatka'] = max(0, floatval($item['quantity']) - $used_quantity);
-        $item['summa_ostatka'] = max(0, floatval($item['total_amount']) - $used_summa);
+        $item['kolichestvo_ostatka'] = max(0, floatval($item['kolichestvo']) - $used_quantity);
+        $item['summa_ostatka'] = max(0, floatval($item['obshchaya_summa']) - $used_summa);
         
         $result_items[] = $item;
     }

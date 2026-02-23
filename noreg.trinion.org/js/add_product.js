@@ -1,23 +1,23 @@
 
 const autocompleteFields = [
-    { inputId: 'warehouse_id', table: 'sklady', col: 'naimenovanie' },
-    { inputId: 'vendor_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
-    { inputId: 'organization_id', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },
-    { inputId: 'responsible_id', table: 'sotrudniki', col: 'fio' }
+    { inputId: 'id_sklada', table: 'sklady', col: 'naimenovanie' },
+    { inputId: 'id_postavschika', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
+    { inputId: 'id_organizacii', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },
+    { inputId: 'id_otvetstvennogo', table: 'sotrudniki', col: 'fio' }
 ];
 
 
 const defaultColumns = [
-    { key: 'product', label: 'Товар', type: 'autocomplete' },
-    { key: 'unit', label: 'Ед', type: 'autocomplete' },
-    { key: 'quantity', label: 'Кол-во', type: 'text' },
-    { key: 'price', label: 'Цена', type: 'text' },
+    { key: 'tovar', label: 'Товар', type: 'autocomplete' },
+    { key: 'edinitsa', label: 'Ед', type: 'autocomplete' },
+    { key: 'kolichestvo', label: 'Кол-во', type: 'text' },
+    { key: 'cena', label: 'Цена', type: 'text' },
     { key: 'nds_id', label: 'НДС', type: 'select' }
 ];
 
 
 function createColumnHTML(rowIndex, column) {
-    const fieldName = `products[${rowIndex}][${column.key}]`;
+    const fieldName = `tovary[${rowIndex}][${column.key}]`;
     
     switch (column.type) {
         case 'autocomplete':
@@ -35,7 +35,7 @@ function createColumnHTML(rowIndex, column) {
                     <td>
                         <div class="search-container" style="position: relative;">
                             <input class="form-control" type="text" name="${fieldName}_name" placeholder="Введите ${column.label.toLowerCase()}..." autocomplete="off">
-                            <input type="hidden" name="${fieldName}" class="product-id">
+                            <input type="hidden" name="${fieldName}" class="id_tovara">
                         </div>
                     </td>
                 `;
@@ -44,7 +44,7 @@ function createColumnHTML(rowIndex, column) {
                     <td>
                         <div class="search-container" style="position: relative;">
                             <input class="form-control" type="text" name="${fieldName}_name" placeholder="Введите ${column.label.toLowerCase()}..." autocomplete="off">
-                            <input type="hidden" name="${fieldName}" class="unit-id">
+                            <input type="hidden" name="${fieldName}" class="edinitsa-id">
                         </div>
                     </td>
                 `;
@@ -95,13 +95,13 @@ function createRowTemplate(rowIndex, config = null) {
             continue;
         }
         
-        if (column.key === 'warehouse') {
+        if (column.key === 'sklad') {
             warehouseColumn = column;
             continue;
         }
         
         if (column.key === 'nds_id' || column.type === 'select') {
-            const fieldName = `products[${rowIndex}][${column.key}]`;
+            const fieldName = `tovary[${rowIndex}][${column.key}]`;
             html += `
                 <td>
                     <select class="form-control" name="${fieldName}">
@@ -109,39 +109,39 @@ function createRowTemplate(rowIndex, config = null) {
                     </select>
                 </td>
             `;
-        } else if (column.key === 'quantity' || column.key === 'price') {
-            const fieldName = `products[${rowIndex}][${column.key}]`;
+        } else if (column.key === 'kolichestvo' || column.key === 'cena') {
+            const fieldName = `tovary[${rowIndex}][${column.key}]`;
             html += `<td><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
-        } else if (column.key === 'product') {
-            const fieldName = `products[${rowIndex}][product_name]`;
-            const hiddenName = `products[${rowIndex}][product_id]`;
+        } else if (column.key === 'tovar') {
+            const fieldName = `tovary[${rowIndex}][naimenovanie_tovara]`;
+            const hiddenName = `tovary[${rowIndex}][id_tovara]`;
             html += `
                 <td>
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите товар..." autocomplete="off">
-                        <input type="hidden" name="${hiddenName}" class="product-id">
+                        <input type="hidden" name="${hiddenName}" class="id_tovara">
                     </div>
                 </td>
             `;
         } else if (column.key === 'seria') {
-            const fieldName = `products[${rowIndex}][seria_name]`;
-            const hiddenName = `products[${rowIndex}][seria_id]`;
+            const fieldName = `tovary[${rowIndex}][naimenovanie_serii]`;
+            const hiddenName = `tovary[${rowIndex}][id_serii]`;
             html += `
                 <td>
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите серию..." autocomplete="off">
-                        <input type="hidden" name="${hiddenName}" class="seria-id">
+                        <input type="hidden" name="${hiddenName}" class="id-serii">
                     </div>
                 </td>
             `;
-        } else if (column.key === 'unit') {
-            const fieldName = `products[${rowIndex}][unit_name]`;
-            const hiddenName = `products[${rowIndex}][unit_id]`;
+        } else if (column.key === 'edinitsa') {
+            const fieldName = `tovary[${rowIndex}][naimenovanie_edinitsii]`;
+            const hiddenName = `tovary[${rowIndex}][id_edinitsii]`;
             html += `
                 <td>
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите ед." autocomplete="off">
-                        <input type="hidden" name="${hiddenName}" class="unit-id">
+                        <input type="hidden" name="${hiddenName}" class="edinitsa-id">
                     </div>
                 </td>
             `;
@@ -149,8 +149,8 @@ function createRowTemplate(rowIndex, config = null) {
     }
     
     
-    const summaBefore = `products[${rowIndex}][summa_stavka]`;
-    const summaAfter = `products[${rowIndex}][summa]`;
+    const summaBefore = `tovary[${rowIndex}][summa_stavka]`;
+    const summaAfter = `tovary[${rowIndex}][summa]`;
     html += `
         <td><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
         <td><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
@@ -158,20 +158,20 @@ function createRowTemplate(rowIndex, config = null) {
     
     
     if (warehouseColumn) {
-        const fieldName = `products[${rowIndex}][warehouse_name]`;
-        const hiddenName = `products[${rowIndex}][warehouse_id]`;
+        const fieldName = `tovary[${rowIndex}][naimenovanie_sklada]`;
+        const hiddenName = `tovary[${rowIndex}][id_sklada]`;
         html += `
             <td>
                 <div class="search-container" style="position: relative;">
                     <input class="form-control" type="text" name="${fieldName}" placeholder="Введите склад" autocomplete="off">
-                    <input type="hidden" name="${hiddenName}" class="warehouse-id">
+                    <input type="hidden" name="${hiddenName}" class="sklad-id">
                 </div>
             </td>
         `;
     }
     
     if (deliveryDateColumn) {
-        const fieldName = `products[${rowIndex}][${deliveryDateColumn.key}]`;
+        const fieldName = `tovary[${rowIndex}][${deliveryDateColumn.key}]`;
         html += `
             <td>
                 <input class="form-control" type="date" name="${fieldName}" autocomplete="off" required>
@@ -191,7 +191,7 @@ function addRow() {
     const tbody = document.getElementById('productsBody');
     const rowCount = tbody.rows.length;
     const newRow = document.createElement('tr');
-    newRow.className = 'product-row';
+    newRow.className = 'tovar-row';
     const cfg = typeof formConfig !== 'undefined' ? formConfig : null;
     newRow.innerHTML = createRowTemplate(rowCount, cfg);
     tbody.appendChild(newRow);
@@ -211,7 +211,7 @@ function updateRowNumbers() {
     const tbody = document.getElementById('productsBody');
     const rows = tbody.querySelectorAll('tr');
     rows.forEach((row, index) => {
-        row.querySelector('td:first-child').textContent = index + 1;
+        row.querySelector('td:pervyj-child').textContent = index + 1;
         row.querySelectorAll('input, select').forEach(input => {
             if (input.name) {
                 input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
@@ -229,21 +229,21 @@ function positionDropdown(dropdown, input) {
     dropdown.style.width = rect.width + 'px';
 }
 
-// Calculate summa based on price and quantity
+// Calculate summa based on cena and kolichestvo
 function attachCalculationListeners(row) {
-    const priceInput = row.querySelector('input[name*="[price]"]');
-    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    const priceInput = row.querySelector('input[name*="[cena]"]');
+    const quantityInput = row.querySelector('input[name*="[kolichestvo]"]');
     const summaInput = row.querySelector('input[name*="[summa]"]');
     const ndsSelect = row.querySelector('select[name*="[nds_id]"]');
     const ndsAmountInput = row.querySelector('input[name*="[summa_stavka]"]');
 
     const calculateSumma = () => {
-        const price = parseFloat(priceInput.value) || 0;
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const summa = price * quantity;
+        const cena = parseFloat(priceInput.value) || 0;
+        const kolichestvo = parseFloat(quantityInput.value) || 0;
+        const summa = cena * kolichestvo;
         summaInput.value = summa > 0 ? summa.toFixed(2) : '';
         
-        // Recalculate NDS amount when summa changes
+        // Recalculate NDS kolichestvo when summa changes
         calculateNdsAmount();
     };
 
@@ -273,7 +273,7 @@ function attachCalculationListeners(row) {
     }
 }
 
-// Check if product requires series (poserijnyj_uchet)
+// Check if tovar requires series (poserijnyj_uchet)
 async function checkProductSeriesRequirement(productId, seriaInput, seriaHidden, productInput) {
     if (!productId) {
         
@@ -283,7 +283,7 @@ async function checkProductSeriesRequirement(productId, seriaInput, seriaHidden,
     }
     
     try {
-        const response = await fetch(`/api/get_product_info.php?product_id=${encodeURIComponent(productId)}`);
+        const response = await fetch(`/api/get_product_info.php?id_tovara=${encodeURIComponent(productId)}`);
         const data = await response.json();
         
 
@@ -299,22 +299,22 @@ async function checkProductSeriesRequirement(productId, seriaInput, seriaHidden,
             seriaInput.classList.remove('disabled-field');
         }
     } catch (error) {
-        console.error('Error checking product series requirement:', error);
+        console.error('Error checking tovar series requirement:', error);
         seriaInput.disabled = false;
         seriaInput.classList.remove('disabled-field');
     }
 }
 
-// Autocomplete for table product/series/unit fields
+// Autocomplete for table tovar/series/edinitsa fields
 function initTableAutocomplete(row) {
-    const productInput = row.querySelector('input[name*="[product_name]"]');
-    const productHidden = row.querySelector('input[name*="[product_id]"]');
-    const seriaInput = row.querySelector('input[name*="[seria_name]"]');
-    const seriaHidden = row.querySelector('input[name*="[seria_id]"]');
-    const unitInput = row.querySelector('input[name*="[unit_name]"]');
-    const unitHidden = row.querySelector('input[name*="[unit_id]"]');
+    const productInput = row.querySelector('input[name*="[naimenovanie_tovara]"]');
+    const productHidden = row.querySelector('input[name*="[id_tovara]"]');
+    const seriaInput = row.querySelector('input[name*="[naimenovanie_serii]"]');
+    const seriaHidden = row.querySelector('input[name*="[id_serii]"]');
+    const unitInput = row.querySelector('input[name*="[naimenovanie_edinitsii]"]');
+    const unitHidden = row.querySelector('input[name*="[id_edinitsii]"]');
 
-    // Product autocomplete
+    // tovar autocomplete
     if (productInput && productHidden) {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
@@ -330,7 +330,7 @@ function initTableAutocomplete(row) {
         productInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
             
-            // If product field is cleared, enable series field
+            // If tovar field is cleared, enable series field
             if (query.length === 0) {
                 dropdown.style.display = 'none';
                 productHidden.value = '';
@@ -359,7 +359,7 @@ function initTableAutocomplete(row) {
                             productInput.value = item.name;
                             productHidden.value = item.id;
                             dropdown.style.display = 'none';
-                            // Check if product requires series
+                            // Check if tovar requires series
                             checkProductSeriesRequirement(item.id, seriaInput, seriaHidden, productInput);
                         });
 
@@ -378,7 +378,7 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Product autocomplete error:', error);
+                console.error('tovar autocomplete error:', error);
             }
         });
 
@@ -481,7 +481,7 @@ function initTableAutocomplete(row) {
         });
     }
 
-    // Unit autocomplete - uses pre-loaded unitsData array for performance
+    // edinitsa autocomplete - uses pre-loaded unitsData array for performance
     if (unitInput && unitHidden) {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
@@ -504,8 +504,8 @@ function initTableAutocomplete(row) {
 
             try {
                 // Use local unitsData array instead of API call for better performance
-                const results = unitsData.filter(unit =>
-                    unit.naimenovanie.toLowerCase().includes(query.toLowerCase())
+                const results = unitsData.filter(edinitsa =>
+                    edinitsa.naimenovanie.toLowerCase().includes(query.toLowerCase())
                 );
 
                 dropdown.innerHTML = '';
@@ -539,7 +539,7 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Unit autocomplete error:', error);
+                console.error('edinitsa autocomplete error:', error);
             }
         });
 
@@ -561,9 +561,9 @@ function initTableAutocomplete(row) {
         });
     }
 
-    // Warehouse autocomplete
-    const warehouseInput = row.querySelector('input[name*="[warehouse_name]"]');
-    const warehouseHidden = row.querySelector('input[name*="[warehouse_id]"]');
+    // sklad autocomplete
+    const warehouseInput = row.querySelector('input[name*="[naimenovanie_sklada]"]');
+    const warehouseHidden = row.querySelector('input[name*="[id_sklada]"]');
 
     if (warehouseInput && warehouseHidden) {
         const dropdown = document.createElement('div');
@@ -624,7 +624,7 @@ function initTableAutocomplete(row) {
                     dropdown.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Warehouse autocomplete error:', error);
+                console.error('sklad autocomplete error:', error);
             }
         });
 
@@ -650,14 +650,14 @@ function initTableAutocomplete(row) {
 // Event listeners for form field autocomplete initialization
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize autocomplete for existing rows
-    document.querySelectorAll('.product-row').forEach(row => {
+    document.querySelectorAll('.tovar-row').forEach(row => {
         initTableAutocomplete(row);
         attachCalculationListeners(row);
         
-        // Check series requirement for existing products
-        const productHidden = row.querySelector('input[name*="[product_id]"]');
-        const seriaInput = row.querySelector('input[name*="[seria_name]"]');
-        const seriaHidden = row.querySelector('input[name*="[seria_id]"]');
+        // Check series requirement for existing tovary
+        const productHidden = row.querySelector('input[name*="[id_tovara]"]');
+        const seriaInput = row.querySelector('input[name*="[naimenovanie_serii]"]');
+        const seriaHidden = row.querySelector('input[name*="[id_serii]"]');
         if (productHidden && productHidden.value) {
             checkProductSeriesRequirement(productHidden.value, seriaInput, seriaHidden);
         }
@@ -668,10 +668,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById(field.inputId);
         if (!input) return;
 
-        // For the responsible field, find the hidden input with class responsible-id
+        // For the  otvetstvennyj field, find the hidden input with class  otvetstvennyj-id
         let hiddenInput;
-        if (field.inputId === 'responsible_id') {
-            hiddenInput = input.parentNode.querySelector('input[name="responsible_id"]');       
+        if (field.inputId === 'id_otvetstvennogo') {
+            hiddenInput = input.parentNode.querySelector('input[name="id_otvetstvennogo"]');       
         } else {
             hiddenInput = input.parentNode.querySelector('input[name="' + field.inputId + '"]');
         }
@@ -772,20 +772,20 @@ document.addEventListener('click', function(e) {
     // This is handled by the blur events on inputs
 });
 
-// Handle form submission - ensure unit_id is populated for rows that weren't modified
+// Handle form submission - ensure id_edinitsii is populated for rows that weren't modified
 document.getElementById('documentForm').addEventListener('submit', function(e) {
-    const rows = document.querySelectorAll('.product-row');
+    const rows = document.querySelectorAll('.tovar-row');
     let hasError = false;
     
     rows.forEach((row, index) => {
-        const unitNameInput = row.querySelector('input[name*="[unit_name]"]');
-        const unitIdHidden = row.querySelector('input[name*="[unit_id]"]');
+        const unitNameInput = row.querySelector('input[name*="[naimenovanie_edinitsii]"]');
+        const unitIdHidden = row.querySelector('input[name*="[id_edinitsii]"]');
         
         if (unitNameInput && unitIdHidden && unitNameInput.value.trim()) {
-            // If unit name is filled but unit_id is empty, try to find it
+            // If edinitsa name is filled but id_edinitsii is empty, try to find it
             if (!unitIdHidden.value) {
-                const matchedUnit = unitsData.find(unit => 
-                    unit.naimenovanie.toLowerCase() === unitNameInput.value.toLowerCase()
+                const matchedUnit = unitsData.find(edinitsa => 
+                    edinitsa.naimenovanie.toLowerCase() === unitNameInput.value.toLowerCase()
                 );
                 
                 if (matchedUnit) {

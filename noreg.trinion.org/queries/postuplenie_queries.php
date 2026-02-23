@@ -4,28 +4,28 @@ require_once __DIR__ . '/../config/database_config.php';
 require_once __DIR__ . '/id_index_helper.php';
 require_once __DIR__ . '/entity_helpers.php';
 
-// CREATE ARRIVAL DOCUMENT
-function createArrivalDocument($mysqli, $data) {
+
+function sozdatPribytieDokument($mysqli, $data) {
     try {
         $mysqli->begin_transaction();
         
         
-        $warehouse_id_input = isset($data['warehouse_id']) ? $data['warehouse_id'] : null;
-        $warehouse_name_input = isset($data['warehouse_name']) ? $data['warehouse_name'] : null;
-        $data['warehouse_id'] = getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_input);
+        $sklad_id_input = isset($data['id_sklada']) ? $data['id_sklada'] : null;
+        $naimenovanie_sklada_input = isset($data['naimenovanie_sklada']) ? $data['naimenovanie_sklada'] : null;
+        $data['id_sklada'] = getOrCreateWarehouse($mysqli, $sklad_id_input, $naimenovanie_sklada_input);
         
-        $vendor_id_input = isset($data['vendor_id']) ? $data['vendor_id'] : null;
-        $vendor_name_input = isset($data['vendor_name']) ? $data['vendor_name'] : null;
-        $data['vendor_id'] = getOrCreateVendor($mysqli, $vendor_id_input, $vendor_name_input);
+        $id_postavschika_input = isset($data['id_postavschika']) ? $data['id_postavschika'] : null;
+        $naimenovanie_postavschika_input = isset($data['naimenovanie_postavschika']) ? $data['naimenovanie_postavschika'] : null;
+        $data['id_postavschika'] = getOrCreateVendor($mysqli, $id_postavschika_input, $naimenovanie_postavschika_input);
         
-        $org_id_input = isset($data['organization_id']) ? $data['organization_id'] : null;
-        $org_name_input = isset($data['organization_name']) ? $data['organization_name'] : null;
-        $data['organization_id'] = getOrCreateOrganization($mysqli, $org_id_input, $org_name_input);
+        $org_id_input = isset($data['id_organizacii']) ? $data['id_organizacii'] : null;
+        $org_name_input = isset($data['naimenovanie_organizacii']) ? $data['naimenovanie_organizacii'] : null;
+        $data['id_organizacii'] = getOrCreateOrganization($mysqli, $org_id_input, $org_name_input);
         
-        $warehouse_id = intval($data['warehouse_id']);
-        $organization_id = intval($data['organization_id']);
-        $responsible_id = intval($data['responsible_id']);
-        $vendor_id = intval($data['vendor_id']);
+        $id_sklada = intval($data['id_sklada']);
+        $id_organizacii = intval($data['id_organizacii']);
+        $id_otvetstvennogo = intval($data['id_otvetstvennogo']);
+        $id_postavschika = intval($data['id_postavschika']);
         
         $datetime = $data['product_date'];
         $datetime = str_replace('T', ' ', $datetime) . ':00';
@@ -34,7 +34,7 @@ function createArrivalDocument($mysqli, $data) {
         
         $id_index = getNextIdIndex($mysqli);
         
-        $arrival_sql = "INSERT INTO " . postupleniya_tovarov . "(" . COL_ARRIVAL_VENDOR_ID . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_WAREHOUSE_ID . ", " . COL_ARRIVAL_RESPONSIBLE_ID . ", " . COL_ARRIVAL_DATE . ", utverzhden, id_index) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $arrival_sql = "INSERT INTO " . postupleniya_tovarov . "(" . COL_ARRIVAL_id_postavschika . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_sklad_id . ", " . COL_ARRIVAL_id_otvetstvennogo . ", " . COL_ARRIVAL_DATE . ", utverzhden, id_index) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $arrival_stmt = $mysqli->stmt_init();
         
         if (!$arrival_stmt->prepare($arrival_sql)) {
@@ -43,10 +43,10 @@ function createArrivalDocument($mysqli, $data) {
         
         $arrival_stmt->bind_param(
             "iiiisii",
-            $vendor_id,
-            $organization_id,
-            $warehouse_id,
-            $responsible_id,
+            $id_postavschika,
+            $id_organizacii,
+            $id_sklada,
+            $id_otvetstvennogo,
             $datetime,
             $utverzhden,
             $id_index
@@ -59,49 +59,49 @@ function createArrivalDocument($mysqli, $data) {
         $document_id = $mysqli->insert_id;
         
         
-        $products_data = $data['products'];
-        foreach ($products_data as $product) {
-            // Validate required fields (price, quantity, nds are always required)
-            if (empty($product['price']) || empty($product['quantity']) || empty($product['nds_id'])) {
+        $tovary_data = $data['tovary'];
+        foreach ($tovary_data as $tovar) {
+            
+            if (empty($tovar['cena']) || empty($tovar['kolichestvo']) || empty($tovar['nds_id'])) {
                 continue; 
             }
             
-            // Get or create product, unit, series
-            $prod_id_input = isset($product['product_id']) ? $product['product_id'] : null;
-            $prod_name_input = isset($product['product_name']) ? $product['product_name'] : null;
-            $product['product_id'] = getOrCreateProduct($mysqli, $prod_id_input, $prod_name_input);
             
-            if (empty($product['product_id'])) {
+            $prod_id_input = isset($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $prod_name_input = isset($tovar['naimenovanie_tovara']) ? $tovar['naimenovanie_tovara'] : null;
+            $tovar['id_tovara'] = getOrCreateProduct($mysqli, $prod_id_input, $prod_name_input);
+            
+            if (empty($tovar['id_tovara'])) {
                 continue;
             }
             
-            $unit_id_input = isset($product['unit_id']) ? $product['unit_id'] : null;
-            $unit_name_input = isset($product['unit_name']) ? $product['unit_name'] : null;
-            $product['unit_id'] = getOrCreateUnit($mysqli, $unit_id_input, $unit_name_input);
+            $id_edinitsii_input = isset($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
+            $naimenovanie_edinitsii_input = isset($tovar['naimenovanie_edinitsii']) ? $tovar['naimenovanie_edinitsii'] : null;
+            $tovar['id_edinitsii'] = getOrCreateUnit($mysqli, $id_edinitsii_input, $naimenovanie_edinitsii_input);
             
             $prod_date = !empty($data['data_izgotovleniya']) ? $data['data_izgotovleniya'] : null;
             $exp_date = !empty($data['srok_godnosti']) ? $data['srok_godnosti'] : null;
             
-            $seria_id_input = isset($product['seria_id']) ? $product['seria_id'] : null;
-            $seria_name_input = isset($product['seria_name']) ? $product['seria_name'] : null;
-            $product['seria_id'] = getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product['product_id'], $prod_date, $exp_date, true);
+            $id_serii_input = isset($tovar['id_serii']) ? $tovar['id_serii'] : null;
+            $naimenovanie_serii_input = isset($tovar['naimenovanie_serii']) ? $tovar['naimenovanie_serii'] : null;
+            $tovar['id_serii'] = getOrCreateSeries($mysqli, $id_serii_input, $naimenovanie_serii_input, $tovar['id_tovara'], $prod_date, $exp_date, true);
             
-            $goods_id = intval($product['product_id']);
-            $nds_id = intval($product['nds_id']);
-            $price = floatval($product['price']);
-            $quantity = floatval($product['quantity']);
-            $summa = floatval($product['summa']);
-            $summa_stavka = !empty($product['summa_stavka']) ? floatval($product['summa_stavka']) : 0;
-            $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : 0;
-            $unit_id = !empty($product['unit_id']) ? intval($product['unit_id']) : 0;
+            $goods_id = intval($tovar['id_tovara']);
+            $nds_id = intval($tovar['nds_id']);
+            $cena = floatval($tovar['cena']);
+            $kolichestvo = floatval($tovar['kolichestvo']);
+            $summa = floatval($tovar['summa']);
+            $summa_stavka = !empty($tovar['summa_stavka']) ? floatval($tovar['summa_stavka']) : 0;
+            $id_serii = !empty($tovar['id_serii']) ? intval($tovar['id_serii']) : 0;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? intval($tovar['id_edinitsii']) : 0;
             
             
-            if ($seria_id > 0) {
-                updateSeriesData($mysqli, $seria_id, $goods_id, $prod_date, $exp_date);
+            if ($id_serii > 0) {
+                updateSeriesData($mysqli, $id_serii, $goods_id, $prod_date, $exp_date);
             }
             
             
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_id_tovara . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_id_edinitsii . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -114,11 +114,11 @@ function createArrivalDocument($mysqli, $data) {
                 $id_index,
                 $goods_id,
                 $nds_id,
-                $price,
-                $quantity,
+                $cena,
+                $kolichestvo,
                 $summa,
-                $seria_id,
-                $unit_id,
+                $id_serii,
+                $id_edinitsii,
                 $summa_stavka
             );
             
@@ -136,7 +136,7 @@ function createArrivalDocument($mysqli, $data) {
 }
 
 
-function fetchDocumentHeader($mysqli, $document_id) {
+function getDokumentHeader($mysqli, $document_id) {
     $sql = "SELECT 
         pt.id,
         pt.data_dokumenta,
@@ -151,19 +151,19 @@ function fetchDocumentHeader($mysqli, $document_id) {
         kon.id as org_id,
         kon.inn as org_inn,
         kon.kpp as org_kpp,
-        ps.naimenovanie as vendor_name,
-        ps.id as vendor_id,
-        ps.inn as vendor_inn,
-        ps.kpp as vendor_kpp,
-        sl.naimenovanie as warehouse_name,
-        sl.id as warehouse_id,
-        u.user_name as responsible_name,
-        u.user_id as responsible_id
+        ps.naimenovanie as naimenovanie_postavschika,
+        ps.id as id_postavschika,
+        ps.inn as inn_postavschika,
+        ps.kpp as kpp_postavschika,
+        sl.naimenovanie as naimenovanie_sklada,
+        sl.id as id_sklada,
+        CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) as  naimenovanie_otvetstvennogo, 
+        s.id as id_otvetstvennogo
     FROM postupleniya_tovarov pt
     LEFT JOIN kontragenti kon ON pt.id_kontragenti_pokupatel = kon.id
     LEFT JOIN kontragenti ps ON pt.id_kontragenti_postavshik = ps.id
     LEFT JOIN sklady sl ON pt.id_sklada = sl.id
-    LEFT JOIN users u ON pt.id_otvetstvennyj = u.user_id
+    LEFT JOIN sotrudniki s ON pt.id_otvetstvennyj = s.id
     WHERE pt.id = ?";
 
     $stmt = $mysqli->stmt_init();
@@ -179,29 +179,29 @@ function fetchDocumentHeader($mysqli, $document_id) {
 }
 
 
-function fetchDocumentLineItems($mysqli, $id_index) {
+function getStrokiDokumentovItems($mysqli, $id_index) {
     $sql = "SELECT 
         sd.id,
-        sd." . COL_LINE_PRODUCT_ID . " as product_id,
+        sd." . COL_LINE_id_tovara . " as id_tovara,
         sd." . COL_LINE_SERIES_ID . ",
-        sd." . COL_LINE_UNIT_ID . ",
-        ti.naimenovanie as product_name,
-        ser.id as seria_id,
-        ser." . COL_SERIES_NUMBER . " as seria_name,
+        sd." . COL_LINE_id_edinitsii . ",
+        ti.naimenovanie as naimenovanie_tovara,
+        ser.id as id_serii,
+        ser." . COL_SERIES_NUMBER . " as naimenovanie_serii,
         ser." . data_izgotovleniya . ",
         ser." . srok_godnosti . ",
-        eu.naimenovanie as unit_name,
-        sd." . COL_LINE_QUANTITY . " as quantity,
-        sd." . COL_LINE_PRICE . " as unit_price,
+        eu.naimenovanie as naimenovanie_edinitsii,
+        sd." . COL_LINE_QUANTITY . " as kolichestvo,
+        sd." . COL_LINE_PRICE . " as ed_cena,
         sd." . COL_LINE_NDS_ID . " as nds_id,
-        sn.stavka_nds as vat_rate,
-        sd." . COL_LINE_SUMMA . " as total_amount,
-        sd." . COL_LINE_NDS_AMOUNT . " as nds_amount
+        sn.stavka_nds as stavka_nds,
+        sd." . COL_LINE_SUMMA . " as obshchaya_summa,
+        sd." . COL_LINE_NDS_AMOUNT . " as suma_nds
     FROM " . stroki_dokumentov . " sd
-    LEFT JOIN tovary_i_uslugi ti ON sd." . COL_LINE_PRODUCT_ID . " = ti.id
-    LEFT JOIN serii ser ON ser.id = sd." . COL_LINE_SERIES_ID . " AND ser." . serii_id_tovary_i_uslugi . " = sd." . COL_LINE_PRODUCT_ID . "
+    LEFT JOIN tovary_i_uslugi ti ON sd." . COL_LINE_id_tovara . " = ti.id
+    LEFT JOIN serii ser ON ser.id = sd." . COL_LINE_SERIES_ID . " AND ser." . serii_id_tovary_i_uslugi . " = sd." . COL_LINE_id_tovara . "
     LEFT JOIN stavki_nds sn ON sd." . COL_LINE_NDS_ID . " = sn.id
-    LEFT JOIN edinicy_izmereniya eu ON sd." . COL_LINE_UNIT_ID . " = eu.id
+    LEFT JOIN edinicy_izmereniya eu ON sd." . COL_LINE_id_edinitsii . " = eu.id
     WHERE sd.id_index = ?
     ORDER BY sd.id ASC";
 
@@ -222,40 +222,40 @@ function fetchDocumentLineItems($mysqli, $id_index) {
     return $line_items;
 }
 
-function updateArrivalDocument($mysqli, $document_id, $data) {
+function obnovitPribytieDokument($mysqli, $document_id, $data) {
     try {
         $mysqli->begin_transaction();
         
         
-        $warehouse_id_input = isset($data['warehouse_id']) ? $data['warehouse_id'] : null;
-        $warehouse_name_input = isset($data['warehouse_name']) ? $data['warehouse_name'] : null;
-        $data['warehouse_id'] = getOrCreateWarehouse($mysqli, $warehouse_id_input, $warehouse_name_input);
+        $sklad_id_input = isset($data['id_sklada']) ? $data['id_sklada'] : null;
+        $naimenovanie_sklada_input = isset($data['naimenovanie_sklada']) ? $data['naimenovanie_sklada'] : null;
+        $data['id_sklada'] = getOrCreateWarehouse($mysqli, $sklad_id_input, $naimenovanie_sklada_input);
         
-        $vendor_id_input = isset($data['vendor_id']) ? $data['vendor_id'] : null;
-        $vendor_name_input = isset($data['vendor_name']) ? $data['vendor_name'] : null;
-        $data['vendor_id'] = getOrCreateVendor($mysqli, $vendor_id_input, $vendor_name_input);
+        $id_postavschika_input = isset($data['id_postavschika']) ? $data['id_postavschika'] : null;
+        $naimenovanie_postavschika_input = isset($data['naimenovanie_postavschika']) ? $data['naimenovanie_postavschika'] : null;
+        $data['id_postavschika'] = getOrCreateVendor($mysqli, $id_postavschika_input, $naimenovanie_postavschika_input);
         
-        $org_id_input = isset($data['organization_id']) ? $data['organization_id'] : null;
-        $org_name_input = isset($data['organization_name']) ? $data['organization_name'] : null;
-        $data['organization_id'] = getOrCreateOrganization($mysqli, $org_id_input, $org_name_input);
+        $org_id_input = isset($data['id_organizacii']) ? $data['id_organizacii'] : null;
+        $org_name_input = isset($data['naimenovanie_organizacii']) ? $data['naimenovanie_organizacii'] : null;
+        $data['id_organizacii'] = getOrCreateOrganization($mysqli, $org_id_input, $org_name_input);
         
         
-        if (empty($data['responsible_id'])) {
+        if (empty($data['id_otvetstvennogo'])) {
             throw new Exception("Пожалуйста, выберите ответственного из списка");
         }
-        $responsible_id = intval($data['responsible_id']);
+        $id_otvetstvennogo = intval($data['id_otvetstvennogo']);
         
-        $warehouse_id = intval($data['warehouse_id']);
-        $organization_id = intval($data['organization_id']);
-        $vendor_id = intval($data['vendor_id']);
+        $id_sklada = intval($data['id_sklada']);
+        $id_organizacii = intval($data['id_organizacii']);
+        $id_postavschika = intval($data['id_postavschika']);
         
         
         $doc_sql = "UPDATE " . postupleniya_tovarov . " SET 
             " . COL_ARRIVAL_DATE . " = ?,
-            " . COL_ARRIVAL_WAREHOUSE_ID . " = ?,
-            " . COL_ARRIVAL_VENDOR_ID . " = ?,
+            " . COL_ARRIVAL_sklad_id . " = ?,
+            " . COL_ARRIVAL_id_postavschika . " = ?,
             " . COL_ARRIVAL_ORG_ID . " = ?,
-            " . COL_ARRIVAL_RESPONSIBLE_ID . " = ?
+            " . COL_ARRIVAL_id_otvetstvennogo . " = ?
         WHERE " . COL_ARRIVAL_ID . " = ?";
         
         $doc_stmt = $mysqli->stmt_init();
@@ -266,10 +266,10 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         $doc_stmt->bind_param(
             "siiiii",
             $data['product_date'],
-            $data['warehouse_id'],
-            $data['vendor_id'],
-            $data['organization_id'],
-            $responsible_id,
+            $data['id_sklada'],
+            $data['id_postavschika'],
+            $data['id_organizacii'],
+            $id_otvetstvennogo,
             $document_id
         );
         
@@ -306,41 +306,41 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
         }
         
         
-        $products_data = $data['products'];
-        foreach ($products_data as $product) {
+        $tovary_data = $data['tovary'];
+        foreach ($tovary_data as $tovar) {
         
-            if (empty($product['price']) || empty($product['quantity']) || empty($product['nds_id'])) {
+            if (empty($tovar['cena']) || empty($tovar['kolichestvo']) || empty($tovar['nds_id'])) {
                 continue;
             }
             
             
-            $prod_id_input = isset($product['product_id']) ? $product['product_id'] : null;
-            $prod_name_input = isset($product['product_name']) ? $product['product_name'] : null;
-            $product['product_id'] = getOrCreateProduct($mysqli, $prod_id_input, $prod_name_input);
+            $prod_id_input = isset($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $prod_name_input = isset($tovar['naimenovanie_tovara']) ? $tovar['naimenovanie_tovara'] : null;
+            $tovar['id_tovara'] = getOrCreateProduct($mysqli, $prod_id_input, $prod_name_input);
             
-            if (empty($product['product_id'])) {
+            if (empty($tovar['id_tovara'])) {
                 continue;
             }
             
-            $unit_id_input = isset($product['unit_id']) ? $product['unit_id'] : null;
-            $unit_name_input = isset($product['unit_name']) ? $product['unit_name'] : null;
-            $product['unit_id'] = getOrCreateUnit($mysqli, $unit_id_input, $unit_name_input);
+            $id_edinitsii_input = isset($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
+            $naimenovanie_edinitsii_input = isset($tovar['naimenovanie_edinitsii']) ? $tovar['naimenovanie_edinitsii'] : null;
+            $tovar['id_edinitsii'] = getOrCreateUnit($mysqli, $id_edinitsii_input, $naimenovanie_edinitsii_input);
             
-            $seria_id_input = isset($product['seria_id']) ? $product['seria_id'] : null;
-            $seria_name_input = isset($product['seria_name']) ? $product['seria_name'] : null;
-            $product['seria_id'] = getOrCreateSeries($mysqli, $seria_id_input, $seria_name_input, $product['product_id'], null, null, false);
+            $id_serii_input = isset($tovar['id_serii']) ? $tovar['id_serii'] : null;
+            $naimenovanie_serii_input = isset($tovar['naimenovanie_serii']) ? $tovar['naimenovanie_serii'] : null;
+            $tovar['id_serii'] = getOrCreateSeries($mysqli, $id_serii_input, $naimenovanie_serii_input, $tovar['id_tovara'], null, null, false);
             
             
-            $goods_id = intval($product['product_id']);
-            $nds_id = intval($product['nds_id']);
-            $price = floatval($product['price']);
-            $quantity = floatval($product['quantity']);
-            $summa = floatval($product['summa']);
-            $summa_stavka = !empty($product['summa_stavka']) ? floatval($product['summa_stavka']) : 0;
-            $seria_id = !empty($product['seria_id']) ? intval($product['seria_id']) : 0;
-            $unit_id = !empty($product['unit_id']) ? intval($product['unit_id']) : 0;
+            $goods_id = intval($tovar['id_tovara']);
+            $nds_id = intval($tovar['nds_id']);
+            $cena = floatval($tovar['cena']);
+            $kolichestvo = floatval($tovar['kolichestvo']);
+            $summa = floatval($tovar['summa']);
+            $summa_stavka = !empty($tovar['summa_stavka']) ? floatval($tovar['summa_stavka']) : 0;
+            $id_serii = !empty($tovar['id_serii']) ? intval($tovar['id_serii']) : 0;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? intval($tovar['id_edinitsii']) : 0;
             
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_PRODUCT_ID . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_UNIT_ID . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_id_tovara . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_id_edinitsii . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -353,11 +353,11 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
                 $id_index,
                 $goods_id,
                 $nds_id,
-                $price,
-                $quantity,
+                $cena,
+                $kolichestvo,
                 $summa,
-                $seria_id,
-                $unit_id,
+                $id_serii,
+                $id_edinitsii,
                 $summa_stavka
             );
             
@@ -386,7 +386,7 @@ function updateArrivalDocument($mysqli, $document_id, $data) {
 }
 
 
-function deleteArrivalDocument($mysqli, $document_id) {
+function udalitPribytieDokument($mysqli, $document_id) {
     try {
         $mysqli->begin_transaction();
         
@@ -453,13 +453,13 @@ function calculateTotals($line_items) {
     $vat_total = 0;
 
     foreach ($line_items as $item) {
-        $subtotal += floatval($item['total_amount']);
+        $subtotal += floatval($item['obshchaya_summa']);
     }
 
     if (!empty($line_items)) {
         $first_item = $line_items[0];
-        $vat_rate = floatval($first_item['vat_rate']);
-        $vat_total = ($subtotal * $vat_rate) / 100;
+        $stavka_nds = floatval($first_item['stavka_nds']);
+        $vat_total = ($subtotal * $stavka_nds) / 100;
     }
 
     return array(

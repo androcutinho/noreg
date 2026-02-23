@@ -55,7 +55,7 @@ if (isset($_SESSION['user_id'])) {
                   <!-- BEGIN NAVBAR MENU -->
                   <ul class="navbar-nav">
                     <li class="nav-item">
-                      <a class="nav-link" href="https://noreg.trinion.org/postuplenie/">
+                      <a class="nav-link" href="https://noreg.trinion.org/postuplenie/spisok.php">
                         <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                             <path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
@@ -70,19 +70,19 @@ if (isset($_SESSION['user_id'])) {
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2"></path></svg></span>
                         <span class="nav-link-title"> Документы </span>
                       </a>
-                      <div class="dropdown-menu" data-bs-popper="static" style="width: 220px;">
-                        <a class="dropdown-item" href="/postuplenie/">Поступление товаров</a>
+                      <div class="dropdown-menu" data-bs-popper="static">
+                        <a class="dropdown-item" href="/postuplenie/spisok.php">Поступление товаров</a>
                         <a class="dropdown-item" href="./">Перемещение товаров</a>
-                        <a class="dropdown-item" href="/zakaz_pokupatelya/">Заказы покупателей</a>
-                        <a class="dropdown-item" href="/noreg_specifikacii/index.php?type=pokupatelya">Спецификации покупателей</a>
-                        <a class="dropdown-item" href="/schet_na_oplatu/index.php?type=pokupatel">Счета на оплату покупателям</a>
-                        <a class="dropdown-item" href="/platezhi/index.php?type=vhodyashchij">Входящие платежи</a>
-                        <a class="dropdown-item" href="/otgruzki_tovarov/index.php?type=pokupatel">Отгрузки товаров покупателям</a>
-                        <a class="dropdown-item" href="/zakaz_postavschiku/">Заказы поставщикам</a>
-                        <a class="dropdown-item" href="/noreg_specifikacii/index.php?type=postavschik">Спецификации поставщиков</a>
-                        <a class="dropdown-item" href="/schet_na_oplatu/index.php?type=postavschik">Счета на оплату поставщикам</a>
-                        <a class="dropdown-item" href="/platezhi/index.php?type=iskhodyashchij">Исходящие платежи</a>
-                        <a class="dropdown-item" href="/otgruzki_tovarov/index.php?type=postavschik">Отгрузки товаров поставщикам</a>
+                        <a class="dropdown-item" href="/zakaz_pokupatelya/spisok.php">Заказы покупателей</a>
+                        <a class="dropdown-item" href="/noreg_specifikacii/spisok.php?type=pokupatelya">Спецификации покупателей</a>
+                        <a class="dropdown-item" href="/schet_na_oplatu/spisok.php?type=pokupatel">Счета на оплату покупателям</a>
+                        <a class="dropdown-item" href="/platezhi/spisok.php?type=vhodyashchij">Входящие платежи</a>
+                        <a class="dropdown-item" href="/otgruzki_tovarov/spisok.php?type=pokupatel">Отгрузки товаров покупателям</a>
+                        <a class="dropdown-item" href="/zakaz_postavschiku/spisok.php">Заказы поставщикам</a>
+                        <a class="dropdown-item" href="/noreg_specifikacii/spisok.php?type=postavschik">Спецификации поставщиков</a>
+                        <a class="dropdown-item" href="/schet_na_oplatu/spisok.php?type=postavschik">Счета на оплату поставщикам</a>
+                        <a class="dropdown-item" href="/platezhi/spisok.php?type=iskhodyashchij">Исходящие платежи</a>
+                        <a class="dropdown-item" href="/otgruzki_tovarov/spisok.php?type=postavschik">Отгрузки товаров поставщикам</a>
                       </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -92,10 +92,10 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Справочники </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="/vsd"> Список ВСД </a>
-                        <a class="dropdown-item" href="/tovary"> Список товары </a>
-                        <a class="dropdown-item" href="/sklady"> Список складов </a>
-                        <a class="dropdown-item" href="/kontragenti"> Список поставщиков</a>
+                        <a class="dropdown-item" href="/vsd/spisok.php"> Список ВСД </a>
+                        <a class="dropdown-item" href="/tovary/spisok.php"> Список товары </a>
+                        <a class="dropdown-item" href="/sklady/spisok.php"> Список складов </a>
+                        <a class="dropdown-item" href="/kontragenti/spisok.php"> Список поставщиков</a>
                       </div>
                     </li>
                     <li class="nav-item">

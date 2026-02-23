@@ -1,18 +1,18 @@
 <?php
 
-function fetchAllProducts($mysqli, $warehouse_id = null, $limit = 8, $offset = 0) {
+function getBceTovary($mysqli, $id_sklada = null, $limit = 8, $offset = 0) {
     $sql = "SELECT 
         pt.id,
         pt.data_dokumenta,
-        ps.naimenovanie as vendor,
-        CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) as responsible,
+        ps.naimenovanie as postavschik,
+        CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) as  otvetstvennyj,
         SUM(sd.cena * sd.kolichestvo) as total_price
     FROM postupleniya_tovarov pt
     LEFT JOIN kontragenti ps ON pt.id_kontragenti_postavshik = ps.id
     LEFT JOIN sotrudniki s ON pt.id_otvetstvennyj = s.id
     LEFT JOIN stroki_dokumentov sd ON pt.id = sd.id_dokumenta";
     
-    if ($warehouse_id !== null) {
+    if ($id_sklada !== null) {
         $sql .= " WHERE pt.id_sklada = ? AND (pt.zakryt = 0 OR pt.zakryt IS NULL)";
     } else {
         $sql .= " WHERE (pt.zakryt = 0 OR pt.zakryt IS NULL)";
@@ -20,9 +20,9 @@ function fetchAllProducts($mysqli, $warehouse_id = null, $limit = 8, $offset = 0
     
     $sql .= " GROUP BY pt.id ORDER BY pt.id DESC LIMIT ? OFFSET ?";
     
-    if ($warehouse_id !== null) {
+    if ($id_sklada !== null) {
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("iii", $warehouse_id, $limit, $offset);
+        $stmt->bind_param("iii", $id_sklada, $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
     } else {
@@ -32,24 +32,24 @@ function fetchAllProducts($mysqli, $warehouse_id = null, $limit = 8, $offset = 0
         $result = $stmt->get_result();
     }
     
-    $products = array();
+    $tovary = array();
 
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+            $tovary[] = $row;
         }
     }
     
-    return $products;
+    return $tovary;
 }
 
-function getProductsCount($mysqli, $warehouse_id = null) {
+function getKolichestvoTovarov($mysqli, $id_sklada = null) {
     $sql = "SELECT COUNT(DISTINCT pt.id) as total FROM postupleniya_tovarov pt";
     
-    if ($warehouse_id !== null) {
+    if ($id_sklada !== null) {
         $sql .= " WHERE pt.id_sklada = ? AND (pt.zakryt = 0 OR pt.zakryt IS NULL)";
         $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param("i", $warehouse_id);
+        $stmt->bind_param("i", $id_sklada);
         $stmt->execute();
         $result = $stmt->get_result();
     } else {
@@ -66,18 +66,18 @@ function getProductsCount($mysqli, $warehouse_id = null) {
 }
 
 
-function fetchAllWarehouses($mysqli) {
+function getBceSklady($mysqli) {
     $sql = "SELECT id, naimenovanie FROM sklady ORDER BY naimenovanie ASC";
     $result = $mysqli->query($sql);
-    $warehouses = array();
+    $sklady = array();
 
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            $warehouses[] = $row;
+            $sklady[] = $row;
         }
     }
     
-    return $warehouses;
+    return $sklady;
 }
 
 ?>

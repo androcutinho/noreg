@@ -14,10 +14,10 @@ function fetchSchetDataForPayment($mysqli, $schet_id) {
         sno.pokupatelya,
         sno.ot_postavshchika,
         sno.id_index,
-        kon_pokup.naimenovanie as vendor_name,
-        kon_pokup.id as vendor_id,
-        kon_post.naimenovanie as organization_name,
-        kon_post.id as organization_id
+        kon_pokup.naimenovanie as naimenovanie_postavschika,
+        kon_pokup.id as id_postavschika,
+        kon_post.naimenovanie as naimenovanie_organizacii,
+        kon_post.id as id_organizacii
     FROM scheta_na_oplatu sno
     LEFT JOIN kontragenti kon_pokup ON sno.id_kontragenti_pokupatel = kon_pokup.id
     LEFT JOIN kontragenti kon_post ON sno.id_kontragenti_postavshik = kon_post.id
@@ -41,14 +41,14 @@ function fetchSchetDataForPayment($mysqli, $schet_id) {
 function fetchSchetLineItemsForPayment($mysqli, $id_index) {
     $sql = "SELECT 
         sd.id,
-        sd." . COL_LINE_PRODUCT_ID . " as product_id,
-        ti.naimenovanie as product_name,
-        sd." . COL_LINE_QUANTITY . " as quantity,
-        sd." . COL_LINE_PRICE . " as unit_price,
+        sd." . COL_LINE_PRODUCT_ID . " as id_tovara,
+        ti.naimenovanie as naimenovanie_tovara,
+        sd." . COL_LINE_QUANTITY . " as kolichestvo,
+        sd." . COL_LINE_PRICE . " as ed_cena,
         sd." . COL_LINE_NDS_ID . " as nds_id,
-        sn.stavka_nds as vat_rate,
-        sd." . COL_LINE_SUMMA . " as total_amount,
-        sd." . COL_LINE_NDS_AMOUNT . " as nds_amount
+        sn.stavka_nds as stavka_nds,
+        sd." . COL_LINE_SUMMA . " as obshchaya_summa,
+        sd." . COL_LINE_NDS_AMOUNT . " as obshchaya_summa
     FROM " . stroki_dokumentov . " sd
     LEFT JOIN tovary_i_uslugi ti ON sd." . COL_LINE_PRODUCT_ID . " = ti.id
     LEFT JOIN stavki_nds sn ON sd." . COL_LINE_NDS_ID . " = sn.id
@@ -109,7 +109,7 @@ function createPaymentDocument($mysqli, $data) {
         $total_summa = 0;
         
         foreach ($line_items as $item) {
-            $total_summa += floatval($item['total_amount']) + floatval($item['nds_amount']);
+            $total_summa += floatval($item['obshchaya_summa']) + floatval($item['obshchaya_summa']);
         }
         
         
@@ -119,8 +119,8 @@ function createPaymentDocument($mysqli, $data) {
             $data_dokumenta .= ' 00:00:00';
         }
         
-        $vendor_id = intval($schet_data['vendor_id']);
-        $organization_id = intval($schet_data['organization_id']);
+        $id_postavschika = intval($schet_data['id_postavschika']);
+        $id_organizacii = intval($schet_data['id_organizacii']);
         $total_summa = floatval($total_summa);
         
     
@@ -143,8 +143,8 @@ function createPaymentDocument($mysqli, $data) {
         $payment_stmt->bind_param(
             "siiiiiid",
             $data_dokumenta,
-            $vendor_id,
-            $organization_id,
+            $id_postavschika,
+            $id_organizacii,
             $schet_id,
             $vhodyashchij,
             $iskhodyashchij,
@@ -162,8 +162,8 @@ function createPaymentDocument($mysqli, $data) {
         
         foreach ($line_items as $item) {
             $nds_id = intval($item['nds_id']);
-            $summa = floatval($item['total_amount']);
-            $summa_nds = floatval($item['nds_amount']);
+            $summa = floatval($item['obshchaya_summa']);
+            $summa_nds = floatval($item['obshchaya_summa']);
             
             $line_sql = "INSERT INTO stroki_platezhej (
                 id_dokumenta, 
@@ -238,8 +238,8 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
             $data_dokumenta .= ' 00:00:00';
         }
         
-        $vendor_id = intval($schet_data['vendor_id']);
-        $organization_id = intval($schet_data['organization_id']);
+        $id_postavschika = intval($schet_data['id_postavschika']);
+        $id_organizacii = intval($schet_data['id_organizacii']);
         $vhodyashchij = 0;
         $iskhodyashchij = 0;
         
@@ -254,7 +254,7 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
         $total_summa = 0;
         
         foreach ($line_items as $item) {
-            $total_summa += floatval($item['total_amount']) + floatval($item['nds_amount']);
+            $total_summa += floatval($item['obshchaya_summa']) + floatval($item['obshchaya_summa']);
         }
         
         $total_summa = floatval($total_summa);
@@ -277,8 +277,8 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
         $update_stmt->bind_param(
             "siiiidi",
             $data_dokumenta,
-            $vendor_id,
-            $organization_id,
+            $id_postavschika,
+            $id_organizacii,
             $vhodyashchij,
             $iskhodyashchij,
             $total_summa,
@@ -308,8 +308,8 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
     
         foreach ($line_items as $item) {
             $nds_id = intval($item['nds_id']);
-            $summa = floatval($item['total_amount']);
-            $summa_nds = floatval($item['nds_amount']);
+            $summa = floatval($item['obshchaya_summa']);
+            $summa_nds = floatval($item['obshchaya_summa']);
             
             $line_sql = "INSERT INTO stroki_platezhej (
                 id_dokumenta, 
@@ -468,12 +468,14 @@ function fetchContractorInfo($mysqli, $contractor_id) {
 function fetchPaymentLineItemsForDisplay($mysqli, $schet_id) {
     $sql = "SELECT 
         sp.id_dokumenta,
-        sp.id_stavka_nds,
+        sp.id_stavka_nds AS nds_id,
         sp.summa,
         sp.summa_nds,
-        sno.data_dokumenta as schet_date
+        sno.data_dokumenta as schet_date,
+        nds.stavka_nds    
     FROM stroki_platezhej sp
     LEFT JOIN scheta_na_oplatu sno ON sp.id_dokumenta = sno.id
+    LEFT JOIN stavki_nds nds ON sp.id_stavka_nds = nds.id
     WHERE sp.id_dokumenta = ?
     ORDER BY sp.id ASC";
 
@@ -520,7 +522,7 @@ function fetchPaymentBankDetails($mysqli, $contractor_id) {
 }
 
 
-function getPaymentsCount($mysqli, $type = 'vhodyashchij') {
+function getKolichestvoPlatezhi($mysqli, $type = 'vhodyashchij') {
     $is_incoming = ($type === 'vhodyashchij');
     
     if ($is_incoming) {
@@ -539,7 +541,7 @@ function getPaymentsCount($mysqli, $type = 'vhodyashchij') {
 }
 
 
-function getAllPayments($mysqli, $limit, $offset, $type = 'vhodyashchij') {
+function getVcePlatezhi($mysqli, $limit, $offset, $type = 'vhodyashchij') {
     $is_incoming = ($type === 'vhodyashchij');
     
     $sql = "SELECT 
@@ -549,8 +551,8 @@ function getAllPayments($mysqli, $limit, $offset, $type = 'vhodyashchij') {
         p.summa,
         p.vhodyashchij,
         p.iskhodyashchij,
-        k_payer.naimenovanie as payer_name,
-        k_recipient.naimenovanie as recipient_name
+        k_payer.naimenovanie as naimenovanie_platelshchika,
+        k_recipient.naimenovanie as naimenovanie_poluchatelya
     FROM platezhi p
     LEFT JOIN kontragenti k_payer ON p.id_kontragenti_platelshik = k_payer.id
     LEFT JOIN kontragenti k_recipient ON p.id_kontragenti_poluchatel = k_recipient.id
@@ -572,7 +574,7 @@ function getAllPayments($mysqli, $limit, $offset, $type = 'vhodyashchij') {
     return $payments;
 }
 
-function getPaymentsBySchetId($mysqli, $schet_id) {
+function GetPlatezhZaSchetID($mysqli, $schet_id) {
     $sql = "SELECT DISTINCT
         p.id,
         p.nomer,
@@ -580,8 +582,8 @@ function getPaymentsBySchetId($mysqli, $schet_id) {
         p.summa,
         p.vhodyashchij,
         p.iskhodyashchij,
-        k_payer.naimenovanie as payer_name,
-        k_recipient.naimenovanie as recipient_name
+        k_payer.naimenovanie as naimenovanie_platelshchika,
+        k_recipient.naimenovanie as naimenovanie_poluchatelya
     FROM platezhi p
     LEFT JOIN kontragenti k_payer ON p.id_kontragenti_platelshik = k_payer.id
     LEFT JOIN kontragenti k_recipient ON p.id_kontragenti_poluchatel = k_recipient.id
@@ -603,4 +605,3 @@ function getPaymentsBySchetId($mysqli, $schet_id) {
     return $payments;
 }
 ?>
-

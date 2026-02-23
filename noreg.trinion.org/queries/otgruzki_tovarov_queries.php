@@ -102,9 +102,9 @@ function getAllOtgruzki($mysqli, $limit, $offset, $type = 'pokupatel') {
             op.id,
             op.data_dokumenta,
             op.nomer,
-            k.naimenovanie AS vendor_name,
-            o.naimenovanie AS organization_name,
-            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS responsible_name
+            k.naimenovanie AS naimenovanie_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
         FROM  otgruzki_tovarov_pokupatelyam op
         LEFT JOIN kontragenti k ON op.id_kontragenti_pokupatel = k.id
         LEFT JOIN kontragenti o ON op.id_kontragenti_postavshik = o.id
@@ -122,10 +122,10 @@ function getAllOtgruzki($mysqli, $limit, $offset, $type = 'pokupatel') {
     $stmt->bind_param('ii', $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
-    $orders = $result->fetch_all(MYSQLI_ASSOC);
+    $zakazy = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    return $orders;
+    return $zakazy;
 }
 
 function fetchOtgruzkiHeader($mysqli, $id) {
@@ -144,14 +144,14 @@ function fetchOtgruzkiHeader($mysqli, $id) {
             op.zakryt,
             op.ot_postavshchika,
             op.pokupatelya,
-            s.naimenovanie AS warehouse_name,
-            k.naimenovanie AS vendor_name,
-            k.INN AS vendor_inn,
-            k.KPP AS vendor_kpp,
-            o.naimenovanie AS organization_name,
-            o.INN AS organization_inn,
-            o.KPP AS organization_kpp,
-            CONCAT(COALESCE(sr.familiya, ''), ' ', COALESCE(sr.imya, ''), ' ', COALESCE(sr.otchestvo, '')) AS responsible_name,
+            s.naimenovanie AS naimenovanie_sklada,
+            k.naimenovanie AS naimenovanie_postavschika,
+            k.INN AS inn_postavschika,
+            k.KPP AS kpp_postavschika,
+            o.naimenovanie AS naimenovanie_organizacii,
+            o.INN AS inn_organizacii,
+            o.KPP AS kpp_organizacii,
+            CONCAT(COALESCE(sr.familiya, ''), ' ', COALESCE(sr.imya, ''), ' ', COALESCE(sr.otchestvo, '')) AS naimenovanie_otvetstvennogo,
             COALESCE(zp.nomer, zs.nomer) AS customer_order_nomer
         FROM  otgruzki_tovarov_pokupatelyam op
         LEFT JOIN sklady s ON op.id_sklada = s.id
@@ -181,19 +181,19 @@ function fetchOtgruzkiLineItems($mysqli, $id_index) {
             sd.id,
             sd.id_index,
             sd.id_tovary_i_uslugi,
-            t.naimenovanie AS product_name,
+            t.naimenovanie AS naimenovanie_tovara,
             sd.id_serii,
             ser.nomer AS seria_name,
             sd.id_edinicy_izmereniya,
-            e.naimenovanie AS unit_name,
-            sd.id_sklada AS warehouse_id,
-            s.naimenovanie AS warehouse_name,
-            sd.kolichestvo AS quantity,
-            sd.cena AS unit_price,
+            e.naimenovanie AS naimenovanie_edinitsii,
+            sd.id_sklada AS id_sklada,
+            s.naimenovanie AS naimenovanie_sklada,
+            sd.kolichestvo AS kolichestvo,
+            sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS nds_amount,
-            sd.summa AS total_amount
+            sd.summa_nds AS obshchaya_summa,
+            sd.summa AS obshchaya_summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
@@ -220,30 +220,30 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         $mysqli->begin_transaction();
         
     
-        if (empty($data['otgruzki_date']) || empty($data['products'])) {
+        if (empty($data['otgruzki_date']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для создания заказа');
         }
         
         
-        $vendor_result = resolveKontragenteId($mysqli, $data['vendor_id'] ?? null, $data['vendor_name'] ?? null);
+        $vendor_result = resolveKontragenteId($mysqli, $data['id_postavschika'] ?? null, $data['naimenovanie_postavschika'] ?? null);
         if (!$vendor_result['success']) {
             throw new Exception('Покупатель не найден');
         }
-        $vendor_id = $vendor_result['id'];
+        $id_postavschika = $vendor_result['id'];
         
         
-        $org_result = resolveKontragenteId($mysqli, $data['organization_id'] ?? null, $data['organization_name'] ?? null);
+        $org_result = resolveKontragenteId($mysqli, $data['id_organizacii'] ?? null, $data['naimenovanie_organizacii'] ?? null);
         if (!$org_result['success']) {
             throw new Exception('Организация поставщика не найдена');
         }
-        $organization_id = $org_result['id'];
+        $id_organizacii = $org_result['id'];
         
         
-        $resp_result = resolveUserId($mysqli, $data['responsible_id'] ?? null, $data['responsible_name'] ?? null);
+        $resp_result = resolveUserId($mysqli, $data['id_otvetstvennogo'] ?? null, $data['naimenovanie_otvetstvennogo'] ?? null);
         if (!$resp_result['success']) {
             throw new Exception('Ответственный не найден');
         }
-        $responsible_id = $resp_result['id'];
+        $id_otvetstvennogo = $resp_result['id'];
         
         $id_index = getNextIdIndex($mysqli);
         
@@ -273,17 +273,17 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         }
         
         $utverzhden = 0;
-        $warehouse_id = !empty($data['warehouse_id']) ? $data['warehouse_id'] : null;
+        $id_sklada = !empty($data['id_sklada']) ? $data['id_sklada'] : null;
         $ot_postavshchika = !empty($data['ot_postavshchika']) ? 1 : 0;
         $pokupatelya = !empty($data['pokupatelya']) ? 1 : 0;
         
         $stmt->bind_param(
             'siiiiiiiii',
             $data['otgruzki_date'],
-            $vendor_id,
-            $organization_id,
-            $responsible_id,
-            $warehouse_id,
+            $id_postavschika,
+            $id_organizacii,
+            $id_otvetstvennogo,
+            $id_sklada,
             $zakaz_pokupatelya_id,
             $utverzhden,
             $ot_postavshchika,
@@ -310,29 +310,29 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         }
         $update_stmt->close();
         
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
-            $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
+            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
-            $seria_id = !empty($product['seria_id']) ? $product['seria_id'] : null;
-            $seria_name = !empty($product['seria_name']) ? $product['seria_name'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
+            $seria_id = !empty($tovar['seria_id']) ? $tovar['seria_id'] : null;
+            $seria_name = !empty($tovar['seria_name']) ? $tovar['seria_name'] : null;
             
            
-            if (!empty($seria_name) && $product_id) {
+            if (!empty($seria_name) && $id_tovara) {
                
                 $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
                 $stmt_check = $mysqli->prepare($check_seria);
                 if ($stmt_check) {
-                    $stmt_check->bind_param('si', $seria_name, $product_id);
+                    $stmt_check->bind_param('si', $seria_name, $id_tovara);
                     $stmt_check->execute();
                     $result_check = $stmt_check->get_result();
                     $existing_seria = $result_check->fetch_assoc();
@@ -344,7 +344,7 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                         $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
                         $stmt_seria = $mysqli->prepare($insert_seria);
                         if ($stmt_seria) {
-                            $stmt_seria->bind_param('si', $seria_name, $product_id);
+                            $stmt_seria->bind_param('si', $seria_name, $id_tovara);
                             if ($stmt_seria->execute()) {
                                 $seria_id = $mysqli->insert_id;
                             }
@@ -381,15 +381,15 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                 'iiiiiidiidd',
                 $schet_id,
                 $id_index,
-                $product_id,
+                $id_tovara,
                 $seria_id,
-                $unit_id,
-                $warehouse_id,
-                $product['quantity'],
-                $unit_price,
+                $id_edinitsii,
+                $id_sklada,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {
@@ -530,30 +530,30 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
     try {
         $mysqli->begin_transaction();
         
-        if (empty($data['otgruzki_date']) || empty($data['products'])) {
+        if (empty($data['otgruzki_date']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
         }
         
     
-        $vendor_result = resolveKontragenteId($mysqli, $data['vendor_id'] ?? null, $data['vendor_name'] ?? null);
+        $vendor_result = resolveKontragenteId($mysqli, $data['id_postavschika'] ?? null, $data['naimenovanie_postavschika'] ?? null);
         if (!$vendor_result['success']) {
             throw new Exception('Покупатель не найден');
         }
-        $vendor_id = $vendor_result['id'];
+        $id_postavschika = $vendor_result['id'];
         
         
-        $org_result = resolveKontragenteId($mysqli, $data['organization_id'] ?? null, $data['organization_name'] ?? null);
+        $org_result = resolveKontragenteId($mysqli, $data['id_organizacii'] ?? null, $data['naimenovanie_organizacii'] ?? null);
         if (!$org_result['success']) {
             throw new Exception('Организация поставщика не найдена');
         }
-        $organization_id = $org_result['id'];
+        $id_organizacii = $org_result['id'];
         
 
-        $resp_result = resolveUserId($mysqli, $data['responsible_id'] ?? null, $data['responsible_name'] ?? null);
+        $resp_result = resolveUserId($mysqli, $data['id_otvetstvennogo'] ?? null, $data['naimenovanie_otvetstvennogo'] ?? null);
         if (!$resp_result['success']) {
             throw new Exception('Ответственный не найден');
         }
-        $responsible_id = $resp_result['id'];
+        $id_otvetstvennogo = $resp_result['id'];
         
         $get_index_query = "SELECT id_index FROM  otgruzki_tovarov_pokupatelyam WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
@@ -589,7 +589,7 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
         }
         
         
-        $warehouse_id = !empty($data['warehouse_id']) ? $data['warehouse_id'] : null;
+        $id_sklada = !empty($data['id_sklada']) ? $data['id_sklada'] : null;
         $zakaz_id = !empty($data['zakaz_id']) ? intval($data['zakaz_id']) : null;
         $ot_postavshchika = !empty($data['ot_postavshchika']) ? 1 : 0;
         $pokupatelya = !empty($data['pokupatelya']) ? 1 : 0;
@@ -597,10 +597,10 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
         $stmt->bind_param(
             'siiiiiiii',
             $data['otgruzki_date'],
-            $vendor_id,
-            $organization_id,
-            $responsible_id,
-            $warehouse_id,
+            $id_postavschika,
+            $id_organizacii,
+            $id_otvetstvennogo,
+            $id_sklada,
             $zakaz_id,
             $ot_postavshchika,
             $pokupatelya,
@@ -621,29 +621,29 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
         $stmt->close();
         
         
-        foreach ($data['products'] as $index => $product) {
-            if (empty($product['product_name']) || empty($product['quantity'])) {
+        foreach ($data['tovary'] as $index => $tovar) {
+            if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
-            $nds_id = !empty($product['nds_id']) ? $product['nds_id'] : null;
-            $nds_amount = !empty($product['summa_stavka']) ? $product['summa_stavka'] : 0;
-            $total_amount = !empty($product['summa']) ? $product['summa'] : 0;
-            $unit_price = !empty($product['price']) ? $product['price'] : 0;
-            $warehouse_id = !empty($product['warehouse_id']) ? $product['warehouse_id'] : null;
+            $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
+            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
+            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
-            $product_id = !empty($product['product_id']) ? $product['product_id'] : null;
-            $unit_id = !empty($product['unit_id']) ? $product['unit_id'] : null;
-            $seria_id = !empty($product['seria_id']) ? $product['seria_id'] : null;
-            $seria_name = !empty($product['seria_name']) ? $product['seria_name'] : null;
+            $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
+            $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
+            $seria_id = !empty($tovar['seria_id']) ? $tovar['seria_id'] : null;
+            $seria_name = !empty($tovar['seria_name']) ? $tovar['seria_name'] : null;
             
            
-            if (!empty($seria_name) && $product_id) {
+            if (!empty($seria_name) && $id_tovara) {
                
                 $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
                 $stmt_check = $mysqli->prepare($check_seria);
                 if ($stmt_check) {
-                    $stmt_check->bind_param('si', $seria_name, $product_id);
+                    $stmt_check->bind_param('si', $seria_name, $id_tovara);
                     $stmt_check->execute();
                     $result_check = $stmt_check->get_result();
                     $existing_seria = $result_check->fetch_assoc();
@@ -656,7 +656,7 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                         $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
                         $stmt_seria = $mysqli->prepare($insert_seria);
                         if ($stmt_seria) {
-                            $stmt_seria->bind_param('si', $seria_name, $product_id);
+                            $stmt_seria->bind_param('si', $seria_name, $id_tovara);
                             if ($stmt_seria->execute()) {
                                 $seria_id = $mysqli->insert_id;
                             }
@@ -694,15 +694,15 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                 'iiiiiiddidd',
                 $id,
                 $id_index,
-                $product_id,
+                $id_tovara,
                 $seria_id,
-                $unit_id,
-                $warehouse_id,
-                $product['quantity'],
-                $unit_price,
+                $id_edinitsii,
+                $id_sklada,
+                $tovar['kolichestvo'],
+                $ed_cena,
                 $nds_id,
-                $nds_amount,
-                $total_amount
+                $obshchaya_summa,
+                $obshchaya_summa
             );
             
             if (!$stmt->execute()) {

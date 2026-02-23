@@ -15,7 +15,7 @@ $uuid = $_GET['uuid'];
 
 require_once(__DIR__ . '/../api/vetis_service.php');
 
-$data = fetchVetisDocument($uuid);
+$data = getVetisDokument($uuid);
 
 if (!$data['success']) {
     die('Ошибка: ' . htmlspecialchars($data['error']));
@@ -27,10 +27,10 @@ $page_title = 'Документ поступлення';
 include '../header.php';
 ?>
 
-<div class="container-xl">
+<div class="container-fluid">
     <div class="row mb-3 d-print-none" style="margin-top: 30px;">
         <div class="col-auto ms-auto">
-            <button type="button" class="btn btn-primary" onclick="window.location.href='../postuplenie/form.php?uuid=<?php echo $uuid; ?>'"> Создать поступление</button>
+            <button type="button" class="btn btn-primary" onclick="window.location.href='../postuplenie/redaktirovanie.php?uuid=<?php echo $uuid; ?>'"> Создать поступление</button>
             <button type="button" class="btn btn-primary" onclick="window.print();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                     <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"></path>
@@ -39,7 +39,7 @@ include '../header.php';
                 </svg>
                 Печать
             </button>
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='index.php';">
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='spisok.php';">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M9 6l-6 6l6 6"></path>

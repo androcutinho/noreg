@@ -182,7 +182,7 @@ function fetchDocumentList()
 
         foreach ($vet_documents as $vet_doc) {
             $doc_uuid = $vet_doc['uuid'] ?? '';
-            $date_issued = $vet_doc['issueDate'] ?? '';
+            $data_vypuska = $vet_doc['issueDate'] ?? '';
             $type = $vet_doc['vetDType'] ?? '';
             $status = $vet_doc['vetDStatus'] ?? '';
             $last_update = $vet_doc['lastUpdateDate'] ?? '';
@@ -215,7 +215,7 @@ function fetchDocumentList()
 
             $documents_data[] = [
                 'uuid' => $doc_uuid,
-                'issueDate' => $date_issued,
+                'issueDate' => $data_vypuska,
                 'vetDType' => $type,
                 'vetDStatus' => $status,
                 'lastUpdateDate' => $last_update,

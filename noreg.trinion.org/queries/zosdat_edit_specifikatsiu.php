@@ -6,64 +6,64 @@ require_once 'id_index_helper.php';
 function loadOrderDataForSpecification($mysqli, $zakaz_id, $ot_postavshchika = false) {
     $zakaz_id = intval($zakaz_id);
     $data = [
-        'nomer_order' => null,
+        'nomer_zakaza' => null,
         'data_dogovora' => date('Y-m-d'),
         'nomer_dogovora' => '',
-        'organization_id' => '',
-        'organization_name' => '',
-        'kontragenti_id' => '',
-        'kontragenti_name' => '',
-        'sotrudniki_id' => '',
-        'sotrudniki_name' => '',
+        'id_organizacii' => '',
+        'naimenovanie_organizacii' => '',
+        'id_kontragenta' => '',
+        'naimenovanie_kontragenta' => '',
+        'id_sotrudnika' => '',
+        'naimmenovanie_sotrudnika' => '',
         'line_items' => []
     ];
     
     if ($ot_postavshchika) {
         $zakaz = fetchZakazHeader($mysqli, $zakaz_id);
     } else {
-        $zakaz = fetchOrderHeader($mysqli, $zakaz_id);
+        $zakaz = getZakazHeader($mysqli, $zakaz_id);
     }
     
     if (!$zakaz) return $data;
     
-    $data['nomer_order'] = $zakaz['nomer'];
+    $data['nomer_zakaza'] = $zakaz['nomer'];
     $data['data_dogovora'] = $zakaz['data_dokumenta'] ?? date('Y-m-d');
     $data['nomer_dogovora'] = $zakaz['nomer'] ?? '';
-    $data['organization_id'] = $ot_postavshchika ? ($zakaz['id_kontragenti_postavshchik'] ?? '') : ($zakaz['id_kontragenti_postavshik'] ?? '');
-    $data['kontragenti_id'] = $ot_postavshchika ? ($zakaz['id_kontragenti_pokupatel'] ?? '') : ($zakaz['id_kontragenti_pokupatel'] ?? '');
-    $data['sotrudniki_id'] = $zakaz['id_otvetstvennyj'] ?? '';
+    $data['id_organizacii'] = $ot_postavshchika ? ($zakaz['id_kontragenti_postavshchik'] ?? '') : ($zakaz['id_kontragenti_postavshik'] ?? '');
+    $data['id_kontragenta'] = $ot_postavshchika ? ($zakaz['id_kontragenti_pokupatel'] ?? '') : ($zakaz['id_kontragenti_pokupatel'] ?? '');
+    $data['id_sotrudnika'] = $zakaz['id_otvetstvennyj'] ?? '';
     
     
-    $org_query = $mysqli->query("SELECT naimenovanie FROM kontragenti WHERE id = " . intval($data['organization_id']));
+    $org_query = $mysqli->query("SELECT naimenovanie FROM kontragenti WHERE id = " . intval($data['id_organizacii']));
     if ($org = $org_query->fetch_assoc()) {
-        $data['organization_name'] = $org['naimenovanie'];
+        $data['naimenovanie_organizacii'] = $org['naimenovanie'];
     }
     
     
-    $vendor_query = $mysqli->query("SELECT naimenovanie FROM kontragenti WHERE id = " . intval($data['kontragenti_id']));
+    $vendor_query = $mysqli->query("SELECT naimenovanie FROM kontragenti WHERE id = " . intval($data['id_kontragenta']));
     if ($vendor = $vendor_query->fetch_assoc()) {
-        $data['kontragenti_name'] = $vendor['naimenovanie'];
+        $data['naimenovanie_kontragenta'] = $vendor['naimenovanie'];
     }
     
     
-    $sotrudnik_query = $mysqli->query("SELECT CONCAT(COALESCE(familiya, ''), ' ', COALESCE(imya, ''), ' ', COALESCE(otchestvo, '')) as fio FROM sotrudniki WHERE id = " . intval($data['sotrudniki_id']));
+    $sotrudnik_query = $mysqli->query("SELECT CONCAT(COALESCE(familiya, ''), ' ', COALESCE(imya, ''), ' ', COALESCE(otchestvo, '')) as fio FROM sotrudniki WHERE id = " . intval($data['id_sotrudnika']));
     if ($sotrudnik = $sotrudnik_query->fetch_assoc()) {
-        $data['sotrudniki_name'] = trim($sotrudnik['fio']);
+        $data['naimmenovanie_sotrudnika'] = trim($sotrudnik['fio']);
     }
 
-    $zakaz_line_items = $ot_postavshchika ? fetchZakazLineItems($mysqli, $zakaz['id_index']) : fetchOrderLineItems($mysqli, $zakaz['id_index']);
+    $zakaz_line_items = $ot_postavshchika ? getZakazStrokiItems($mysqli, $zakaz['id_index']) : getZakazStrokiItems($mysqli, $zakaz['id_index']);
     if ($zakaz_line_items) {
         foreach ($zakaz_line_items as $item) {
             $line_item = [
-                'product_name' => $item['product_name'] ?? '',
+                'naimenovanie_tovara' => $item['naimenovanie_tovara'] ?? '',
                 'id_tovary_i_uslugi' => $item['id_tovary_i_uslugi'] ?? '',
-                'unit_name' => $item['unit_name'] ?? '',
+                'naimenovanie_edinitsii' => $item['naimenovanie_edinitsii'] ?? '',
                 'id_edinicy_izmereniya' => $item['id_edinicy_izmereniya'] ?? '',
-                'kolichestvo' => $item['quantity'] ?? '',
-                'cena' => $item['unit_price'] ?? '',
+                'kolichestvo' => $item['kolichestvo'] ?? '',
+                'cena' => $item['ed_cena'] ?? '',
                 'id_stavka_nds' => $item['id_stavka_nds'] ?? '',
-                'summa_nds' => $item['nds_amount'] ?? '',
-                'summa' => $item['total_amount'] ?? '',
+                'summa_nds' => $item['obshchaya_summa'] ?? '',
+                'summa' => $item['obshchaya_summa'] ?? '',
                 'planiruemaya_data_postavki' => ''
             ];
             $data['line_items'][] = $line_item;
@@ -75,13 +75,13 @@ function loadOrderDataForSpecification($mysqli, $zakaz_id, $ot_postavshchika = f
 
 
 function getAllNdsRates($mysqli) {
-    $nds_rates = [];
+    $stavki_nds = [];
     $nds_query = "SELECT id, stavka_nds FROM stavki_nds ORDER BY stavka_nds ASC";
     $nds_result = $mysqli->query($nds_query);
     if ($nds_result) {
-        $nds_rates = $nds_result->fetch_all(MYSQLI_ASSOC);
+        $stavki_nds = $nds_result->fetch_all(MYSQLI_ASSOC);
     }
-    return $nds_rates;
+    return $stavki_nds;
 }
 
 
@@ -153,12 +153,12 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
     $data_dogovora = $data['data_dogovora'];
     $gorod = $data['gorod'];
     $nomer_dogovora = $data['nomer_dogovora'];
-    $organization_id = intval($data['organization_id']);
-    $kontragenti_id = intval($data['kontragenti_id']);
+    $id_organizacii = intval($data['id_organizacii']);
+    $id_kontragenta = intval($data['id_kontragenta']);
     $usloviya_otgruzki = $data['usloviya_otgruzki'];
     $usloviya_oplaty = $data['usloviya_oplaty'];
     $inye_usloviya = $data['inye_usloviya'];
-    $sotrudniki_id = intval($data['sotrudniki_id']);
+    $id_sotrudnika = intval($data['id_sotrudnika']);
     $podpisant_postavshchika_dolzhnost = $data['podpisant_postavshchika_dolzhnost'];
     $podpisant_postavshchika_fio = $data['podpisant_postavshchika_fio'];
     $utverzhden = 0;
@@ -171,7 +171,7 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
     $id_zakazy_postavshchikam = ($ot_postavshchika && $zakaz_id) ? intval($zakaz_id) : null;
     
     $stmt = $mysqli->prepare("
-        INSERT INTO noreg_specifikacii_k_dogovoru 
+        INSERT INTO noreg_specifikacii_k_zakazam  
         (data_dogovora, nomer_specifikacii, gorod, nomer_dogovora, id_kontragenti_postavshik, id_kontragenti_pokupatel, usloviya_otgruzki, usloviya_oplaty, inye_usloviya, id_sotrudniki, podpisant_postavshchika_dolzhnost, podpisant_postavshchika_fio, id_index, dlya_zakaza_pokupatelya, dlya_zakaza_postavshiku, id_zakazy_pokupatelei, id_zakazy_postavshchikam)
         VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
@@ -180,12 +180,12 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
         $data_dogovora,
         $gorod,
         $nomer_dogovora,
-        $organization_id,
-        $kontragenti_id,
+        $id_organizacii,
+        $id_kontragenta,
         $usloviya_otgruzki,
         $usloviya_oplaty,
         $inye_usloviya,
-        $sotrudniki_id,
+        $id_sotrudnika,
         $podpisant_postavshchika_dolzhnost,
         $podpisant_postavshchika_fio,
         $id_index,
@@ -202,7 +202,7 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
     $doc_id = $mysqli->insert_id;
     $stmt->close();
     
-    $update_stmt = $mysqli->prepare("UPDATE noreg_specifikacii_k_dogovoru SET nomer_specifikacii = ? WHERE id = ?");
+    $update_stmt = $mysqli->prepare("UPDATE noreg_specifikacii_k_zakazam  SET nomer_specifikacii = ? WHERE id = ?");
     $update_stmt->bind_param('ii', $doc_id, $doc_id);
     
     if (!$update_stmt->execute()) {
@@ -219,15 +219,15 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
 }
 
 
-function createLineItem($mysqli, $doc_id, $product, $id_index) {
-    $product_id = intval($product['product_id']);
-    $unit_id = intval($product['unit_id']);
-    $nds_id = intval($product['nds_id']);
-    $quantity = floatval($product['quantity'] ?? 0);
-    $price = floatval($product['price'] ?? 0);
-    $nds_amount = floatval($product['summa_stavka'] ?? 0);
-    $total_amount = floatval($product['summa'] ?? 0);
-    $planiruemaya_data_postavki = $product['planiruemaya_data_postavki'] ?? null;
+function createLineItem($mysqli, $doc_id, $tovar, $id_index) {
+    $id_tovara = intval($tovar['id_tovara']);
+    $id_edinitsii = intval($tovar['id_edinitsii']);
+    $nds_id = intval($tovar['nds_id']);
+    $kolichestvo = floatval($tovar['kolichestvo'] ?? 0);
+    $cena = floatval($tovar['cena'] ?? 0);
+    $obshchaya_summa = floatval($tovar['summa_stavka'] ?? 0);
+    $obshchaya_summa = floatval($tovar['summa'] ?? 0);
+    $planiruemaya_data_postavki = $tovar['planiruemaya_data_postavki'] ?? null;
     $seria_id = null;
     
     $stmt = $mysqli->prepare("
@@ -239,14 +239,14 @@ function createLineItem($mysqli, $doc_id, $product, $id_index) {
         'iiiiiidddds',
         $doc_id,
         $id_index,
-        $product_id,
+        $id_tovara,
         $seria_id,
-        $unit_id,
+        $id_edinitsii,
         $nds_id,
-        $quantity,
-        $price,
-        $nds_amount,
-        $total_amount,
+        $kolichestvo,
+        $cena,
+        $obshchaya_summa,
+        $obshchaya_summa,
         $planiruemaya_data_postavki
     );
     
@@ -259,11 +259,11 @@ function createLineItem($mysqli, $doc_id, $product, $id_index) {
 }
 
 
-function createSpecificationLineItems($mysqli, $doc_id, $products, $id_index) {
-    foreach ($products as $product) {
-        if (empty($product['product_id'])) continue;
+function createSpecificationLineItems($mysqli, $doc_id, $tovary, $id_index) {
+    foreach ($tovary as $tovar) {
+        if (empty($tovar['id_tovara'])) continue;
         
-        $result = createLineItem($mysqli, $doc_id, $product, $id_index);
+        $result = createLineItem($mysqli, $doc_id, $tovar, $id_index);
         if (!$result['success']) {
             return $result;
         }
@@ -281,7 +281,7 @@ function getSpecificationById($mysqli, $spec_id) {
                id_kontragenti_postavshik, id_kontragenti_pokupatel, usloviya_otgruzki, usloviya_oplaty, 
                inye_usloviya, id_sotrudniki, podpisant_postavshchika_dolzhnost, 
                podpisant_postavshchika_fio, utverzhden, id_index
-        FROM noreg_specifikacii_k_dogovoru
+        FROM noreg_specifikacii_k_zakazam 
         WHERE id = ?
     ");
     
@@ -315,8 +315,8 @@ function fetchSpecificationHeader($mysqli, $spec_id) {
         nsk.nomer_specifikacii as nomer, 
         nsk.data_dogovora AS data_dokumenta, 
         nsk.utverzhden,
-        CONCAT(COALESCE(so.familiya, ''), ' ', COALESCE(so.imya, ''), ' ', COALESCE(so.otchestvo, '')) AS responsible_name
-        FROM noreg_specifikacii_k_dogovoru nsk
+        CONCAT(COALESCE(so.familiya, ''), ' ', COALESCE(so.imya, ''), ' ', COALESCE(so.otchestvo, '')) AS naimenovanie_otvetstvennogo
+        FROM noreg_specifikacii_k_zakazam  nsk
         LEFT JOIN sotrudniki so ON nsk.id_sotrudniki = so.id
         WHERE nsk.id = ?
     ");
@@ -364,10 +364,10 @@ function getSpecificationLineItems($mysqli, $id_index) {
     foreach ($items as &$item) {
         
         $product_result = $mysqli->query("SELECT naimenovanie FROM tovary_i_uslugi WHERE id = " . intval($item['id_tovary_i_uslugi']));
-        if ($product_result && $product = $product_result->fetch_assoc()) {
-            $item['product_name'] = $product['naimenovanie'];
+        if ($product_result && $tovar = $product_result->fetch_assoc()) {
+            $item['naimenovanie_tovara'] = $tovar['naimenovanie'];
         } else {
-            $item['product_name'] = '';
+            $item['naimenovanie_tovara'] = '';
         }
         
         
@@ -384,10 +384,10 @@ function getSpecificationLineItems($mysqli, $id_index) {
         
         
         $unit_result = $mysqli->query("SELECT naimenovanie FROM edinicy_izmereniya WHERE id = " . intval($item['id_edinicy_izmereniya']));
-        if ($unit_result && $unit = $unit_result->fetch_assoc()) {
-            $item['unit_name'] = $unit['naimenovanie'];
+        if ($unit_result && $edinitsa = $unit_result->fetch_assoc()) {
+            $item['naimenovanie_serii'] = $edinitsa['naimenovanie'];
         } else {
-            $item['unit_name'] = '';
+            $item['naimenovanie_serii'] = '';
         }
     }
     
@@ -400,17 +400,17 @@ function updateSpecification($mysqli, $spec_id, $data) {
     $data_dogovora = $data['data_dogovora'];
     $gorod = $data['gorod'];
     $nomer_dogovora = $data['nomer_dogovora'];
-    $organization_id = intval($data['organization_id']);
-    $kontragenti_id = intval($data['kontragenti_id']);
+    $id_organizacii = intval($data['id_organizacii']);
+    $id_kontragenta = intval($data['id_kontragenta']);
     $usloviya_otgruzki = $data['usloviya_otgruzki'];
     $usloviya_oplaty = $data['usloviya_oplaty'];
     $inye_usloviya = $data['inye_usloviya'];
-    $sotrudniki_id = intval($data['sotrudniki_id']);
+    $id_sotrudnika = intval($data['id_sotrudnika']);
     $podpisant_postavshchika_dolzhnost = $data['podpisant_postavshchika_dolzhnost'];
     $podpisant_postavshchika_fio = $data['podpisant_postavshchika_fio'];
     
     $stmt = $mysqli->prepare("
-        UPDATE noreg_specifikacii_k_dogovoru
+        UPDATE noreg_specifikacii_k_zakazam 
         SET data_dogovora = ?, gorod = ?, nomer_dogovora = ?, 
             id_kontragenti_postavshik = ?,  id_kontragenti_pokupatel = ?, usloviya_otgruzki = ?, usloviya_oplaty = ?, 
             inye_usloviya = ?, id_sotrudniki = ?, podpisant_postavshchika_dolzhnost = ?, 
@@ -427,12 +427,12 @@ function updateSpecification($mysqli, $spec_id, $data) {
         $data_dogovora,
         $gorod,
         $nomer_dogovora,
-        $organization_id,
-        $kontragenti_id,
+        $id_organizacii,
+        $id_kontragenta,
         $usloviya_otgruzki,
         $usloviya_oplaty,
         $inye_usloviya,
-        $sotrudniki_id,
+        $id_sotrudnika,
         $podpisant_postavshchika_dolzhnost,
         $podpisant_postavshchika_fio,
         $spec_id
@@ -467,16 +467,16 @@ function deleteLineItem($mysqli, $line_item_id) {
 }
 
 
-function updateLineItem($mysqli, $line_item_id, $product) {
+function updateLineItem($mysqli, $line_item_id, $tovar) {
     $line_item_id = intval($line_item_id);
-    $product_id = intval($product['product_id']);
-    $unit_id = intval($product['unit_id']);
-    $nds_id = intval($product['nds_id']);
-    $quantity = floatval($product['quantity'] ?? 0);
-    $price = floatval($product['price'] ?? 0);
-    $nds_amount = floatval($product['summa_stavka'] ?? 0);
-    $total_amount = floatval($product['summa'] ?? 0);
-    $planiruemaya_data_postavki = $product['planiruemaya_data_postavki'] ?? null;
+    $id_tovara = intval($tovar['id_tovara']);
+    $id_edinitsii = intval($tovar['id_edinitsii']);
+    $nds_id = intval($tovar['nds_id']);
+    $kolichestvo = floatval($tovar['kolichestvo'] ?? 0);
+    $cena = floatval($tovar['cena'] ?? 0);
+    $obshchaya_summa = floatval($tovar['summa_stavka'] ?? 0);
+    $obshchaya_summa = floatval($tovar['summa'] ?? 0);
+    $planiruemaya_data_postavki = $tovar['planiruemaya_data_postavki'] ?? null;
     $seria_id = null;
     
     $stmt = $mysqli->prepare("
@@ -492,14 +492,14 @@ function updateLineItem($mysqli, $line_item_id, $product) {
     
     $stmt->bind_param(
         'iiiiidddsi',
-        $product_id,
+        $id_tovara,
         $seria_id,
-        $unit_id,
+        $id_edinitsii,
         $nds_id,
-        $quantity,
-        $price,
-        $nds_amount,
-        $total_amount,
+        $kolichestvo,
+        $cena,
+        $obshchaya_summa,
+        $obshchaya_summa,
         $planiruemaya_data_postavki,
         $line_item_id
     );
@@ -512,9 +512,9 @@ function updateLineItem($mysqli, $line_item_id, $product) {
     return ['success' => true];
 }
 
-function updateSpecificationLineItems($mysqli, $spec_id, $products) {
+function updateSpecificationLineItems($mysqli, $spec_id, $tovary) {
     
-    $get_index_query = "SELECT id_index FROM noreg_specifikacii_k_dogovoru WHERE id = ?";
+    $get_index_query = "SELECT id_index FROM noreg_specifikacii_k_zakazam  WHERE id = ?";
     $stmt = $mysqli->prepare($get_index_query);
     $stmt->bind_param('i', $spec_id);
     $stmt->execute();
@@ -543,10 +543,10 @@ function updateSpecificationLineItems($mysqli, $spec_id, $products) {
     $delete_stmt->close();
     
     
-    foreach ($products as $product) {
-        if (empty($product['product_id'])) continue;
+    foreach ($tovary as $tovar) {
+        if (empty($tovar['id_tovara'])) continue;
         
-        $result = createLineItem($mysqli, $spec_id, $product, $id_index);
+        $result = createLineItem($mysqli, $spec_id, $tovar, $id_index);
         if (!$result['success']) {
             return $result;
         }
@@ -561,7 +561,7 @@ function deleteSpecification($mysqli, $spec_id) {
     $mysqli->begin_transaction();
     
     try {
-        $get_index_query = "SELECT id_index FROM noreg_specifikacii_k_dogovoru WHERE id = ?";
+        $get_index_query = "SELECT id_index FROM noreg_specifikacii_k_zakazam  WHERE id = ?";
         $stmt = $mysqli->prepare($get_index_query);
         $stmt->bind_param('i', $spec_id);
         $stmt->execute();
@@ -587,7 +587,7 @@ function deleteSpecification($mysqli, $spec_id) {
         $delete_items_stmt->close();
         
         
-        $delete_spec_stmt = $mysqli->prepare("DELETE FROM noreg_specifikacii_k_dogovoru WHERE id = ?");
+        $delete_spec_stmt = $mysqli->prepare("DELETE FROM noreg_specifikacii_k_zakazam  WHERE id = ?");
         if (!$delete_spec_stmt) {
             throw new Exception('Ошибка при подготовке запроса удаления спецификации: ' . $mysqli->error);
         }

@@ -4,7 +4,7 @@ require_once(__DIR__ . '/../config/env_helper.php');
 require_once(__DIR__ . '/../vendor/autoload.php');
 require_once(__DIR__ . '/../vendor/econea/nusoap/src/nusoap.php');
 
-function fetchVetisDocument($uuid)
+function getVetisDokument($uuid)
 {
     try {
         
@@ -115,7 +115,7 @@ function fetchVetisDocument($uuid)
                 $save_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Ошибка БД в fetchVetisDocument: " . $e->getMessage());
+            error_log("Ошибка БД в getVetisDokument: " . $e->getMessage());
         }
          
         
@@ -171,7 +171,7 @@ function fetchVetisDocument($uuid)
         }
 
         $doc_uuid = $vet_doc['uuid'] ?? '';
-        $date_issued = $vet_doc['issueDate'] ?? '';
+        $data_vypuska = $vet_doc['issueDate'] ?? '';
         $form = $vet_doc['vetDForm'] ?? '';
         $type = $vet_doc['vetDType'] ?? '';
         $status = $vet_doc['vetDStatus'] ?? '';
@@ -251,7 +251,7 @@ function fetchVetisDocument($uuid)
         return [
             'success' => true,
             'doc_uuid' => $doc_uuid,
-            'date_issued' => $date_issued,
+            'data_vypuska' => $data_vypuska,
             'form' => $form,
             'type' => $type,
             'status' => $status,
