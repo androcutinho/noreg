@@ -72,7 +72,7 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="container-fluid">
+<div class="card-body">
         <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
@@ -306,9 +306,14 @@ include '../header.php';
                     </div>
                 </div>
 
-                <?php if (!empty($related_payments)): ?>
-                <div>    
-                <div style="margin-top: 40px; margin-bottom: 30px;">
+                
+            </div>
+        </div>
+
+        <?php if (!empty($related_payments)): ?>
+        <div class="card d-print-none">
+            <div class="card-body">    
+            <div style="margin-top: 40px; margin-bottom: 30px;">
                     <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные платежи</h3>
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table">
@@ -358,7 +363,9 @@ include '../header.php';
                     </div>
                 </div>
                 </div>
-                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
                 
             </div>
         </div>

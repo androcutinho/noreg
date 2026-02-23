@@ -34,7 +34,7 @@ $tovary = getBceTovary($mysqli, $vybrannyj_id_sklada, $items_na_stranitse, $offs
 include '../header.php';
 ?>
       <div class="page-body">
-        <div class="container-fluid">
+        <div class="card-body">
           <div class="card">
             <div class="card-header">
               <div class="row w-full">

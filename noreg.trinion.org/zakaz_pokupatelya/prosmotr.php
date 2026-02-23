@@ -70,8 +70,7 @@ include '../header.php';
         <?= htmlspecialchars($error) ?>
     </div>
 <?php endif; ?>
-
-<div class="container-fluid">
+<div class="card-body">
         <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
@@ -273,126 +272,124 @@ include '../header.php';
                         </div>
                     </div>
                 </div>
-
-               
-                <?php 
-                $svyazannye_dokumenty = [];
-                if (!empty($zakaz['id_scheta_na_oplatu_pokupatelyam'])) {
-                    $schet_ids_json = $zakaz['id_scheta_na_oplatu_pokupatelyam'];
-                    $doc_items = json_decode($schet_ids_json, true);
-                    
-                    if (!is_array($doc_items)) {
-                        $doc_items = [$doc_items];
-                    }
-                    
-                    
-                    $doc_items = array_filter($doc_items, function($item) {
-                        return !is_null($item) && $item !== '';
-                    });
-                    
-                    if (!empty($doc_items)) {
-                        foreach ($doc_items as $doc_item) {
-                            
-                            if (is_array($doc_item) && isset($doc_item['id']) && isset($doc_item['type'])) {
-                                $doc_id = $doc_item['id'];
-                                $doc_type = $doc_item['type'];
-                            } else {
-                                
-                                $doc_id = is_array($doc_item) ? ($doc_item['id'] ?? $doc_item) : $doc_item;
-                                $doc_type = 'invoice';
-                            }
-                            
-                            
-                            if ($doc_type === 'shipment') {
-                                $doc = fetchOtgruzkiHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'shipment';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            } elseif ($doc_type === 'specification') {
-                                $doc = fetchSpecificationHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'specification';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            } else {
-        
-                                $doc = fetchSchetHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'invoice';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            }
-                        }
-                    }
-                }
-                ?>
-                
-                <?php if (!empty($svyazannye_dokumenty)): ?>
-                <div>    
-                <div style="margin-top: 40px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table">
-                            <thead>
-                                <tr>
-                                    <th>Тип документа</th>
-                                    <th>Номер</th>
-                                    <th>Ответственный</th>
-                                    <th>Дата</th>
-                                    <th class="text-center">Утвержден</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($svyazannye_dokumenty as $doc): ?>
-                                <tr>
-                                    <td>
-                                        <?php 
-                                        if ($doc['document_type'] === 'shipment') {
-                                            echo 'Отгрузка';
-                                        } elseif ($doc['document_type'] === 'specification') {
-                                            echo 'Спецификация';
-                                        } else {
-                                            echo 'Счет';
-                                        }
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <?php 
-                                        if ($doc['document_type'] === 'shipment') {
-                                            $link = "../otgruzki_tovarov/prosmotr.php?id=";
-                                        } elseif ($doc['document_type'] === 'specification') {
-                                            $link = "../noreg_specifikacii/prosmotr.php?id=";
-                                        } else {
-                                            $link = "../schet_na_oplatu/prosmotr.php?id=";
-                                        }
-                                        ?>
-                                        <a href="<?= $link . htmlspecialchars($doc['id']) ?>" class="text-primary">
-                                            <?= htmlspecialchars($doc['nomer'] ?? '') ?>
-                                        </a>
-                                    </td>
-                                    <td class="text-secondary"><?= htmlspecialchars($doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
-                                    <td class="text-secondary">
-                                        <?php 
-                                        $doc_date = DateTime::createFromFormat('Y-m-d', $doc['data_dokumenta']);
-                                        echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($doc['data_dokumenta']);
-                                        ?>
-                                    </td>
-                                    <td class="text-center text-secondary">
-                                        <?= $doc['utverzhden'] ? 'Да' : 'Нет' ?>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </div>
-                <?php endif; ?>
                 
             </div>
         </div>
+
+        <?php 
+$svyazannye_dokumenty = [];
+    if (!empty($zakaz['id_scheta_na_oplatu_pokupatelyam'])) {
+        $schet_ids_json = $zakaz['id_scheta_na_oplatu_pokupatelyam'];
+        $doc_items = json_decode($schet_ids_json, true);
+        
+        if (!is_array($doc_items)) {
+            $doc_items = [$doc_items];
+        }
+        
+        
+        $doc_items = array_filter($doc_items, function($item) {
+            return !is_null($item) && $item !== '';
+        });
+        
+        if (!empty($doc_items)) {
+            foreach ($doc_items as $doc_item) {
+                
+                if (is_array($doc_item) && isset($doc_item['id']) && isset($doc_item['type'])) {
+                    $doc_id = $doc_item['id'];
+                    $doc_type = $doc_item['type'];
+                } else {
+                    
+                    $doc_id = is_array($doc_item) ? ($doc_item['id'] ?? $doc_item) : $doc_item;
+                    $doc_type = 'invoice';
+                }
+                
+                
+                if ($doc_type === 'shipment') {
+                    $doc = fetchOtgruzkiHeader($mysqli, intval($doc_id));
+                    if ($doc) {
+                        $doc['document_type'] = 'shipment';
+                        $svyazannye_dokumenty[] = $doc;
+                    }
+                } elseif ($doc_type === 'specification') {
+                    $doc = fetchSpecificationHeader($mysqli, intval($doc_id));
+                    if ($doc) {
+                        $doc['document_type'] = 'specification';
+                        $svyazannye_dokumenty[] = $doc;
+                    }
+                } else {
+
+                    $doc = fetchSchetHeader($mysqli, intval($doc_id));
+                    if ($doc) {
+                        $doc['document_type'] = 'invoice';
+                        $svyazannye_dokumenty[] = $doc;
+                    }
+                }
+            }
+        }
+    }
+    ?>
+
+    <?php if (!empty($svyazannye_dokumenty)): ?>
+    <div class="card d-print-none" >
+        <div class="card-body">
+            <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Тип документа</th>
+                            <th>Номер</th>
+                            <th>Ответственный</th>
+                            <th>Дата</th>
+                            <th class="text-center">Утвержден</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($svyazannye_dokumenty as $doc): ?>
+                        <tr>
+                            <td>
+                                <?php 
+                                if ($doc['document_type'] === 'shipment') {
+                                    echo 'Отгрузка';
+                                } elseif ($doc['document_type'] === 'specification') {
+                                    echo 'Спецификация';
+                                } else {
+                                    echo 'Счет';
+                                }
+                                ?>
+                            </td>
+                            <td>
+                                <?php 
+                                if ($doc['document_type'] === 'shipment') {
+                                    $link = "../otgruzki_tovarov/prosmotr.php?id=";
+                                } elseif ($doc['document_type'] === 'specification') {
+                                    $link = "../noreg_specifikacii/prosmotr.php?id=";
+                                } else {
+                                    $link = "../schet_na_oplatu/prosmotr.php?id=";
+                                }
+                                ?>
+                                <a href="<?= $link . htmlspecialchars($doc['id']) ?>" class="text-primary">
+                                    <?= htmlspecialchars($doc['nomer'] ?? '') ?>
+                                </a>
+                            </td>
+                            <td class="text-secondary"><?= htmlspecialchars($doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                            <td class="text-secondary">
+                                <?php 
+                                $doc_date = DateTime::createFromFormat('Y-m-d', $doc['data_dokumenta']);
+                                echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($doc['data_dokumenta']);
+                                ?>
+                            </td>
+                            <td class="text-center text-secondary">
+                                <?= $doc['utverzhden'] ? 'Да' : 'Нет' ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+    <?php endif;?>
 </div>
 
 <script>
