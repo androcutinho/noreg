@@ -103,7 +103,7 @@ function getZakazStrokiItemsPokupatieliu($mysqli, $id_index) {
             sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS obshchaya_summa,
+            sd.summa_nds,
             sd.summa AS obshchaya_summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id

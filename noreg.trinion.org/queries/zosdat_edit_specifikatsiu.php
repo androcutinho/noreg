@@ -385,9 +385,9 @@ function getSpecificationLineItems($mysqli, $id_index) {
         
         $unit_result = $mysqli->query("SELECT naimenovanie FROM edinicy_izmereniya WHERE id = " . intval($item['id_edinicy_izmereniya']));
         if ($unit_result && $edinitsa = $unit_result->fetch_assoc()) {
-            $item['naimenovanie_serii'] = $edinitsa['naimenovanie'];
+            $item['naimenovanie_edinitsii'] = $edinitsa['naimenovanie'];
         } else {
-            $item['naimenovanie_serii'] = '';
+            $item['naimenovanie_edinitsii'] = '';
         }
     }
     

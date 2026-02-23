@@ -92,6 +92,8 @@ function getZakazStrokiItems($mysqli, $id_index) {
             t.naimenovanie AS naimenovanie_tovara,
             sd.id_edinicy_izmereniya,
             e.naimenovanie AS naimenovanie_edinitsii,
+            sd.id_sklada AS id_sklada,
+            s.naimenovanie AS naimenovanie_sklada,
             sd.kolichestvo AS kolichestvo,
             sd.cena AS ed_cena,
             sd.id_stavka_nds,
@@ -101,6 +103,7 @@ function getZakazStrokiItems($mysqli, $id_index) {
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
+        LEFT JOIN sklady s ON sd.id_sklada = s.id
         LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
         WHERE sd.id_index = ?
         ORDER BY sd.id ASC
