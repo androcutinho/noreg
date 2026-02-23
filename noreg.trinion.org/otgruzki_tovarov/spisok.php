@@ -44,15 +44,15 @@ include '../header.php';
                 </div>
                 <div class="col-md-auto col-sm-12">
                   <div class="ms-auto d-flex flex-wrap btn-list">
-                    <div class="input-gruppa input-gruppa-flat w-auto">
-                      <span class="input-gruppa-text">
+                    <div class="input-group input-gruppa-flat w-auto">
+                      <span class="input-group-text">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                           <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
                           <path d="M21 21l-6 -6"></path>
                         </svg>
                       </span>
                       <input id="advanced-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
-                      <span class="input-gruppa-text">
+                      <span class="input-group-text">
                       </span>
                     </div>
                     <a href="redaktirovanie.php" class="btn btn-primary">Создать</a>

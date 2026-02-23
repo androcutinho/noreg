@@ -18,23 +18,23 @@ define('COL_NDS_ID', 'id');
 define('stavka_nds', 'stavka_nds');
 
 // Column names - Arrivals
-define('COL_ARRIVAL_ID', 'id');
-define('COL_ARRIVAL_id_postavschika', 'id_kontragenti_postavshik');
-define('COL_ARRIVAL_ORG_ID', 'id_kontragenti_pokupatel');
-define('COL_ARRIVAL_sklad_id', 'id_sklada');
+define('id', 'id');
+define('id_kontragenti_postavshik', 'id_kontragenti_postavshik');
+define('id_kontragenti_pokupatel', 'id_kontragenti_pokupatel');
+define('id_sklada', 'id_sklada');
 define('COL_ARRIVAL_id_otvetstvennogo', 'id_otvetstvennyj');
-define('COL_ARRIVAL_DATE', 'data_dokumenta');
-define('COL_ARRIVAL_COMMENT', 'kommentarij');
-define('COL_ARRIVAL_NUMBER', 'nomer');
+define('data_dokumenta', 'data_dokumenta');
+define('kommentarij', 'kommentarij');
+define('nomer', 'nomer');
 
 
-define('COL_LINE_DOCUMENT_ID', 'id_dokumenta');
-define('COL_LINE_PRODUCT_ID', 'id_tovary_i_uslugi');
-define('COL_LINE_NDS_ID', 'id_stavka_nds');
-define('COL_LINE_PRICE', 'cena');
-define('COL_LINE_QUANTITY', 'kolichestvo');
-define('COL_LINE_SUMMA', 'summa');
-define('COL_LINE_NDS_AMOUNT', 'summa_nds');
+define('id_dokumenta', 'id_dokumenta');
+define('id_tovary_i_uslugi', 'id_tovary_i_uslugi');
+define('id_stavka_nds', 'id_stavka_nds');
+define('cena', 'cena');
+define('kolichestvo', 'kolichestvo');
+define('summa', 'summa');
+define('summa_nds', 'summa_nds');
 define('COL_LINE_id_edinitsii', 'id_edinicy_izmereniya');
 define('COL_LINE_SERIES_ID', 'id_serii');
 define('COL_LINE_PLANNED_DELIVERY_DATE', 'planiruemaya_data_postavki');

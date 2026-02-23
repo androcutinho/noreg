@@ -172,6 +172,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $error = 'Требуется добавить хотя бы один товар';
     }
     
+    if (!$error && !empty($_POST['tovary'])) {
+        foreach ($_POST['tovary'] as $index => $tovar) {
+            if (!empty($tovar['naimenovanie_tovara']) || !empty($tovar['kolichestvo']) || !empty($tovar['cena']) || !empty($tovar['nds_id'])) {
+                if (empty($tovar['naimenovanie_tovara'])) {
+                    $error = 'Строка ' . ($index + 1) . ': Требуется указать товар';
+                    break;
+                }
+                if (empty($tovar['kolichestvo'])) {
+                    $error = 'Строка ' . ($index + 1) . ': Требуется указать количество';
+                    break;
+                }
+                if (empty($tovar['cena'])) {
+                    $error = 'Строка ' . ($index + 1) . ': Требуется указать цену';
+                    break;
+                }
+                if (empty($tovar['nds_id'])) {
+                    $error = 'Строка ' . ($index + 1) . ': Требуется выбрать НДС';
+                    break;
+                }
+            }
+        }
+    }
+    
     if (!$error) {
         $user_role = getUserRole($mysqli, $_SESSION['user_id']);
         
@@ -287,39 +310,73 @@ include '../header.php';
                 <table class="table table-vcenter card-table" id="tablitsaTovarov">
                     <thead>
                         <tr>
-                            <th>№</th>
-                            <th>Товар</th>
-                            <th>Ед</th>
-                            <th>Кол-во</th>
-                            <th>Цена</th>
-                            <th>НДС</th>
-                            <th>Сумма НДС</th>
-                            <th>Сумма</th>
-                            <th></th>
+                            <th class="col-num">№</th>
+                            <th class="col-tovar">Товар</th>
+                            <th class="col-edinitsa">Ед</th>
+                            <th class="col-kolichestvo">Кол-во</th>
+                            <th class="col-cena">Цена</th>
+                            <th class="col-nds">НДС</th>
+                            <th class="col-summa-stavka">Сумма НДС</th>
+                            <th class="col-summa">Сумма</th>
+                            <th class="col-action"></th>
                         </tr>
                     </thead>
-                    <tbody id="productsBody">
-                        <?php if (!empty($line_items)): ?>
+                    <tbody id="tovaryBody">
+                        <?php if (!empty($_POST['tovary'])): ?>
+                            <?php $row_index = 0; ?>
+                            <?php foreach ($_POST['tovary'] as $submitted_item): ?>
+                        <tr class="tovar-row">
+                            <td class="col-num"><?= $row_index + 1 ?></td>
+                            <td class="col-tovar">
+                                <div class="search-container">
+                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off"
+                                    value="<?= htmlspecialchars($submitted_item['naimenovanie_tovara'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id_tovara" value="<?= htmlspecialchars($submitted_item['id_tovara'] ?? '') ?>">
+                                </div>
+                            </td>
+                            <td class="col-edinitsa">
+                                <div class="search-container" style="position: relative;">
+                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($submitted_item['naimenovanie_edinitsii'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_edinitsii]" class="id-edinitsii" value="<?= htmlspecialchars($submitted_item['id_edinitsii'] ?? '') ?>">
+                                </div>
+                            </td>
+                            <td class="col-kolichestvo"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['kolichestvo'] ?? '') ?>"></td>
+                            <td class="col-cena"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][cena]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['cena'] ?? '') ?>"></td>
+                            <td class="col-nds">
+                                <select class="form-control" name="tovary[<?= $row_index ?>][nds_id]">
+                                    <option value="">--</option>
+                                    <?php foreach ($stavki_nds as $nds): ?>
+                                        <option value="<?= $nds['id'] ?>" <?= ($nds['id'] == ($submitted_item['nds_id'] ?? '')) ? 'selected' : '' ?>><?= htmlspecialchars($nds['stavka_nds']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa_stavka'] ?? '') ?>"></td>
+                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa'] ?? '') ?>"></td>
+                            <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
+                        </tr>
+                            <?php $row_index++; ?>
+                            <?php endforeach; ?>
+                        <?php elseif (!empty($line_items)): ?>
                             <?php $row_index = 0; ?>
                             <?php foreach ($line_items as $item): ?>
                         <tr class="tovar-row">
-                            <td><?= $row_index + 1 ?></td>
-                            <td>
+                            <td class="col-num"><?= $row_index + 1 ?></td>
+                            <td class="col-tovar">
                                 <div class="search-container">
                                     <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off"
-                                    value="<?= htmlspecialchars($_POST['tovary'][$row_index]['naimenovanie_tovara'] ?? ($item['naimenovanie_tovara'] ?? '')) ?>">
+                                    value="<?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?>">
                                     <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id_tovara" value="<?= htmlspecialchars($item['id_tovary_i_uslugi'] ?? '') ?>">
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-edinitsa">
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['naimenovanie_edinitsii'] ?? ($item['naimenovanie_edinitsii'] ?? '')) ?>">
-                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_edinitsii]" class="id-edinitsii" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['id_edinitsii'] ?? ($item['id_edinicy_izmereniya'] ?? '')) ?>">
+                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_edinitsii]" class="id-edinitsii" value="<?= htmlspecialchars($item['id_edinicy_izmereniya'] ?? '') ?>">
                                 </div>
                             </td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['kolichestvo'] ?? (isset($item['kolichestvo_ostatka']) && $item['kolichestvo_ostatka'] > 0 ? $item['kolichestvo_ostatka'] : (isset($item['kolichestvo']) ? $item['kolichestvo'] : '0'))) ?>"></td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][cena]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['cena'] ?? ($item['ed_cena'] ?? '')) ?>"></td>
-                            <td>
+                            <td class="col-kolichestvo"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['kolichestvo_ostatka']) && $item['kolichestvo_ostatka'] > 0 ? $item['kolichestvo_ostatka'] : (isset($item['kolichestvo']) ? $item['kolichestvo'] : '0')) ?>"></td>
+                            <td class="col-cena"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][cena]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['ed_cena'] ?? '') ?>"></td>
+                            <td class="col-nds">
                                 <select class="form-control" name="tovary[<?= $row_index ?>][nds_id]">
                                     <option value="">--</option>
                                     <?php foreach ($stavki_nds as $nds): ?>
@@ -327,30 +384,30 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['summa_stavka'] ?? ($item['obshchaya_summa'] ?? '')) ?>"></td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($_POST['tovary'][$row_index]['summa'] ?? (isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['obshchaya_summa']) ? $item['obshchaya_summa'] : '0'))) ?>"></td>
-                            <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['obshchaya_summa'] ?? '') ?>"></td>
+                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['obshchaya_summa']) ? $item['obshchaya_summa'] : '0')) ?>"></td>
+                            <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                         <tr class="tovar-row">
-                            <td>1</td>
-                            <td>
+                            <td class="col-num">1</td>
+                            <td class="col-tovar">
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="tovary[0][id_tovara]" class="id_tovara">
                                 </div>
                             </td>
-                            <td>
+                            <td class="col-edinitsa">
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off">
                                     <input type="hidden" name="tovary[0][id_edinitsii]" class="id-edinitsii">
                                 </div>
                             </td>
-                            <td><input class="form-control" type="text" name="tovary[0][kolichestvo]" placeholder="0" autocomplete="off"></td>
-                            <td><input class="form-control" type="text" name="tovary[0][cena]" placeholder="0" autocomplete="off"></td>
-                            <td>
+                            <td class="col-kolichestvo"><input class="form-control" type="text" name="tovary[0][kolichestvo]" placeholder="0" autocomplete="off"></td>
+                            <td class="col-cena"><input class="form-control" type="text" name="tovary[0][cena]" placeholder="0" autocomplete="off"></td>
+                            <td class="col-nds">
                                 <select class="form-control" name="tovary[0][nds_id]">
                                     <option value="">--</option>
                                     <?php foreach ($stavki_nds as $nds): ?>
@@ -358,8 +415,8 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><input class="form-control" type="text" name="tovary[0][summa_stavka]" placeholder="0" autocomplete="off"></td>
-                            <td><input class="form-control" type="text" name="tovary[0][summa]" placeholder="0" autocomplete="off"></td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[0][summa_stavka]" placeholder="0" autocomplete="off"></td>
+                            <td class="col-summa"><input class="form-control" type="text" name="tovary[0][summa]" placeholder="0" autocomplete="off"></td>
                             <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                         <?php endif; ?>
@@ -372,7 +429,7 @@ include '../header.php';
                 
                 <div class="row" style="margin-top: 20px;">
                     <div class="col-12">
-                         <div class="btn-gruppa" role="gruppa" aria-label="Basic example">
+                         <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
                             <?= $is_edit ? 'Сохранить' : 'Сохранить' ?>
                         </button>
@@ -384,8 +441,19 @@ include '../header.php';
     </div>
 </div>
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
-        
-        <script>            // Form configuration for zakaz_postavschiku
+         <script>
+            
+            document.getElementById('documentForm').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    const target = event.target;
+                    
+                    if (target.closest('#tablitsaTovarov')) {
+                        event.preventDefault();
+                    }
+                }
+            });
+        </script>
+        <script>            
             const formConfig = {
                 columns: [
                     { key: 'tovar', label: 'Товар', type: 'autocomplete' },

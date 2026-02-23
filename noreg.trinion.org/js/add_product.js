@@ -82,7 +82,7 @@ function createRowTemplate(rowIndex, config = null) {
     let cfg = config || (typeof formConfig !== 'undefined' ? formConfig : { columns: defaultColumns });
     
     let ndsOptions = (typeof ndsOptionsTemplate !== 'undefined') ? ndsOptionsTemplate : '<option value="">--</option>';
-    let html = `<td>${rowIndex + 1}</td>`;
+    let html = `<td class="col-num">${rowIndex + 1}</td>`;
     
    
     let deliveryDateColumn = null;
@@ -103,7 +103,7 @@ function createRowTemplate(rowIndex, config = null) {
         if (column.key === 'nds_id' || column.type === 'select') {
             const fieldName = `tovary[${rowIndex}][${column.key}]`;
             html += `
-                <td>
+                <td class="col-nds">
                     <select class="form-control" name="${fieldName}">
                         ${ndsOptions}
                     </select>
@@ -111,12 +111,13 @@ function createRowTemplate(rowIndex, config = null) {
             `;
         } else if (column.key === 'kolichestvo' || column.key === 'cena') {
             const fieldName = `tovary[${rowIndex}][${column.key}]`;
-            html += `<td><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
+            const colClass = column.key === 'kolichestvo' ? 'col-kolichestvo' : 'col-cena';
+            html += `<td class="${colClass}"><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
         } else if (column.key === 'tovar') {
             const fieldName = `tovary[${rowIndex}][naimenovanie_tovara]`;
             const hiddenName = `tovary[${rowIndex}][id_tovara]`;
             html += `
-                <td>
+                <td class="col-tovar">
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите товар..." autocomplete="off">
                         <input type="hidden" name="${hiddenName}" class="id_tovara">
@@ -127,7 +128,7 @@ function createRowTemplate(rowIndex, config = null) {
             const fieldName = `tovary[${rowIndex}][naimenovanie_serii]`;
             const hiddenName = `tovary[${rowIndex}][id_serii]`;
             html += `
-                <td>
+                <td class="col-seria">
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите серию..." autocomplete="off">
                         <input type="hidden" name="${hiddenName}" class="id-serii">
@@ -138,7 +139,7 @@ function createRowTemplate(rowIndex, config = null) {
             const fieldName = `tovary[${rowIndex}][naimenovanie_edinitsii]`;
             const hiddenName = `tovary[${rowIndex}][id_edinitsii]`;
             html += `
-                <td>
+                <td class="col-edinitsa">
                     <div class="search-container" style="position: relative;">
                         <input class="form-control" type="text" name="${fieldName}" placeholder="Введите ед." autocomplete="off">
                         <input type="hidden" name="${hiddenName}" class="edinitsa-id">
@@ -152,8 +153,8 @@ function createRowTemplate(rowIndex, config = null) {
     const summaBefore = `tovary[${rowIndex}][summa_stavka]`;
     const summaAfter = `tovary[${rowIndex}][summa]`;
     html += `
-        <td><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
-        <td><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
+        <td class="col-summa-stavka"><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
+        <td class="col-summa"><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
     `;
     
     
@@ -161,7 +162,7 @@ function createRowTemplate(rowIndex, config = null) {
         const fieldName = `tovary[${rowIndex}][naimenovanie_sklada]`;
         const hiddenName = `tovary[${rowIndex}][id_sklada]`;
         html += `
-            <td>
+            <td class="col-sklad">
                 <div class="search-container" style="position: relative;">
                     <input class="form-control" type="text" name="${fieldName}" placeholder="Введите склад" autocomplete="off">
                     <input type="hidden" name="${hiddenName}" class="sklad-id">
@@ -173,7 +174,7 @@ function createRowTemplate(rowIndex, config = null) {
     if (deliveryDateColumn) {
         const fieldName = `tovary[${rowIndex}][${deliveryDateColumn.key}]`;
         html += `
-            <td>
+            <td class="col-delivery-date">
                 <input class="form-control" type="date" name="${fieldName}" autocomplete="off" required>
             </td>
         `;
@@ -181,14 +182,14 @@ function createRowTemplate(rowIndex, config = null) {
     
     
     html += `
-        <td><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
+        <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
     `;
     
     return html;
 }
 
 function addRow() {
-    const tbody = document.getElementById('productsBody');
+    const tbody = document.getElementById('tovaryBody');
     const rowCount = tbody.rows.length;
     const newRow = document.createElement('tr');
     newRow.className = 'tovar-row';
@@ -200,7 +201,7 @@ function addRow() {
 }
 
 function deleteRow(button) {
-    const tbody = document.getElementById('productsBody');
+    const tbody = document.getElementById('tovaryBody');
     if (tbody.rows.length > 1) {
         button.closest('tr').remove();
         updateRowNumbers();
@@ -208,10 +209,10 @@ function deleteRow(button) {
 }
 
 function updateRowNumbers() {
-    const tbody = document.getElementById('productsBody');
+    const tbody = document.getElementById('tovaryBody');
     const rows = tbody.querySelectorAll('tr');
     rows.forEach((row, index) => {
-        row.querySelector('td:pervyj-child').textContent = index + 1;
+        row.querySelector('td:first-child').textContent = index + 1;
         row.querySelectorAll('input, select').forEach(input => {
             if (input.name) {
                 input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
@@ -220,7 +221,7 @@ function updateRowNumbers() {
     });
 }
 
-// Helper function to position dropdown using fixed positioning relative to viewport
+
 function positionDropdown(dropdown, input) {
     const rect = input.getBoundingClientRect();
     dropdown.style.position = 'fixed';
@@ -229,7 +230,7 @@ function positionDropdown(dropdown, input) {
     dropdown.style.width = rect.width + 'px';
 }
 
-// Calculate summa based on cena and kolichestvo
+
 function attachCalculationListeners(row) {
     const priceInput = row.querySelector('input[name*="[cena]"]');
     const quantityInput = row.querySelector('input[name*="[kolichestvo]"]');
@@ -243,7 +244,7 @@ function attachCalculationListeners(row) {
         const summa = cena * kolichestvo;
         summaInput.value = summa > 0 ? summa.toFixed(2) : '';
         
-        // Recalculate NDS kolichestvo when summa changes
+        
         calculateNdsAmount();
     };
 
@@ -255,7 +256,7 @@ function attachCalculationListeners(row) {
             return;
         }
         
-        // Get NDS rate from the selected option's text content
+        
         const selectedOption = ndsSelect.options[ndsSelect.selectedIndex];
         const ndsRate = parseFloat(selectedOption.textContent) || 0;
         
@@ -273,7 +274,7 @@ function attachCalculationListeners(row) {
     }
 }
 
-// Check if tovar requires series (poserijnyj_uchet)
+
 async function checkProductSeriesRequirement(productId, seriaInput, seriaHidden, productInput) {
     if (!productId) {
         
@@ -305,7 +306,7 @@ async function checkProductSeriesRequirement(productId, seriaInput, seriaHidden,
     }
 }
 
-// Autocomplete for table tovar/series/edinitsa fields
+
 function initTableAutocomplete(row) {
     const productInput = row.querySelector('input[name*="[naimenovanie_tovara]"]');
     const productHidden = row.querySelector('input[name*="[id_tovara]"]');
@@ -314,7 +315,7 @@ function initTableAutocomplete(row) {
     const unitInput = row.querySelector('input[name*="[naimenovanie_edinitsii]"]');
     const unitHidden = row.querySelector('input[name*="[id_edinitsii]"]');
 
-    // tovar autocomplete
+   
     if (productInput && productHidden) {
         const dropdown = document.createElement('div');
         dropdown.className = 'autocomplete-dropdown';
@@ -330,7 +331,7 @@ function initTableAutocomplete(row) {
         productInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
             
-            // If tovar field is cleared, enable series field
+            
             if (query.length === 0) {
                 dropdown.style.display = 'none';
                 productHidden.value = '';

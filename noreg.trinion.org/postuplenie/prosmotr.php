@@ -185,10 +185,10 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['obshchaya_summa'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= number_format(floatval($item['obshchaya_summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>

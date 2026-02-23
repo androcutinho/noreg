@@ -147,5 +147,5 @@ if (isset($_SESSION['user_id'])) {
         </div>
       </header>
       <!-- END NAVBAR  -->
-
+         <script src="/js/stil_tablic.js"></script>
         <script></script>

@@ -41,17 +41,17 @@ function fetchSchetDataForPayment($mysqli, $schet_id) {
 function fetchSchetLineItemsForPayment($mysqli, $id_index) {
     $sql = "SELECT 
         sd.id,
-        sd." . COL_LINE_PRODUCT_ID . " as id_tovara,
+        sd.id_tovary_i_uslugi as id_tovara,
         ti.naimenovanie as naimenovanie_tovara,
-        sd." . COL_LINE_QUANTITY . " as kolichestvo,
-        sd." . COL_LINE_PRICE . " as ed_cena,
-        sd." . COL_LINE_NDS_ID . " as nds_id,
+        sd.kolichestvo
+        sd.cena as ed_cena,
+        sd.id_stavka_nds as nds_id,
         sn.stavka_nds as stavka_nds,
-        sd." . COL_LINE_SUMMA . " as obshchaya_summa,
-        sd." . COL_LINE_NDS_AMOUNT . " as obshchaya_summa
-    FROM " . stroki_dokumentov . " sd
-    LEFT JOIN tovary_i_uslugi ti ON sd." . COL_LINE_PRODUCT_ID . " = ti.id
-    LEFT JOIN stavki_nds sn ON sd." . COL_LINE_NDS_ID . " = sn.id
+        sd.summa as obshchaya_summa,
+        sd.summa_nds
+    FROM stroki_dokumentov sd
+    LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+    LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
     WHERE sd.id_index = ?
     ORDER BY sd.id ASC";
 

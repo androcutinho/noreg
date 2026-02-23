@@ -34,7 +34,7 @@ function sozdatPribytieDokument($mysqli, $data) {
         
         $id_index = getNextIdIndex($mysqli);
         
-        $arrival_sql = "INSERT INTO " . postupleniya_tovarov . "(" . COL_ARRIVAL_id_postavschika . ", " . COL_ARRIVAL_ORG_ID . ", " . COL_ARRIVAL_sklad_id . ", " . COL_ARRIVAL_id_otvetstvennogo . ", " . COL_ARRIVAL_DATE . ", utverzhden, id_index) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $arrival_sql = "INSERT INTO postupleniya_tovarov (id_kontragenti_postavshik, id_kontragenti_pokupatel, id_sklada, id_otvetstvennyj, data_dokumenta, utverzhden, id_index) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $arrival_stmt = $mysqli->stmt_init();
         
         if (!$arrival_stmt->prepare($arrival_sql)) {
@@ -101,7 +101,7 @@ function sozdatPribytieDokument($mysqli, $data) {
             }
             
             
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_id_tovara . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_id_edinitsii . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO stroki_dokumentov (id_dokumenta, id_index, id_tovary_i_uslugi, id_stavka_nds, cena, kolichestvo, summa, id, id_edinicy_izmereniya, summa_nds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
@@ -182,26 +182,26 @@ function getDokumentHeader($mysqli, $document_id) {
 function getStrokiDokumentovItems($mysqli, $id_index) {
     $sql = "SELECT 
         sd.id,
-        sd." . COL_LINE_id_tovara . " as id_tovara,
-        sd." . COL_LINE_SERIES_ID . ",
-        sd." . COL_LINE_id_edinitsii . ",
+        sd.id_tovary_i_uslugi as id_tovara,
+        sd.id_serii,
+        sd.id_edinicy_izmereniya,
         ti.naimenovanie as naimenovanie_tovara,
         ser.id as id_serii,
-        ser." . COL_SERIES_NUMBER . " as naimenovanie_serii,
-        ser." . data_izgotovleniya . ",
-        ser." . srok_godnosti . ",
+        ser.nomer as naimenovanie_serii,
+        ser.data_izgotovleniya,
+        ser.srok_godnosti,
         eu.naimenovanie as naimenovanie_edinitsii,
-        sd." . COL_LINE_QUANTITY . " as kolichestvo,
-        sd." . COL_LINE_PRICE . " as ed_cena,
-        sd." . COL_LINE_NDS_ID . " as nds_id,
+        sd.kolichestvo,
+        sd.cena as ed_cena,
+        sd.id_stavka_nds  as nds_id,
         sn.stavka_nds as stavka_nds,
-        sd." . COL_LINE_SUMMA . " as obshchaya_summa,
-        sd." . COL_LINE_NDS_AMOUNT . " as suma_nds
-    FROM " . stroki_dokumentov . " sd
-    LEFT JOIN tovary_i_uslugi ti ON sd." . COL_LINE_id_tovara . " = ti.id
-    LEFT JOIN serii ser ON ser.id = sd." . COL_LINE_SERIES_ID . " AND ser." . serii_id_tovary_i_uslugi . " = sd." . COL_LINE_id_tovara . "
-    LEFT JOIN stavki_nds sn ON sd." . COL_LINE_NDS_ID . " = sn.id
-    LEFT JOIN edinicy_izmereniya eu ON sd." . COL_LINE_id_edinitsii . " = eu.id
+        sd.summa as obshchaya_summa,
+        sd.summa_nds
+    FROM stroki_dokumentov sd
+    LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+    LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
+    LEFT JOIN stavki_nds sn ON sd.id_stavka_nds = sn.id
+    LEFT JOIN edinicy_izmereniya eu ON sd.id_edinicy_izmereniya = eu.id
     WHERE sd.id_index = ?
     ORDER BY sd.id ASC";
 
@@ -250,13 +250,13 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
         $id_postavschika = intval($data['id_postavschika']);
         
         
-        $doc_sql = "UPDATE " . postupleniya_tovarov . " SET 
-            " . COL_ARRIVAL_DATE . " = ?,
-            " . COL_ARRIVAL_sklad_id . " = ?,
-            " . COL_ARRIVAL_id_postavschika . " = ?,
-            " . COL_ARRIVAL_ORG_ID . " = ?,
-            " . COL_ARRIVAL_id_otvetstvennogo . " = ?
-        WHERE " . COL_ARRIVAL_ID . " = ?";
+        $doc_sql = "UPDATE postupleniya_tovarov SET 
+            data_dokumenta = ?,
+            id_sklada = ?,
+            id_kontragenti_postavshik = ?,
+            id_kontragenti_pokupatel = ?,
+            id_otvetstvennyj = ?
+        WHERE id = ?";
         
         $doc_stmt = $mysqli->stmt_init();
         if (!$doc_stmt->prepare($doc_sql)) {
@@ -294,7 +294,7 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
         $id_index = $doc_data['id_index'];
         
         
-        $delete_sql = "DELETE FROM " . stroki_dokumentov . " WHERE id_index = ?";
+        $delete_sql = "DELETE FROM stroki_dokumentov WHERE id_index = ?";
         $delete_stmt = $mysqli->stmt_init();
         if (!$delete_stmt->prepare($delete_sql)) {
             throw new Exception("Ошибка подготовки удаления строк: " . $mysqli->error);
@@ -340,7 +340,7 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
             $id_serii = !empty($tovar['id_serii']) ? intval($tovar['id_serii']) : 0;
             $id_edinitsii = !empty($tovar['id_edinitsii']) ? intval($tovar['id_edinitsii']) : 0;
             
-            $line_sql = "INSERT INTO " . stroki_dokumentov . "(" . COL_LINE_DOCUMENT_ID . ", id_index, " . COL_LINE_id_tovara . ", " . COL_LINE_NDS_ID . ", " . COL_LINE_PRICE . ", " . COL_LINE_QUANTITY . ", " . COL_LINE_SUMMA . ", " . COL_LINE_SERIES_ID . ", " . COL_LINE_id_edinitsii . ", " . COL_LINE_NDS_AMOUNT . ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO stroki_dokumentov (id_dokumenta, id_index, id_tovary_i_uslugi, id_stavka_nds, cena, kolichestvo, summa, id_serii, id_edinicy_izmereniya, summa_nds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {
