@@ -62,7 +62,7 @@ include '../header.php';
                 <div class="col-4 text-center">
                     <p class="h3">Дата оформления</p>
                     <address>
-                        <?= htmlspecialchars($date_issued) ?><br>
+                        <?= htmlspecialchars($data_vypuska) ?><br>
                     </address>
                 </div>
                 <div class="col-4 text-end">
@@ -187,11 +187,11 @@ include '../header.php';
                         <tbody>
                             <tr>
                                 <td class="text-muted" style="width: 30%">Название продукции:</td>
-                                <td><?= htmlspecialchars($product_name) ?></td>
+                                <td><?= htmlspecialchars($naimenovanie_tovara) ?></td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Объём:</td>
-                                <td><?= htmlspecialchars($volume) ?> <?= htmlspecialchars($unit_name) ?></td>
+                                <td><?= htmlspecialchars($volume) ?> <?= htmlspecialchars($naimenovanie_edinitsii) ?></td>
                             </tr>
                              <tr>
                                 <td class="text-muted">Дата выработки продукции:</td>

@@ -44,8 +44,7 @@ function getVetisDokument($uuid)
 
         $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentByUuidOperation';
 
-        $request_xml_1 = '
-<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+        $request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
   <SOAP-ENV:Header/>
   <SOAP-ENV:Body>
     <apldef:submitApplicationRequest>
@@ -192,14 +191,14 @@ function getVetisDokument($uuid)
         
         $batch = $vet_doc['certifiedConsignment']['batch'] ?? [];
         $productType = $batch['productType'] ?? '2';
-        $product_name = $batch['productItem']['name'] ?? '';
+        $naimenovanie_tovara = $batch['productItem']['name'] ?? '';
         $product_guid = $batch['productItem']['guid'] ?? '';
         $product_uuid = $batch['product']['uuid'] ?? '';
         $subProduct_guid = $batch['subProduct']['guid'] ?? '';
         $subProduct_uuid = $batch['subProduct']['uuid'] ?? '';
         $productItem_guid = $batch['productItem']['guid'] ?? '';
         $volume = $batch['volume'] ?? '';
-        $unit_name = $batch['unit']['name'] ?? '';
+        $naimenovanie_edinitsii = $batch['unit']['name'] ?? '';
         $unit_guid = $batch['unit']['guid'] ?? '';
         $unit_uuid = $batch['unit']['uuid'] ?? '';
         $batchID = $batch['batchID'] ?? '';
@@ -270,14 +269,14 @@ function getVetisDokument($uuid)
             'transportType' => $transportType,
             'broker_guid' => $broker_guid,
             'productType' => $productType,
-            'product_name' => $product_name,
+            'naimenovanie_tovara' => $naimenovanie_tovara,
             'product_guid' => $product_guid,
             'product_uuid' => $product_uuid,
             'subProduct_guid' => $subProduct_guid,
             'subProduct_uuid' => $subProduct_uuid,
             'productItem_guid' => $productItem_guid,
             'volume' => $volume,
-            'unit_name' => $unit_name,
+            'naimenovanie_edinitsii' => $naimenovanie_edinitsii,
             'unit_guid' => $unit_guid,
             'unit_uuid' => $unit_uuid,
             'batchID' => $batchID,

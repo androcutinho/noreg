@@ -4,7 +4,7 @@ require_once(__DIR__ . '/../config/env_helper.php');
 require_once(__DIR__ . '/../vendor/autoload.php');
 require_once(__DIR__ . '/../vendor/econea/nusoap/src/nusoap.php');
 
-function fetchDocumentList()
+function fetchDocumentList($vetis_guid = null)
 {
     try {
         
@@ -34,7 +34,11 @@ function fetchDocumentList()
         $apikey = $env['API_KEY'];
         $vetis_issuerId = $env['VETIS_ISSUER_ID'];
         $user_login = $env['USER_LOGIN'];
-        $vetis_guid = $env['VETIS_GUID'];
+        
+        
+        if (!$vetis_guid) {
+            $vetis_guid = $env['VETIS_GUID'];
+        }
 
         // Initialize SOAP client
         $client = new nusoap_client('https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService', true);
@@ -46,7 +50,13 @@ function fetchDocumentList()
 
         $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentListOperation';
 
-        $request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+        $request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" 
+        xmlns:bs="http://api.vetrf.ru/schema/cdm/base" 
+        xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" 
+        xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" 
+        xmlns:apl="http://api.vetrf.ru/schema/cdm/application" 
+        xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" 
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
   <SOAP-ENV:Header/>
   <SOAP-ENV:Body>
     <apldef:submitApplicationRequest>
@@ -186,6 +196,7 @@ function fetchDocumentList()
             $type = $vet_doc['vetDType'] ?? '';
             $status = $vet_doc['vetDStatus'] ?? '';
             $last_update = $vet_doc['lastUpdateDate'] ?? '';
+            $issue_number = $vet_doc['referencedDocument']['issueNumber'] ?? '';
             $shipper_name = $vet_doc['certifiedConsignment']['consignor']['enterprise']['name'] ?? 'Не указано';
             
             
@@ -219,6 +230,7 @@ function fetchDocumentList()
                 'vetDType' => $type,
                 'vetDStatus' => $status,
                 'lastUpdateDate' => $last_update,
+                'issueNumber' => $issue_number,
                 'dateOfProduction' => $prod_date,
                 'expiryDate' => $exp_date,
                 'enterprise' => $shipper_name,

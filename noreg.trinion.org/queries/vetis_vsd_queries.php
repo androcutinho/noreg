@@ -1,18 +1,17 @@
  <?php
 
-function getDocumentsCount($mysqli, $search_term = '') {
+function getDocumentsCount($mysqli, $enterprise_guid = '') {
     $sql = "SELECT COUNT(*) as count FROM vetis_vsd";
     
-    if (!empty($search_term)) {
-        $search_term = '%' . $search_term . '%';
-        $sql .= " WHERE uuid LIKE ? OR vetDType LIKE ? OR vetDStatus LIKE ? OR enterprise LIKE ? OR consignee LIKE ?";
+    if (!empty($enterprise_guid)) {
+        $sql .= " WHERE enterprise_guid = ?";
         
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             die("SQL error: " . $mysqli->error);
         }
         
-        $stmt->bind_param("sssss", $search_term, $search_term, $search_term, $search_term, $search_term);
+        $stmt->bind_param("s", $enterprise_guid);
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
@@ -27,7 +26,7 @@ function getDocumentsCount($mysqli, $search_term = '') {
     return $row['count'];
 }
 
-function fetchAllDocuments($mysqli, $search_term = '', $limit = 8, $offset = 0) {
+function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset = 0) {
     $sql = "SELECT 
         uuid,
         issueDate,
@@ -41,9 +40,8 @@ function fetchAllDocuments($mysqli, $search_term = '', $limit = 8, $offset = 0) 
         id_tovary_i_uslugi
     FROM vetis_vsd";
     
-    if (!empty($search_term)) {
-        $search_term = '%' . $search_term . '%';
-        $sql .= " WHERE uuid LIKE ? OR vetDType LIKE ? OR vetDStatus LIKE ? OR enterprise LIKE ? OR consignee LIKE ?";
+    if (!empty($enterprise_guid)) {
+        $sql .= " WHERE enterprise_guid = ?";
     }
     
     $sql .= " ORDER BY lastUpdateDate DESC LIMIT ? OFFSET ?";
@@ -53,8 +51,8 @@ function fetchAllDocuments($mysqli, $search_term = '', $limit = 8, $offset = 0) 
         die("SQL error: " . $mysqli->error);
     }
     
-    if (!empty($search_term)) {
-        $stmt->bind_param("sssssii", $search_term, $search_term, $search_term, $search_term, $search_term, $limit, $offset);
+    if (!empty($enterprise_guid)) {
+        $stmt->bind_param("sii", $enterprise_guid, $limit, $offset);
     } else {
         $stmt->bind_param("ii", $limit, $offset);
     }

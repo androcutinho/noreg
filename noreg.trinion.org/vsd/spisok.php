@@ -14,11 +14,19 @@ $page_title = 'Список ВСД';
 $mysqli = require '../config/database.php';
 require '../queries/vetis_vsd_queries.php';
 
-// Pagination
+// Fetch enterprises from vetis_predpriyatiya
+$enterprises_sql = "SELECT DISTINCT enterpriseGuid, naimenovaniye FROM vetis_predpriyatiya WHERE enterpriseGuid IS NOT NULL AND enterpriseGuid != '' ORDER BY naimenovaniye";
+$enterprises_result = $mysqli->query($enterprises_sql);
+$enterprises = $enterprises_result ? $enterprises_result->fetch_all(MYSQLI_ASSOC) : [];
+
+
+$vybrannyj_enterprise_guid = isset($_GET['enterprise_guid']) ? htmlspecialchars($_GET['enterprise_guid']) : null;
+
+
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-$total_documents = getDocumentsCount($mysqli, '');
+$total_documents = getDocumentsCount($mysqli, $vybrannyj_enterprise_guid);
 $total_pages = ceil($total_documents / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
@@ -26,7 +34,7 @@ if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pag
 
 $offset = ($current_page - 1) * $items_per_page;
 
-$documents = fetchAllDocuments($mysqli, '', $items_per_page, $offset);
+$documents = fetchAllDocuments($mysqli, $vybrannyj_enterprise_guid, $items_per_page, $offset);
 
 include '../header.php';
 ?>
@@ -61,6 +69,26 @@ include '../header.php';
                       <input id="document-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
                       <span class="input-group-text">
                       </span>
+                      </div>
+                      <div class="dropdown">
+                              <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?php 
+                                if ($vybrannyj_enterprise_guid) {
+                                    $selected = array_filter($enterprises, fn($e) => $e['enterpriseGuid'] == $vybrannyj_enterprise_guid);
+                                    $naimenovanie_enterprise = !empty($selected) ? reset($selected)['naimenovaniye'] : 'Предприятие';
+                                    echo htmlspecialchars($naimenovanie_enterprise);
+                                } else {
+                                    echo 'Предприятия';
+                                }
+                                ?>
+                              </a>
+                              <div class="dropdown-menu" style="">
+                                <a class="dropdown-item" href="?">Все предприятия</a>
+                                <?php foreach ($enterprises as $enterprise): ?>
+                                  <a class="dropdown-item" href="?enterprise_guid=<?= htmlspecialchars($enterprise['enterpriseGuid']) ?>"><?= htmlspecialchars($enterprise['naimenovaniye']) ?></a>
+                                <?php endforeach; ?>
+                              </div>
+                            </div>
                     </div>
                   </div>
                 </div>
@@ -99,7 +127,7 @@ include '../header.php';
                         <td class="text-secondary"><?= htmlspecialchars($doc['consignee']) ?></td>
                         <td>
                           <?php if (hasProductSeries($mysqli, $doc['id_tovary_i_uslugi'])): ?>
-                            <a href="https://noreg.trinion.org/tovary/serii.php?product_id=<?= $doc['id_tovary_i_uslugi'] ?>" class="btn btn-primary">
+                            <a href="https://noreg.trinion.org/serii/spisok.php?product_id=<?= $doc['id_tovary_i_uslugi'] ?>" class="btn btn-primary">
                               Открыть серию
                             </a>
                           <?php else: ?>
@@ -130,7 +158,7 @@ include '../header.php';
                 <div class="col-auto">
                   <ul class="pagination m-0 ms-auto">
                     <?php 
-                    $url_params = "?";
+                    $url_params = "?" . ($vybrannyj_enterprise_guid ? "enterprise_guid=" . htmlspecialchars($vybrannyj_enterprise_guid) . "&" : "");
                     ?>
                     <li class="page-item <?= ($current_page == 1) ? 'disabled' : '' ?>">
                       <a class="page-link" href="<?= $url_params ?>page=<?= max(1, $current_page - 1) ?>" <?= ($current_page == 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
