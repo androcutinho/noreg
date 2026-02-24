@@ -34,10 +34,11 @@ function syncDocumentsToDatabase($documents, $mysqli)
             $vet_dtype = $vet_doc['vetDType'] ?? '';
             $vet_dstatus = $vet_doc['vetDStatus'] ?? '';
             $last_update_date = $vet_doc['lastUpdateDate'] ?? '';
-            $issue_number = $vet_doc['issueNumber'] ?? '';
+            $issueNumber = $vet_doc['issueNumber'] ?? '';
             
     
             $shipper_name = $vet_doc['enterprise'] ?? 'Не указано';
+            $enterprise_guid = $vet_doc['enterprise_guid'] ?? '';
             $receiver_name = $vet_doc['consignee'] ?? 'Не указано';
             $product_name = $vet_doc['naimenovanie_tovara'] ?? '';
             
@@ -110,7 +111,7 @@ function syncDocumentsToDatabase($documents, $mysqli)
                 
                 
                 if (strcmp($last_update_date, $stored_last_update) > 0) {
-                    $update_sql = "UPDATE vetis_vsd SET issueDate = ?, vetDType = ?, vetDStatus = ?, lastUpdateDate = ?, issueNumber = ?, dateOfProduction = ?, expiryDate = ?, enterprise = ?, consignee = ?, naimenovanie_tovara = ?, id_tovary_i_uslugi = ? WHERE uuid = ?";
+                    $update_sql = "UPDATE vetis_vsd SET issueDate = ?, vetDType = ?, vetDStatus = ?, lastUpdateDate = ?, issueNumber = ?, dateOfProduction = ?, expiryDate = ?, enterprise = ?, consignee = ?, naimenovanie_tovara = ?, id_tovary_i_uslugi = ?, enterprise_guid = ? WHERE uuid = ?";
                     $update_stmt = $mysqli->prepare($update_sql);
                     if (!$update_stmt) {
                         $errors[] = "Document $index ($doc_uuid): Prepare update failed - " . $mysqli->error;
@@ -119,7 +120,7 @@ function syncDocumentsToDatabase($documents, $mysqli)
                     }
                     
                     
-                    $update_stmt->bind_param('ssssssssssis', $issue_date, $vet_dtype, $vet_dstatus, $last_update_date, $issue_number, $prod_date, $exp_date, $shipper_name, $receiver_name, $product_name, $id_tovary_i_uslugi, $doc_uuid);
+                    $update_stmt->bind_param('ssssssssssiss', $issue_date, $vet_dtype, $vet_dstatus, $last_update_date, $issue_number, $prod_date, $exp_date, $shipper_name, $receiver_name, $product_name, $id_tovary_i_uslugi, $enterprise_guid, $doc_uuid);
                     if (!$update_stmt->execute()) {
                         $errors[] = "Document $index ($doc_uuid): Execute update failed - " . $update_stmt->error;
                     } else {
@@ -131,7 +132,7 @@ function syncDocumentsToDatabase($documents, $mysqli)
                 }
             } else {
             
-                $insert_sql = "INSERT INTO vetis_vsd (uuid, issueDate, vetDType, vetDStatus, lastUpdateDate, issueNumber, dateOfProduction, expiryDate, enterprise, consignee, naimenovanie_tovara, id_tovary_i_uslugi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $insert_sql = "INSERT INTO vetis_vsd (uuid, issueDate, vetDType, vetDStatus, lastUpdateDate, issueNumber, dateOfProduction, expiryDate, enterprise, consignee, naimenovanie_tovara, id_tovary_i_uslugi, enterprise_guid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $insert_stmt = $mysqli->prepare($insert_sql);
                 if (!$insert_stmt) {
                     $errors[] = "Document $index ($doc_uuid): Prepare insert failed - " . $mysqli->error;
@@ -139,7 +140,7 @@ function syncDocumentsToDatabase($documents, $mysqli)
                     continue;
                 }
                 
-                $insert_stmt->bind_param('sssssssssssi', $doc_uuid, $issue_date, $vet_dtype, $vet_dstatus, $last_update_date, $issue_number, $prod_date, $exp_date, $shipper_name, $receiver_name, $product_name, $id_tovary_i_uslugi);
+                $insert_stmt->bind_param('sssssssssssis', $doc_uuid, $issue_date, $vet_dtype, $vet_dstatus, $last_update_date, $issue_number, $prod_date, $exp_date, $shipper_name, $receiver_name, $product_name, $id_tovary_i_uslugi, $enterprise_guid);
                 if (!$insert_stmt->execute()) {
                     $errors[] = "Document $index ($doc_uuid): Execute insert failed - " . $insert_stmt->error;
                 } else {

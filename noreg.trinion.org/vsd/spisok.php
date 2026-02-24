@@ -20,7 +20,7 @@ $enterprises_result = $mysqli->query($enterprises_sql);
 $enterprises = $enterprises_result ? $enterprises_result->fetch_all(MYSQLI_ASSOC) : [];
 
 
-$vybrannyj_enterprise_guid = isset($_GET['enterprise_guid']) ? htmlspecialchars($_GET['enterprise_guid']) : null;
+$vybrannyj_enterprise_guid = isset($_GET['guid']) ? htmlspecialchars($_GET['guid']) : null;
 
 
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
@@ -85,7 +85,7 @@ include '../header.php';
                               <div class="dropdown-menu" style="">
                                 <a class="dropdown-item" href="?">Все предприятия</a>
                                 <?php foreach ($enterprises as $enterprise): ?>
-                                  <a class="dropdown-item" href="?enterprise_guid=<?= htmlspecialchars($enterprise['enterpriseGuid']) ?>"><?= htmlspecialchars($enterprise['naimenovaniye']) ?></a>
+                                  <a class="dropdown-item" href="?guid=<?= htmlspecialchars($enterprise['enterpriseGuid']) ?>"><?= htmlspecialchars($enterprise['naimenovaniye']) ?></a>
                                 <?php endforeach; ?>
                               </div>
                             </div>
@@ -158,7 +158,7 @@ include '../header.php';
                 <div class="col-auto">
                   <ul class="pagination m-0 ms-auto">
                     <?php 
-                    $url_params = "?" . ($vybrannyj_enterprise_guid ? "enterprise_guid=" . htmlspecialchars($vybrannyj_enterprise_guid) . "&" : "");
+                    $url_params = "?" . ($vybrannyj_enterprise_guid ? "guid=" . htmlspecialchars($vybrannyj_enterprise_guid) . "&" : "");
                     ?>
                     <li class="page-item <?= ($current_page == 1) ? 'disabled' : '' ?>">
                       <a class="page-link" href="<?= $url_params ?>page=<?= max(1, $current_page - 1) ?>" <?= ($current_page == 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>

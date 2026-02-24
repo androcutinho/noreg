@@ -192,12 +192,14 @@ function fetchDocumentList($vetis_guid = null)
 
         foreach ($vet_documents as $vet_doc) {
             $doc_uuid = $vet_doc['uuid'] ?? '';
+            $issueNumber = $vet_doc['issueNumber'] ?? '';
             $data_vypuska = $vet_doc['issueDate'] ?? '';
             $type = $vet_doc['vetDType'] ?? '';
             $status = $vet_doc['vetDStatus'] ?? '';
             $last_update = $vet_doc['lastUpdateDate'] ?? '';
-            $issue_number = $vet_doc['referencedDocument']['issueNumber'] ?? '';
+            $enterprise_guid = $vet_doc['certifiedConsignment']['consignor']['enterprise']['guid'] ?? '';
             $shipper_name = $vet_doc['certifiedConsignment']['consignor']['enterprise']['name'] ?? 'Не указано';
+            
             
             
             
@@ -230,10 +232,11 @@ function fetchDocumentList($vetis_guid = null)
                 'vetDType' => $type,
                 'vetDStatus' => $status,
                 'lastUpdateDate' => $last_update,
-                'issueNumber' => $issue_number,
+                'issueNumber' => $issueNumber,
                 'dateOfProduction' => $prod_date,
                 'expiryDate' => $exp_date,
                 'enterprise' => $shipper_name,
+                'enterprise_guid' => $enterprise_guid,
                 'consignee' => $receiver_name,
                 'naimenovanie_tovara' => $product_name
             ];
