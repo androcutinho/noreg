@@ -384,8 +384,8 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['obshchaya_summa'] ?? '') ?>"></td>
-                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['obshchaya_summa']) ? $item['obshchaya_summa'] : '0')) ?>"></td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['summa_nds'] ?? '') ?>"></td>
+                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['summa']) ? $item['summa'] : '0')) ?>"></td>
                             <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
                         </tr>
                             <?php $row_index++; ?>
@@ -463,10 +463,11 @@ include '../header.php';
                     { key: 'nds_id', label: 'НДС', type: 'select' }
                 ]
             };
-                        let ndsOptionsTemplate = '<option value="">--</option>';
+                         let ndsOptionsTemplate = '<option value="">--</option>';
             <?php foreach ($stavki_nds as $nds): ?>
                 ndsOptionsTemplate += '<option value="<?= $nds['id'] ?>"><?= htmlspecialchars($nds['stavka_nds']) ?></option>';
             <?php endforeach; ?>
+            
             
             
             let unitsData = [];

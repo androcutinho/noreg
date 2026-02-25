@@ -203,10 +203,10 @@ include '../header.php';
 
                 <!-- Totals -->
                 <div style="margin-bottom: 30px; text-align: right;">
-                    <div>
+                    <div style="margin-bottom: 10px;">
                         <strong>Подитог:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
                     </div>
-                     <div>
+                     <div style="margin-bottom: 10px;">
                         <strong>НДС:</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
                     <div style="margin-bottom: 10px;">

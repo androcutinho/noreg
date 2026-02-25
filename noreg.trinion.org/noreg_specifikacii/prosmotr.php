@@ -15,6 +15,9 @@ $mysqli = require '../config/database.php';
 
 require '../queries/noreg_specifikacii_k_dogovoru_queries.php';
 require '../queries/date_helpers.php';
+require '../queries/database_queries.php';
+
+$spec_id = intval($_GET['id']);
 
 $order_type_text = (isset($spec_info['dlya_zakaza_postavshiku']) && $spec_info['dlya_zakaza_postavshiku']) ? 'поставщику' : 'покупателя';
 
@@ -25,6 +28,9 @@ if (!$spec_info) {
     include '../footer.php';
     exit;
 }
+
+
+$parent_doc = getParentDocumentByIndexOsnovannyj($mysqli, $spec_info['id_index']);
 
 $page_title = 'Спецификации к заказу ' . htmlspecialchars($spec_info['nomer_dogovora']);
 include '../header.php';
@@ -167,7 +173,7 @@ include '../header.php';
                     $rowspan = count($gruppa);
                     $pervyj = true;
                     foreach ($gruppa as $item) {
-                        $obshchee_grupp += $item['kolichestvo'];
+                        $obshchee_grupp += $item['summa'];
                         echo '<tr>';
                         echo '<td>' . $n++ . '</td>';
                         echo '<td>' . htmlspecialchars($item['naimenovanie_tovara']) . '</td>';
@@ -179,22 +185,22 @@ include '../header.php';
                             $pervyj = false;
                         }
                         echo '<td class="text-center">' . htmlspecialchars(number_format($item['kolichestvo'], 2, ',', ' ')) . '</td>';
-                        echo '<td class="text-center">' . htmlspecialchars($item['naimenovanie_serii']) . '</td>';
+                        echo '<td class="text-center">' . htmlspecialchars($item['naimenovanie_edinitsii']) . '</td>';
                         $cena = number_format($item['cena'], 2, ',', ' ');
                         $stavka_nds = isset($item['stavka']) ? $item['stavka'] : 0;
-                        $summa_nds = $item['cena'] * $stavka_nds / (100 + $stavka_nds); 
-                        $summa_nds_fmt = number_format($summa_nds, 2, ',', ' ');
+                        $cena_nds = $item['cena'] * $stavka_nds / (100 + $stavka_nds); 
+                        $cena_nds_fmt = number_format($cena_nds, 2, ',', ' ');
                         echo '<td class="text-center">' .
                             htmlspecialchars($cena) .
-                            '<br><small class="text-muted">НДС ' . htmlspecialchars($stavka_nds) . ' % - ' . htmlspecialchars($summa_nds_fmt) . '</small>' .
+                            '<br><small class="text-muted">НДС ' . htmlspecialchars($stavka_nds) . ' % - ' . htmlspecialchars($cena_nds_fmt) . '</small>' .
                         '</td>';
-                        $kolichestvo = number_format($item['kolichestvo'], 2, ',', ' ');
+                        $summa = number_format($item['summa'], 2, ',', ' ');
                         $stavka_nds = isset($item['stavka']) ? $item['stavka'] : 0;
                         $vat_value = isset($item['summa_nds']) ? $item['summa_nds'] : 0;
                         $vat_value_fmt = number_format($vat_value, 2, ',', ' ');
                         echo '<td class="text-center">' .
-                            htmlspecialchars($kolichestvo) .
-                            '<br><small class="text-muted">НДС ' . htmlspecialchars($stavka_nds) . ' % - ' . htmlspecialchars($vat_value_fmt) . '</small>' .
+                            htmlspecialchars($summa) .
+                            '<br><small class="text-muted">НДС ' . number_format($stavka_nds) . ' % - ' . number_format($vat_value) . '</small>' .
                         '</td>';
                         echo '</tr>';
                     }
@@ -288,6 +294,54 @@ include '../header.php';
             </div>
         </div>
     </div>
+
+    <?php if (!empty($parent_doc)): ?>
+    <div class="card d-print-none" >
+        <div class="card-body">
+            <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Тип документа</th>
+                            <th>Номер</th>
+                            <th>Ответственный</th>
+                            <th>Дата</th>
+                            <th class="text-center">Утвержден</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <?= htmlspecialchars($parent_doc['document_type']) ?>
+                            </td>
+                            <td>
+                                <?php 
+                                $order_link = stripos($parent_doc['document_type'], 'поставщику') !== false ? 
+                                    '../zakaz_postavschiku/prosmotr.php' : 
+                                    '../zakaz_pokupatelya/prosmotr.php';
+                                ?>
+                                <a href="<?= $order_link ?>?zakaz_id=<?= htmlspecialchars($parent_doc['id']) ?>" class="text-primary">
+                                    <?= htmlspecialchars($parent_doc['nomer'] ?? '') ?>
+                                </a>
+                            </td>
+                            <td class="text-secondary"><?= htmlspecialchars($parent_doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                            <td class="text-secondary">
+                                <?php 
+                                $doc_date = DateTime::createFromFormat('Y-m-d', $parent_doc['data_dokumenta']);
+                                echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($parent_doc['data_dokumenta']);
+                                ?>
+                            </td>
+                            <td class="text-center text-secondary">
+                                <?= $parent_doc['utverzhden'] ? 'Да' : 'Нет' ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <script>

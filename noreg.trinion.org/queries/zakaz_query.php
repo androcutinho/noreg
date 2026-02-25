@@ -98,8 +98,8 @@ function getZakazStrokiItems($mysqli, $id_index) {
             sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS obshchaya_summa,
-            sd.summa AS obshchaya_summa
+            sd.summa_nds,
+            sd.summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
@@ -172,20 +172,7 @@ function sozdatDokumentZakaza($mysqli, $data, $document_id = null) {
         
         
         if ($document_id) {
-            $linked_docs = [['id' => $document_id, 'type' => 'invoice']];
-            $linked_docs_json = json_encode($linked_docs);
-            
-            $link_query = "UPDATE zakazy_postavshchikam SET id_scheta_na_oplatu_postavshchikam = ? WHERE id = ?";
-            $link_stmt = $mysqli->prepare($link_query);
-            if (!$link_stmt) {
-                throw new Exception('Ошибка при связывании документов: ' . $mysqli->error);
-            }
-            
-            $link_stmt->bind_param('si', $linked_docs_json, $zakaz_id);
-            if (!$link_stmt->execute()) {
-                throw new Exception('Ошибка при сохранении связи документов: ' . $link_stmt->error);
-            }
-            $link_stmt->close();
+            linkDocumentsByIndex($mysqli, $zakaz_id, $document_id, 'zakazy_postavshchikam');
         }
         
     
@@ -195,8 +182,8 @@ function sozdatDokumentZakaza($mysqli, $data, $document_id = null) {
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
@@ -230,8 +217,8 @@ function sozdatDokumentZakaza($mysqli, $data, $document_id = null) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -318,48 +305,7 @@ function obnovitZakazDokument($mysqli, $zakaz_id, $data, $document_id = null) {
         
         
         if ($document_id) {
-            $select_query = "SELECT id_scheta_na_oplatu_postavshchikam FROM zakazy_postavshchikam WHERE id = ?";
-            $doc_stmt = $mysqli->prepare($select_query);
-            if (!$doc_stmt) {
-                throw new Exception('Ошибка при получении связанных документов: ' . $mysqli->error);
-            }
-            
-            $doc_stmt->bind_param('i', $zakaz_id);
-            $doc_stmt->execute();
-            $result = $doc_stmt->get_result();
-            $existing = $result->fetch_assoc();
-            $doc_stmt->close();
-            
-            $doc_ids = [];
-            if (!empty($existing['id_scheta_na_oplatu_postavshchikam'])) {
-                $existing_data = json_decode($existing['id_scheta_na_oplatu_postavshchikam'], true);
-                $doc_ids = is_array($existing_data) ? $existing_data : [];
-            }
-            
-            $invoice_ref = ['id' => $document_id, 'type' => 'invoice'];
-            $already_exists = false;
-            foreach ($doc_ids as $ref) {
-                if (is_array($ref) && isset($ref['id']) && $ref['id'] == $document_id) {
-                    $already_exists = true;
-                    break;
-                }
-            }
-            if (!$already_exists) {
-                $doc_ids[] = $invoice_ref;
-            }
-            
-            $linked_docs_json = json_encode($doc_ids);
-            $link_query = "UPDATE zakazy_postavshchikam SET id_scheta_na_oplatu_postavshchikam = ? WHERE id = ?";
-            $link_stmt = $mysqli->prepare($link_query);
-            if (!$link_stmt) {
-                throw new Exception('Ошибка при связывании документов: ' . $mysqli->error);
-            }
-            
-            $link_stmt->bind_param('si', $linked_docs_json, $zakaz_id);
-            if (!$link_stmt->execute()) {
-                throw new Exception('Ошибка при сохранении связи документов: ' . $link_stmt->error);
-            }
-            $link_stmt->close();
+            linkDocumentsByIndex($mysqli, $zakaz_id, $document_id, 'zakazy_postavshchikam');
         }
         
         
@@ -376,8 +322,8 @@ function obnovitZakazDokument($mysqli, $zakaz_id, $data, $document_id = null) {
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             
             $line_query = "
@@ -411,8 +357,8 @@ function obnovitZakazDokument($mysqli, $zakaz_id, $data, $document_id = null) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -482,50 +428,7 @@ function deleteZakazDocument($mysqli, $zakaz_id) {
         if (!$stmt->execute()) {
             throw new Exception('Ошибка при удалении заказа: ' . $stmt->error);
         }
-        $stmt->close();
-        
-        
-        $select_related_query = "SELECT id FROM scheta_na_oplatu WHERE id_scheta_na_oplatu_postavshchikam LIKE ?";
-        $rel_stmt = $mysqli->prepare($select_related_query);
-        if ($rel_stmt) {
-            $search_pattern = '%"id":' . $zakaz_id . '%';
-            $rel_stmt->bind_param('s', $search_pattern);
-            $rel_stmt->execute();
-            $result = $rel_stmt->get_result();
-            
-            while ($related = $result->fetch_assoc()) {
-                $related_id = $related['id'];
-                $get_data_query = "SELECT id_scheta_na_oplatu_postavshchikam FROM scheta_na_oplatu WHERE id = ?";
-                $get_stmt = $mysqli->prepare($get_data_query);
-                $get_stmt->bind_param('i', $related_id);
-                $get_stmt->execute();
-                $data_result = $get_stmt->get_result();
-                $data_row = $data_result->fetch_assoc();
-                $get_stmt->close();
-                
-                if (!empty($data_row['id_scheta_na_oplatu_postavshchikam'])) {
-                    $current_data = json_decode($data_row['id_scheta_na_oplatu_postavshchikam'], true);
-                    if (is_array($current_data)) {
-                        $updated_data = array_filter($current_data, function($item) use ($zakaz_id) {
-                            if (is_array($item) && isset($item['id'])) {
-                                return $item['id'] != $zakaz_id;
-                            }
-                            return $item != $zakaz_id;
-                        });
-                        
-                        $updated_json = json_encode($updated_data);
-                        $update_query = "UPDATE scheta_na_oplatu SET id_scheta_na_oplatu_postavshchikam = ? WHERE id = ?";
-                        $upd_stmt = $mysqli->prepare($update_query);
-                        if ($upd_stmt) {
-                            $upd_stmt->bind_param('si', $updated_json, $related_id);
-                            $upd_stmt->execute();
-                            $upd_stmt->close();
-                        }
-                    }
-                }
-            }
-            $rel_stmt->close();
-        }
+
         
         $mysqli->commit();
         

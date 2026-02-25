@@ -311,7 +311,7 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa_stavka'] ?? '') ?>"></td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa_nds'] ?? '') ?>"></td>
                             <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa'] ?? '') ?>"></td>
                             <?php if (!$ot_postavshchika): ?>
                             <td class="col-sklad">
@@ -364,8 +364,8 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['obshchaya_summa'] ?? '') ?>"></td>
-                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['obshchaya_summa']) ? $item['obshchaya_summa'] : '0')) ?>"></td>
+                            <td class="col-summa-stavka"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['summa_nds'] ?? '') ?>"></td>
+                            <td class="col-summa"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars(isset($item['summa_ostatka']) && $item['summa_ostatka'] > 0 ? $item['summa_ostatka'] : (isset($item['summa']) ? $item['summa'] : '0')) ?>"></td>
                             <?php if (!$ot_postavshchika): ?>
                             <td class="col-sklad">
                                 <div class="search-container" style="position: relative;">

@@ -67,10 +67,10 @@ $stmt = $mysqli->prepare("
         p.naimenovanie AS naimenovanie_tovara,
         sd.planiruemaya_data_postavki AS planiruemaya_data_postavki,
         sd.kolichestvo AS kolichestvo,
-        u.naimenovanie AS naimenovanie_serii,
-        sd.cena AS cena,
-        sd.summa AS kolichestvo,
-        sd.summa_nds  AS summa_nds,
+        u.naimenovanie AS naimenovanie_edinitsii,
+        sd.cena,
+        sd.summa,
+        sd.summa_nds,
         sn.stavka_nds AS stavka
     FROM stroki_dokumentov sd
     JOIN tovary_i_uslugi p ON sd.id_tovary_i_uslugi = p.id

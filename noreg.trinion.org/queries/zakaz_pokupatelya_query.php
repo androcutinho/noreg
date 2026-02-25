@@ -104,7 +104,7 @@ function getZakazStrokiItemsPokupatieliu($mysqli, $id_index) {
             sd.id_stavka_nds,
             sn.stavka_nds,
             sd.summa_nds,
-            sd.summa AS obshchaya_summa
+            sd.summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN edinicy_izmereniya e ON sd.id_edinicy_izmereniya = e.id
@@ -177,15 +177,15 @@ function sozdatZakazDokument($mysqli, $data) {
         $zakaz_id = $mysqli->insert_id;
         $stmt->close();
         
-        // Insert line items with id_index
+        
         foreach ($data['tovary'] as $index => $tovar) {
             if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
@@ -222,8 +222,8 @@ function sozdatZakazDokument($mysqli, $data) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -321,8 +321,8 @@ function obnovitZakazDokumentPokupatieliu($mysqli, $zakaz_id, $data) {
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
@@ -359,8 +359,8 @@ function obnovitZakazDokumentPokupatieliu($mysqli, $zakaz_id, $data) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -446,6 +446,125 @@ function udalitZakazDokument($mysqli, $zakaz_id) {
             'error' => $e->getMessage()
         ];
     }
+}
+
+
+function getRelatedDocumentsByIndexOsnovanie($mysqli, $id_index) {
+    $svyazannye_dokumenty = [];
+    
+    
+    $query = "
+        SELECT 
+            sd.index_osnovannyj,
+            sd.id_index_tablic,
+            it.nazvanie_tablicy,
+            it.naimenovanie_v_edinstvennom_chisle
+        FROM svyazi_dokumentov sd
+        JOIN index_tablic it ON sd.id_index_tablic = it.id
+        WHERE sd.index_osnovanie = ?
+        ORDER BY sd.id DESC
+    ";
+    
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        error_log('Failed to prepare svyazi_dokumentov query: ' . $mysqli->error);
+        return [];
+    }
+    
+    $stmt->bind_param('i', $id_index);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $relationships = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    
+    foreach ($relationships as $rel) {
+        $table_name = $rel['nazvanie_tablicy'];
+        $display_name = $rel['naimenovanie_v_edinstvennom_chisle'];
+        $doc_index = $rel['index_osnovannyj'];
+        
+        
+        $table_name_escaped = '`' . str_replace('`', '``', $table_name) . '`';
+        
+        
+        $nomer_column = 'nomer'; 
+        $date_column = 'data_dokumenta';  
+        $employee_column = 'id_otvetstvennyj'; 
+        $has_utverzhden = true; 
+        
+        if ($table_name === 'noreg_specifikacii_k_zakazam') {
+            $nomer_column = 'nomer_specifikacii';
+            $date_column = 'data_dogovora';
+            $employee_column = 'id_sotrudniki';
+            $has_utverzhden = true;
+        } elseif ($table_name === 'zakazy_pokupatelei' || $table_name === 'zakazy_postavshchikam') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_otvetstvennyj';
+            $has_utverzhden = true;
+        } elseif ($table_name === 'otgruzki_tovarov_pokupatelyam' || $table_name === 'otgruzki_tovarov_postavshchikam') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_otvetstvennyj';
+            $has_utverzhden = true;
+        } elseif ($table_name === 'scheta_na_oplatu') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_otvetstvennyj';
+            $has_utverzhden = true;
+        } elseif ($table_name === 'platezhi') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_kontragenti_platelshik'; 
+            $has_utverzhden = false;
+        } elseif ($table_name === 'postuplenie_tovara') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_otvetstvennyj';
+            $has_utverzhden = true;
+        }
+        
+        
+        $utverzhden_clause = $has_utverzhden ? "COALESCE(doc.utverzhden, 0) as utverzhden," : "0 as utverzhden,";
+        
+        $doc_query = "
+            SELECT 
+                doc.id,
+                doc." . $mysqli->real_escape_string($nomer_column) . " as nomer,
+                doc." . $mysqli->real_escape_string($date_column) . " as data_dokumenta,
+                " . $utverzhden_clause . "
+                CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
+            FROM " . $table_name_escaped . " doc
+            LEFT JOIN sotrudniki s ON doc." . $mysqli->real_escape_string($employee_column) . " = s.id
+            WHERE doc.id_index = ?
+        ";
+        
+        $doc_stmt = $mysqli->prepare($doc_query);
+        if (!$doc_stmt) {
+            error_log('Failed to prepare document query for table ' . $table_name . ': ' . $mysqli->error);
+            continue;
+        }
+        
+        $doc_stmt->bind_param('i', $doc_index);
+        if (!$doc_stmt->execute()) {
+            error_log('Failed to execute document query for table ' . $table_name . ': ' . $doc_stmt->error);
+            $doc_stmt->close();
+            continue;
+        }
+        
+        $doc_result = $doc_stmt->get_result();
+        $doc = $doc_result->fetch_assoc();
+        $doc_stmt->close();
+        
+        if ($doc) {
+            $doc['document_type'] = $display_name;
+            $doc['table_name'] = $table_name;
+            $doc['naimenovanie_otvetstvennogo'] = trim($doc['naimenovanie_otvetstvennogo'] ?? '');
+            $svyazannye_dokumenty[] = $doc;
+        }
+    }
+    
+    return $svyazannye_dokumenty;
 }
 
 ?>

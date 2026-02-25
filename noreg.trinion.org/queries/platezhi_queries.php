@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config/database_config.php';
 require_once __DIR__ . '/id_index_helper.php';
 require_once __DIR__ . '/entity_helpers.php';
+require_once __DIR__ . '/database_queries.php';
 
 
 function fetchSchetDataForPayment($mysqli, $schet_id) {
@@ -43,11 +44,11 @@ function fetchSchetLineItemsForPayment($mysqli, $id_index) {
         sd.id,
         sd.id_tovary_i_uslugi as id_tovara,
         ti.naimenovanie as naimenovanie_tovara,
-        sd.kolichestvo
+        sd.kolichestvo,
         sd.cena as ed_cena,
         sd.id_stavka_nds as nds_id,
         sn.stavka_nds as stavka_nds,
-        sd.summa as obshchaya_summa,
+        sd.summa,
         sd.summa_nds
     FROM stroki_dokumentov sd
     LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
@@ -109,7 +110,7 @@ function createPaymentDocument($mysqli, $data) {
         $total_summa = 0;
         
         foreach ($line_items as $item) {
-            $total_summa += floatval($item['obshchaya_summa']) + floatval($item['obshchaya_summa']);
+            $total_summa += floatval($item['summa']) + floatval($item['summa_nds']);
         }
         
         
@@ -160,10 +161,12 @@ function createPaymentDocument($mysqli, $data) {
         $payment_stmt->close();
         
         
+        linkDocumentsByIndex($mysqli, $schet_id, $document_id, 'platezhi', 'scheta_na_oplatu');
+        
         foreach ($line_items as $item) {
             $nds_id = intval($item['nds_id']);
-            $summa = floatval($item['obshchaya_summa']);
-            $summa_nds = floatval($item['obshchaya_summa']);
+            $summa = floatval($item['summa']);
+            $summa_nds = floatval($item['summa_nds']);
             
             $line_sql = "INSERT INTO stroki_platezhej (
                 id_dokumenta, 
@@ -254,7 +257,7 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
         $total_summa = 0;
         
         foreach ($line_items as $item) {
-            $total_summa += floatval($item['obshchaya_summa']) + floatval($item['obshchaya_summa']);
+            $total_summa += floatval($item['summa']) + floatval($item['summa_nds']);
         }
         
         $total_summa = floatval($total_summa);
@@ -308,8 +311,8 @@ function updatePaymentDocument($mysqli, $document_id, $data) {
     
         foreach ($line_items as $item) {
             $nds_id = intval($item['nds_id']);
-            $summa = floatval($item['obshchaya_summa']);
-            $summa_nds = floatval($item['obshchaya_summa']);
+            $summa = floatval($item['summa']);
+            $summa_nds = floatval($item['summa_nds']);
             
             $line_sql = "INSERT INTO stroki_platezhej (
                 id_dokumenta, 

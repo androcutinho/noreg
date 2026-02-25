@@ -205,7 +205,7 @@ include '../header.php';
                                     $item_total = floatval($item['summa']) + floatval($item['summa_nds']);
                                 ?>
                                 <tr style="border: 1px solid #000;">
-                                    <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['id_dokumenta']) ?></td>
+                                    <td style="border: 1px solid #000; padding: 8px;"><a href="../schet_na_oplatu/prosmotr.php?id=<?= htmlspecialchars($item['id_dokumenta']) ?>"><?= htmlspecialchars($item['id_dokumenta']) ?></a></td>
                                     <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($formatted_item_date) ?></td>
                                     <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa']), 2, '.', ' ') ?></td>
                                     <td style="border: 1px solid #000; padding: 8px; text-align: right;"><strong><?= number_format($item_total, 2, '.', ' ') ?></strong></td>

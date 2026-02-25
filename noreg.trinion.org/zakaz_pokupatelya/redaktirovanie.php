@@ -63,7 +63,7 @@ $error = '';
 $success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Validation
+
     $validations = array(
         'data_zakaza' => 'Требуется дата заказа',
         'nomer_zakaza' => 'Требуется указать номер заказа',
@@ -126,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "Доступ запрещен. Вам нужны права администратора для доступа к этой странице.";
         } else {
             if ($is_edit) {
-                // Update existing document
+            
                 $result = obnovitZakazDokumentPokupatieliu($mysqli, $zakaz_id, $_POST);
                 
                 if ($result['success']) {
@@ -136,7 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $error = $result['error'];
                 }
             } else {
-                // Create new document
+                
                 $result = sozdatZakazDokument($mysqli, $_POST);
                 
                 if ($result['success']) {
@@ -254,7 +254,7 @@ include '../header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa_stavka'] ?? '') ?>"></td>
+                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa_nds'] ?? '') ?>"></td>
                             <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['summa'] ?? '') ?>"></td>
                             <td>
                                 <div class="search-container" style="position: relative;">
@@ -295,7 +295,7 @@ include '../header.php';
                                 </select>
                             </td>
                             <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa_stavka]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['summa_nds'] ?? '') ?>"></td>
-                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['obshchaya_summa'] ?? '') ?>"></td>
+                            <td><input class="form-control" type="text" name="tovary[<?= $row_index ?>][summa]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['summa'] ?? '') ?>"></td>
                             <td>
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_sklada]" placeholder="Введите склад" autocomplete="off" value="<?= htmlspecialchars($item['naimenovanie_sklada'] ?? '') ?>">

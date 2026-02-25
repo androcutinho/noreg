@@ -62,8 +62,8 @@ function loadOrderDataForSpecification($mysqli, $zakaz_id, $ot_postavshchika = f
                 'kolichestvo' => $item['kolichestvo'] ?? '',
                 'cena' => $item['ed_cena'] ?? '',
                 'id_stavka_nds' => $item['id_stavka_nds'] ?? '',
-                'summa_nds' => $item['obshchaya_summa'] ?? '',
-                'summa' => $item['obshchaya_summa'] ?? '',
+                'summa_nds' => $item['summa_nds'] ?? '',
+                'summa' => $item['summa'] ?? '',
                 'planiruemaya_data_postavki' => ''
             ];
             $data['line_items'][] = $line_item;
@@ -93,59 +93,6 @@ function getAllUnits($mysqli) {
         $units = $units_result->fetch_all(MYSQLI_ASSOC);
     }
     return $units;
-}
-
-
-function linkSpecificationToOrder($mysqli, $zakaz_id, $spec_id, $ot_postavshchika = false, $pokupatelya = false) {
-    $zakaz_id = intval($zakaz_id);
-    $spec_id = intval($spec_id);
-    
-    if ($ot_postavshchika) {
-        $table = 'zakazy_postavshchikam';
-        $field = 'id_scheta_na_oplatu_postavshchikam';
-    } else {
-        $table = 'zakazy_pokupatelei';
-        $field = 'id_scheta_na_oplatu_pokupatelyam';
-    }
-    
-
-    $select_query = "SELECT " . $field . " FROM " . $table . " WHERE id = ?";
-    $stmt = $mysqli->prepare($select_query);
-    if (!$stmt) {
-        return;
-    }
-    
-    $stmt->bind_param('i', $zakaz_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $stmt->close();
-    
-    $existing_data = [];
-    if (!empty($row[$field])) {
-        $existing_data = json_decode($row[$field], true);
-        if (!is_array($existing_data)) {
-            $existing_data = [];
-        }
-    }
-    
-    $doc_entry = [
-        'id' => $spec_id,
-        'type' => 'specification'
-    ];
-    
-    $existing_data[] = $doc_entry;
-    
-    $update_query = "UPDATE " . $table . " SET " . $field . " = ? WHERE id = ?";
-    $update_stmt = $mysqli->prepare($update_query);
-    if (!$update_stmt) {
-        return;
-    }
-    
-    $json_data = json_encode($existing_data);
-    $update_stmt->bind_param('si', $json_data, $zakaz_id);
-    $update_stmt->execute();
-    $update_stmt->close();
 }
 
 
@@ -212,7 +159,8 @@ function createSpecification($mysqli, $data, $nomer_from_order = null, $zakaz_id
     $update_stmt->close();
     
     if (!empty($zakaz_id)) {
-        linkSpecificationToOrder($mysqli, $zakaz_id, $doc_id, $ot_postavshchika, $pokupatelya);
+        $order_table = $ot_postavshchika ? 'zakazy_postavshchikam' : 'zakazy_pokupatelei';
+        linkDocumentsByIndex($mysqli, $zakaz_id, $doc_id, 'noreg_specifikacii_k_zakazam', $order_table);
     }
     
     return ['success' => true, 'id' => $doc_id];
@@ -225,8 +173,8 @@ function createLineItem($mysqli, $doc_id, $tovar, $id_index) {
     $nds_id = intval($tovar['nds_id']);
     $kolichestvo = floatval($tovar['kolichestvo'] ?? 0);
     $cena = floatval($tovar['cena'] ?? 0);
-    $obshchaya_summa = floatval($tovar['summa_stavka'] ?? 0);
-    $obshchaya_summa = floatval($tovar['summa'] ?? 0);
+    $summa_nds = floatval($tovar['summa_stavka'] ?? 0);
+    $summa = floatval($tovar['summa'] ?? 0);
     $planiruemaya_data_postavki = $tovar['planiruemaya_data_postavki'] ?? null;
     $seria_id = null;
     
@@ -245,8 +193,8 @@ function createLineItem($mysqli, $doc_id, $tovar, $id_index) {
         $nds_id,
         $kolichestvo,
         $cena,
-        $obshchaya_summa,
-        $obshchaya_summa,
+        $summa_nds,
+        $summa,
         $planiruemaya_data_postavki
     );
     
@@ -474,8 +422,8 @@ function updateLineItem($mysqli, $line_item_id, $tovar) {
     $nds_id = intval($tovar['nds_id']);
     $kolichestvo = floatval($tovar['kolichestvo'] ?? 0);
     $cena = floatval($tovar['cena'] ?? 0);
-    $obshchaya_summa = floatval($tovar['summa_stavka'] ?? 0);
-    $obshchaya_summa = floatval($tovar['summa'] ?? 0);
+    $summa_nds = floatval($tovar['summa_stavka'] ?? 0);
+    $summa = floatval($tovar['summa'] ?? 0);
     $planiruemaya_data_postavki = $tovar['planiruemaya_data_postavki'] ?? null;
     $seria_id = null;
     
@@ -498,8 +446,8 @@ function updateLineItem($mysqli, $line_item_id, $tovar) {
         $nds_id,
         $kolichestvo,
         $cena,
-        $obshchaya_summa,
-        $obshchaya_summa,
+        $summa_nds,
+        $summa,
         $planiruemaya_data_postavki,
         $line_item_id
     );

@@ -9,7 +9,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $mysqli = require '../config/database.php';
 require '../queries/schet_na_oplatu_query.php';
-require '../queries/platezhi_queries.php';
+require '../queries/zakaz_pokupatelya_query.php';
+require '../queries/database_queries.php';
 
 $page_title = 'Счет на оплату';
 
@@ -40,21 +41,41 @@ if (!$schet) {
 $line_items = getSchetStrokiItems($mysqli, $schet['id_index']);
 
 
-$related_payments = GetPlatezhZaSchetID($mysqli, $id);
+$all_related = getRelatedDocumentsByIndexOsnovanie($mysqli, $schet['id_index']);
 
-// Calculate totals
+// Get parent document (zakaz)
+$parent_doc = getParentDocumentByIndexOsnovannyj($mysqli, $schet['id_index']);
+
+$related_payments = [];
+if (!empty($all_related)) {
+    foreach ($all_related as $doc) {
+        if ($doc['table_name'] === 'platezhi') {
+            $related_payments[] = $doc;
+        }
+    }
+}
+
+
+$all_related_for_display = [];
+if (!empty($parent_doc)) {
+    $all_related_for_display[] = $parent_doc;
+}
+$all_related_for_display = array_merge($all_related_for_display, $related_payments);
+
+
+$obshchaya_summa = 0;
 $summa_nds = 0;
 $ispolzuemye_stavki_nds = [];
 
 foreach ($line_items as $item) {
-    $obshchaya_summa += floatval($item['obshchaya_summa'] ?? 0);
-    $summa_nds += floatval($item['obshchaya_summa'] ?? 0);
+    $podytog += floatval($item['summa'] ?? 0);
+    $summa_nds += floatval($item['summa_nds'] ?? 0);
     if (!empty($item['stavka_nds'])) {
         $ispolzuemye_stavki_nds[] = $item['stavka_nds'];
     }
 }
 
-
+$obshchaya_summa = $podytog + $summa_nds;
 $ispolzuemye_stavki_nds = array_unique($ispolzuemye_stavki_nds);
 $stavka_nds_tekst = !empty($ispolzuemye_stavki_nds) ? implode(', ', $ispolzuemye_stavki_nds) : '0%';
 
@@ -262,7 +283,7 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['obshchaya_summa'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
@@ -278,10 +299,13 @@ include '../header.php';
                 <!-- Totals -->
                 <div style="margin-bottom: 30px; text-align: right;">
                     <div style="margin-bottom: 10px;">
-                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
+                        <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
-                    <div>
+                    <div style="margin-bottom: 10px;">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
+                    </div>
+                     <div>
+                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
                     </div>
                 </div>
 
@@ -310,58 +334,66 @@ include '../header.php';
             </div>
         </div>
 
-        <?php if (!empty($related_payments)): ?>
+        <?php if (!empty($all_related_for_display)): ?>
         <div class="card d-print-none">
-            <div class="card-body">    
-            <div style="margin-top: 40px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные платежи</h3>
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">Тип</th>
-                                    <th>Номер</th>
-                                    <th>Дата</th>
-                                    <th>Плательщик</th>
-                                    <th>Получатель</th>
-                                    <th>Сумма</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($related_payments as $platezh): ?>
-                                <tr>
-                                    <td class="text-center text-secondary">
-                                        <?php 
-                                        if ($platezh['iskhodyashchij']) {
-                                            echo 'Исходящий';
-                                        } else {
-                                            echo 'Входящий';
+            <div class="card-body">
+                <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>Тип документа</th>
+                                <th>Номер</th>
+                                <th>Ответственный</th>
+                                <th>Дата</th>
+                                <th class="text-center">Утвержден</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($all_related_for_display as $doc): ?>
+                            <tr>
+                                <td>
+                                    <?= htmlspecialchars($doc['document_type']) ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                        $link = '#';
+                                        if ($doc['document_type'] === 'Платеж') {
+                                            $link = '../platezhi/prosmotr.php?id=' . htmlspecialchars($doc['id']);
+                                        } elseif ($doc['document_type'] === 'Заказ') {
+                                            
+                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id_index = ?";
+                                            $check_stmt = $mysqli->prepare($check_query);
+                                            $check_stmt->bind_param('i', $doc['id']);
+                                            $check_stmt->execute();
+                                            $customer_order = $check_stmt->get_result()->num_rows > 0;
+                                            $check_stmt->close();
+                                            
+                                            if ($customer_order) {
+                                                $link = '../zakaz_pokupatelya/prosmotr.php?id=' . htmlspecialchars($doc['id']);
+                                            } else {
+                                                $link = '../zakaz_postavschiku/prosmotr.php?id=' . htmlspecialchars($doc['id']);
+                                            }
                                         }
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <a href="../platezhi/prosmotr?id=<?= htmlspecialchars($platezh['id']) ?>" class="text-primary">
-                                            <?= htmlspecialchars($platezh['nomer']) ?>
-                                        </a>
-                                    </td>
-                                    <td class="text-secondary">
-                                        <?php 
-                                        $data_platezha = DateTime::createFromFormat('Y-m-d H:i:s', $platezh['data_dokumenta']);
-                                        if (!$data_platezha) {
-                                            $data_platezha = DateTime::createFromFormat('Y-m-d', $platezh['data_dokumenta']);
-                                        }
-                                        echo $data_platezha ? $data_platezha->format('d.m.Y H:i') : htmlspecialchars($platezh['data_dokumenta']);
-                                        ?>
-                                    </td>
-                                    <td class="text-secondary"><?= htmlspecialchars($platezh['naimenovanie_platelshchika'] ?? 'N/A') ?></td>
-                                    <td class="text-secondary"><?= htmlspecialchars($platezh['naimenovanie_poluchatelya'] ?? 'N/A') ?></td>
-                                    <td class="text-secondary"><?= number_format(floatval($platezh['summa'] ?? 0), 2, '.', ' ') ?> </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                    ?>
+                                    <a href="<?= $link ?>" class="text-primary">
+                                        <?= htmlspecialchars($doc['nomer'] ?? '') ?>
+                                    </a>
+                                </td>
+                                <td class="text-secondary"><?= htmlspecialchars($doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                                <td class="text-secondary">
+                                    <?php 
+                                    $doc_date = DateTime::createFromFormat('Y-m-d', $doc['data_dokumenta']);
+                                    echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($doc['data_dokumenta']);
+                                    ?>
+                                </td>
+                                <td class="text-center text-secondary">
+                                    <?= $doc['utverzhden'] ? 'Да' : 'Нет' ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

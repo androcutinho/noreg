@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $mysqli = require '../config/database.php';
 require '../queries/zakaz_query.php';
+require '../queries/zakaz_pokupatelya_query.php';
 require '../queries/schet_na_oplatu_query.php';
 require '../queries/otgruzki_tovarov_queries.php';
 require '../queries/zosdat_edit_specifikatsiu.php';
@@ -47,12 +48,14 @@ $summa_nds = 0;
 $ispolzuemye_stavki_nds = [];
 
 foreach ($line_items as $item) {
-    $obshchaya_summa += floatval($item['obshchaya_summa'] ?? 0);
-    $summa_nds += floatval($item['obshchaya_summa'] ?? 0);
+    $summa += floatval($item['summa'] ?? 0);
+    $summa_nds += floatval($item['summa_nds'] ?? 0);
     if (!empty($item['stavka_nds'])) {
         $ispolzuemye_stavki_nds[] = $item['stavka_nds'];
     }
 }
+
+$obshchaya_summa = $podytog + $summa_nds;
 
 $ispolzuemye_stavki_nds = array_unique($ispolzuemye_stavki_nds);
 $stavka_nds_tekst = !empty($ispolzuemye_stavki_nds) ? implode(', ', $ispolzuemye_stavki_nds) : '0%';
@@ -70,7 +73,7 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="container-fluid">
+<div class="card-body">
         <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
@@ -228,7 +231,7 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['obshchaya_summa'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
@@ -244,10 +247,13 @@ include '../header.php';
                 
                 <div style="margin-bottom: 30px; text-align: right;">
                     <div style="margin-bottom: 10px;">
-                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
+                        <strong>Подытог:</strong> <span><?= number_format($summa, 2, '.', ' ') ?></span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
                     <div>
-                        <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
+                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
                     </div>
                 </div>
 
@@ -264,111 +270,67 @@ include '../header.php';
                         <strong>Ответственный:</strong> <?= htmlspecialchars($zakaz['naimenovanie_otvetstvennogo'] ?? '') ?>
                     </p>
                 </div>
-
-                <?php 
-                $svyazannye_dokumenty = [];
-                if (!empty($zakaz['id_scheta_na_oplatu_postavshchikam'])) {
-                    $schet_ids_json = $zakaz['id_scheta_na_oplatu_postavshchikam'];
-                    $doc_items = json_decode($schet_ids_json, true);
-                    
-                    if (!is_array($doc_items)) {
-                        $doc_items = [$doc_items];
-                    }
-                    
-                    $doc_items = array_filter($doc_items, function($item) {
-                        return !is_null($item) && $item !== '';
-                    });
-                    
-                    if (!empty($doc_items)) {
-                        foreach ($doc_items as $doc_item) {
-                            if (is_array($doc_item) && isset($doc_item['id']) && isset($doc_item['type'])) {
-                                $doc_id = $doc_item['id'];
-                                $doc_type = $doc_item['type'];
-                            } else {
-                                $doc_id = is_array($doc_item) ? ($doc_item['id'] ?? $doc_item) : $doc_item;
-                                $doc_type = 'invoice';
-                            }
-                            
-                            if ($doc_type === 'shipment') {
-                                $doc = fetchOtgruzkiHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'shipment';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            } elseif ($doc_type === 'specification') {
-                                $doc = fetchSpecificationHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'specification';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            } else {
-                                $doc = fetchSchetHeader($mysqli, intval($doc_id));
-                                if ($doc) {
-                                    $doc['document_type'] = 'invoice';
-                                    $svyazannye_dokumenty[] = $doc;
-                                }
-                            }
-                        }
-                    }
-                }
-                ?>
-                
-                <?php if (!empty($svyazannye_dokumenty)): ?>
-                <div>    
-                <div style="margin-top: 40px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table">
-                            <thead>
-                                <tr>
-                                    <th>Тип документа</th>
-                                    <th>Номер</th>
-                                    <th>Ответственный</th>
-                                    <th>Дата</th>
-                                    <th class="text-center">Утвержден</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($svyazannye_dokumenty as $doc): ?>
-                                <tr>
-                                    <td>
-                                        <?php if ($doc['document_type'] === 'shipment'): ?>
-                                            Отгрузка
-                                        <?php elseif ($doc['document_type'] === 'specification'): ?>
-                                            Спецификация
-                                        <?php else: ?>
-                                            Счет
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($doc['document_type'] === 'shipment'): ?>
-                                            <a href="../otgruzki_tovarov/prosmotr.php?id=<?= htmlspecialchars($doc['id']) ?>" class="text-primary"><?= htmlspecialchars($doc['nomer'] ?? '') ?></a>
-                                        <?php elseif ($doc['document_type'] === 'specification'): ?>
-                                            <a href="../noreg_specifikacii/prosmotr.php?id=<?= htmlspecialchars($doc['id']) ?>" class="text-primary"><?= htmlspecialchars($doc['nomer'] ?? '') ?></a>
-                                        <?php else: ?>
-                                            <a href="../schet_na_oplatu/prosmotr.php?id=<?= htmlspecialchars($doc['id']) ?>" class="text-primary"><?= htmlspecialchars($doc['nomer'] ?? '') ?></a>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-secondary"><?= htmlspecialchars($doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
-                                    <td class="text-secondary">
-                                        <?php if (!empty($doc['data_dokumenta'])): ?>
-                                            <?= htmlspecialchars($doc['data_dokumenta']) ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center text-secondary">
-                                        <?= (!empty($doc['utverzhden'])) ? 'Да' : 'Нет' ?>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </div>
-                <?php endif; ?>
-                
             </div>
         </div>
+
+        <?php 
+        $svyazannye_dokumenty = getRelatedDocumentsByIndexOsnovanie($mysqli, $zakaz['id_index']);
+        ?>
+        
+        <?php if (!empty($svyazannye_dokumenty)): ?>
+        <div class="card d-print-none" >
+            <div class="card-body">    
+                <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>Тип документа</th>
+                                <th>Номер</th>
+                                <th>Ответственный</th>
+                                <th>Дата</th>
+                                <th class="text-center">Утвержден</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($svyazannye_dokumenty as $doc): ?>
+                            <tr>
+                                <td>
+                                    <?= htmlspecialchars($doc['document_type']) ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                    
+                                    if (stripos($doc['document_type'], 'Отгрузк') !== false) {
+                                        $link = "../otgruzki_tovarov/prosmotr.php?id=";
+                                    } elseif (stripos($doc['document_type'], 'Спецификац') !== false) {
+                                        $link = "../noreg_specifikacii/prosmotr.php?id=";
+                                    } else {
+                                        $link = "../schet_na_oplatu/prosmotr.php?id=";
+                                    }
+                                    ?>
+                                    <a href="<?= $link . htmlspecialchars($doc['id']) ?>" class="text-primary">
+                                        <?= htmlspecialchars($doc['nomer'] ?? '') ?>
+                                    </a>
+                                </td>
+                                <td class="text-secondary"><?= htmlspecialchars($doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                                <td class="text-secondary">
+                                    <?php 
+                                    $doc_date = DateTime::createFromFormat('Y-m-d', $doc['data_dokumenta']);
+                                    echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($doc['data_dokumenta']);
+                                    ?>
+                                </td>
+                                <td class="text-center text-secondary">
+                                    <?= $doc['utverzhden'] ? 'Да' : 'Нет' ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 

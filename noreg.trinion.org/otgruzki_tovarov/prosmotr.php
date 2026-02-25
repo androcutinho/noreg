@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $mysqli = require '../config/database.php';
 require '../queries/otgruzki_tovarov_queries.php';
+require '../queries/database_queries.php';
 
 $page_title = 'Отгрузки товаров';
 
@@ -36,6 +37,8 @@ if (!$otgruzki) {
     die("Отгрузка не найдена.");
 }
 
+$parent_doc = getParentDocumentByIndexOsnovannyj($mysqli, $otgruzki['id_index']);
+
 $line_items = fetchOtgruzkiLineItems($mysqli, $otgruzki['id_index']);
 
 
@@ -44,13 +47,13 @@ $summa_nds = 0;
 $ispolzuemye_stavki_nds = [];
 
 foreach ($line_items as $item) {
-    $obshchaya_summa += floatval($item['obshchaya_summa'] ?? 0);
-    $summa_nds += floatval($item['obshchaya_summa'] ?? 0);
+    $podytog += floatval($item['summa'] ?? 0);
+    $summa_nds += floatval($item['summa_nds'] ?? 0);
     if (!empty($item['stavka_nds'])) {
         $ispolzuemye_stavki_nds[] = $item['stavka_nds'];
     }
 }
-
+$obshchaya_summa = $podytog + $summa_nds;
 
 $ispolzuemye_stavki_nds = array_unique($ispolzuemye_stavki_nds);
 $stavka_nds_tekst = !empty($ispolzuemye_stavki_nds) ? implode(', ', $ispolzuemye_stavki_nds) : '0%';
@@ -227,12 +230,12 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
                                         <?php endif; ?>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
                                         <?php if (!$otgruzki['ot_postavshchika']): ?>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_sklada'] ?? 'Не указан') ?></td>
                                         <?php endif; ?>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['obshchaya_summa'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
@@ -248,11 +251,14 @@ include '../header.php';
                 <!-- Totals -->
                 <div style="margin-bottom: 30px; text-align: right;">
                     <div style="margin-bottom: 10px;">
-                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
+                        <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
-                    <div>
+                    <div style="margin-bottom: 10px;">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
+                        <div style="margin-bottom: 10px;">
+                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
+                     </div>
                 </div>
 
                 <!-- Text representation of sum -->
@@ -275,6 +281,56 @@ include '../header.php';
                         </div>
                     </div>
                 </div>
+
+                <!-- Related documents -->
+                <?php if (!empty($parent_doc)): ?>
+                <div style="margin-top: 30px;">
+                    <h4 style="margin-bottom: 15px;">Связанные документы</h4>
+                    <table class="table table-sm d-print-none" style="margin: 0;">
+                        <thead style="background-color: #f5f5f5;">
+                            <tr>
+                                <th style="padding: 8px;">Тип документа</th>
+                                <th style="padding: 8px;">Номер</th>
+                                <th style="padding: 8px;">Ответственный</th>
+                                <th style="padding: 8px;">Дата</th>
+                                <th style="padding: 8px;">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 8px;"><?= htmlspecialchars($parent_doc['document_type']) ?></td>
+                                <td style="padding: 8px;">
+                                    <?php 
+                                        if ($parent_doc['document_type'] === 'Заказ') {
+                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id_index = ?";
+                                            $check_stmt = $mysqli->prepare($check_query);
+                                            $check_stmt->bind_param('i', $parent_doc['id']);
+                                            $check_stmt->execute();
+                                            $customer_order = $check_stmt->get_result()->num_rows > 0;
+                                            $check_stmt->close();
+                                            
+                                            if ($customer_order) {
+                                                $link = '../zakaz_pokupatelya/prosmotr.php?id=' . htmlspecialchars($parent_doc['id']);
+                                            } else {
+                                                $link = '../zakaz_postavschiku/prosmotr.php?id=' . htmlspecialchars($parent_doc['id']);
+                                            }
+                                        }
+                                    ?>
+                                    <a href="<?= $link ?>"><?= htmlspecialchars($parent_doc['nomer']) ?></a>
+                                </td>
+                                <td style="padding: 8px;"><?= htmlspecialchars($parent_doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                                <td style="padding: 8px;">
+                                    <?php 
+                                        $doc_date = DateTime::createFromFormat('Y-m-d', $parent_doc['data_dokumenta']);
+                                        echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($parent_doc['data_dokumenta']);
+                                    ?>
+                                </td>
+                                <td style="padding: 8px;"><?= $parent_doc['utverzhden'] ? 'Да' : 'Нет' ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
 
                 
             </div>

@@ -192,8 +192,8 @@ function fetchOtgruzkiLineItems($mysqli, $id_index) {
             sd.cena AS ed_cena,
             sd.id_stavka_nds,
             sn.stavka_nds,
-            sd.summa_nds AS obshchaya_summa,
-            sd.summa AS obshchaya_summa
+            sd.summa_nds,
+            sd.summa
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi t ON sd.id_tovary_i_uslugi = t.id
         LEFT JOIN serii ser ON ser.id = sd.id_serii AND ser.id_tovary_i_uslugi = sd.id_tovary_i_uslugi
@@ -316,8 +316,8 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
@@ -388,8 +388,8 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -401,111 +401,11 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         
         
         
-        if ($zakaz_pokupatelya_id && empty($data['ot_postavshchika'])) {
-            
-            $select_query = "SELECT id_scheta_na_oplatu_pokupatelyam FROM zakazy_pokupatelei WHERE id = ?";
-            $stmt = $mysqli->prepare($select_query);
-            if (!$stmt) {
-                throw new Exception('Ошибка при подготовке запроса выборки: ' . $mysqli->error);
-            }
-            
-            $stmt->bind_param('i', $zakaz_pokupatelya_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $existing = $result->fetch_assoc();
-            $stmt->close();
-            
-            
-            $schet_ids = [];
-            if (!empty($existing['id_scheta_na_oplatu_pokupatelyam'])) {
-                $existing_ids = json_decode($existing['id_scheta_na_oplatu_pokupatelyam'], true);
-                if (is_array($existing_ids)) {
-                    $schet_ids = $existing_ids;
-                } else {
-                    $schet_ids = [$existing_ids];
-                }
-            }
-            
-            
-            $shipment_ref = ['id' => $schet_id, 'type' => 'shipment'];
-            $already_exists = false;
-            foreach ($schet_ids as $ref) {
-                if (is_array($ref) && $ref['id'] == $schet_id && $ref['type'] == 'shipment') {
-                    $already_exists = true;
-                    break;
-                }
-            }
-            if (!$already_exists) {
-                $schet_ids[] = $shipment_ref;
-            }
-            
-        
-            $update_query = "UPDATE zakazy_pokupatelei SET id_scheta_na_oplatu_pokupatelyam = ? WHERE id = ?";
-            $stmt = $mysqli->prepare($update_query);
-            if (!$stmt) {
-                throw new Exception('Ошибка при подготовке запроса обновления заказа: ' . $mysqli->error);
-            }
-            
-            $schet_ids_json = json_encode($schet_ids);
-            $stmt->bind_param('si', $schet_ids_json, $zakaz_pokupatelya_id);
-            if (!$stmt->execute()) {
-                throw new Exception('Ошибка при обновлении ссылки заказа: ' . $stmt->error);
-            }
-            $stmt->close();
-        }
-        
-        
-        if ($zakaz_pokupatelya_id && !empty($data['ot_postavshchika'])) {
-            
-            $select_query = "SELECT id_scheta_na_oplatu_postavshchikam FROM zakazy_postavshchikam WHERE id = ?";
-            $stmt = $mysqli->prepare($select_query);
-            if (!$stmt) {
-                throw new Exception('Ошибка при подготовке запроса выборки: ' . $mysqli->error);
-            }
-            
-            $stmt->bind_param('i', $zakaz_pokupatelya_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $existing = $result->fetch_assoc();
-            $stmt->close();
-            
-            
-            $schet_ids = [];
-            if (!empty($existing['id_scheta_na_oplatu_postavshchikam'])) {
-                $existing_ids = json_decode($existing['id_scheta_na_oplatu_postavshchikam'], true);
-                if (is_array($existing_ids)) {
-                    $schet_ids = $existing_ids;
-                } else {
-                    $schet_ids = [$existing_ids];
-                }
-            }
-            
-            
-            $shipment_ref = ['id' => $schet_id, 'type' => 'shipment'];
-            $already_exists = false;
-            foreach ($schet_ids as $ref) {
-                if (is_array($ref) && $ref['id'] == $schet_id && $ref['type'] == 'shipment') {
-                    $already_exists = true;
-                    break;
-                }
-            }
-            if (!$already_exists) {
-                $schet_ids[] = $shipment_ref;
-            }
-            
-        
-            $update_query = "UPDATE zakazy_postavshchikam SET id_scheta_na_oplatu_postavshchikam = ? WHERE id = ?";
-            $stmt = $mysqli->prepare($update_query);
-            if (!$stmt) {
-                throw new Exception('Ошибка при подготовке запроса обновления заказа: ' . $mysqli->error);
-            }
-            
-            $schet_ids_json = json_encode($schet_ids);
-            $stmt->bind_param('si', $schet_ids_json, $zakaz_pokupatelya_id);
-            if (!$stmt->execute()) {
-                throw new Exception('Ошибка при обновлении ссылки заказа: ' . $stmt->error);
-            }
-            $stmt->close();
+       
+        if ($zakaz_pokupatelya_id) {
+            require_once 'database_queries.php';
+            $order_table = $ot_postavshchika ? 'zakazy_postavshchikam' : 'zakazy_pokupatelei';
+            linkDocumentsByIndex($mysqli, $zakaz_pokupatelya_id, $schet_id, 'otgruzki_tovarov_pokupatelyam', $order_table);
         }
         
         $mysqli->commit();
@@ -627,8 +527,8 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
             }
             
             $nds_id = !empty($tovar['nds_id']) ? $tovar['nds_id'] : null;
-            $obshchaya_summa = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
-            $obshchaya_summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
+            $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
+            $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
             $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
             
@@ -701,8 +601,8 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                 $tovar['kolichestvo'],
                 $ed_cena,
                 $nds_id,
-                $obshchaya_summa,
-                $obshchaya_summa
+                $summa_nds,
+                $summa
             );
             
             if (!$stmt->execute()) {
@@ -774,39 +674,12 @@ function deleteOtgruzkiDocument($mysqli, $id) {
         $stmt->close();
         
         
-        if ($zakaz_pokupatelya_id) {
-            $select_query = "SELECT id_scheta_na_oplatu_pokupatelyam FROM zakazy_pokupatelei WHERE id = ?";
-            $stmt = $mysqli->prepare($select_query);
-            if ($stmt) {
-                $stmt->bind_param('i', $zakaz_pokupatelya_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $existing = $result->fetch_assoc();
-                $stmt->close();
-                
-                if ($existing && !empty($existing['id_scheta_na_oplatu_pokupatelyam'])) {
-                    $schet_ids = json_decode($existing['id_scheta_na_oplatu_pokupatelyam'], true);
-                    if (is_array($schet_ids)) {
-                        $schet_ids = array_filter($schet_ids, function($val) use ($id) {
-                            
-                            if (is_array($val)) {
-                                return !($val['id'] == $id && $val['type'] == 'shipment');
-                            }
-                            return $val != $id;
-                        });
-                        $schet_ids = array_values($schet_ids);
-                    }
-                    
-                    $update_query = "UPDATE zakazy_pokupatelei SET id_scheta_na_oplatu_pokupatelyam = ? WHERE id = ?";
-                    $stmt = $mysqli->prepare($update_query);
-                    if ($stmt) {
-                        $schet_ids_json = !empty($schet_ids) ? json_encode($schet_ids) : null;
-                        $stmt->bind_param('si', $schet_ids_json, $zakaz_pokupatelya_id);
-                        $stmt->execute();
-                        $stmt->close();
-                    }
-                }
-            }
+        $delete_relationships_query = "DELETE FROM svyazi_dokumentov WHERE index_osnovannyj = ?";
+        $stmt = $mysqli->prepare($delete_relationships_query);
+        if ($stmt) {
+            $stmt->bind_param('i', $id_index);
+            $stmt->execute();
+            $stmt->close();
         }
         
         $mysqli->commit();
