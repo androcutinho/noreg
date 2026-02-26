@@ -31,6 +31,18 @@ const tableColumnStyles = {
                 width: 70px;
             }
             
+            .col-ostatok {
+                width: 70px;
+            }
+            
+            .col-ubavit {
+                width: 70px;
+            }
+             
+             .col-pribavit {
+                width: 70px;
+            }
+            
             .col-cena {
                 width: 100px;
             }

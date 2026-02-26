@@ -11,6 +11,9 @@ const defaultColumns = [
     { key: 'tovar', label: 'Товар', type: 'autocomplete' },
     { key: 'edinitsa', label: 'Ед', type: 'autocomplete' },
     { key: 'kolichestvo', label: 'Кол-во', type: 'text' },
+    { key: 'ostatok', label: 'Остаток', type: 'text' },
+    { key: 'ubavit', label: 'Убавить', type: 'text' },
+    { key: 'pribavit', label: 'Прибавить', type: 'text' },
     { key: 'cena', label: 'Цена', type: 'text' },
     { key: 'nds_id', label: 'НДС', type: 'select' }
 ];
@@ -113,6 +116,10 @@ function createRowTemplate(rowIndex, config = null) {
             const fieldName = `tovary[${rowIndex}][${column.key}]`;
             const colClass = column.key === 'kolichestvo' ? 'col-kolichestvo' : 'col-cena';
             html += `<td class="${colClass}"><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
+        } else if (column.key === 'ostatok' || column.key === 'ubavit' || column.key === 'pribavit') {
+            const fieldName = `tovary[${rowIndex}][${column.key}]`;
+            const colClass = `col-${column.key}`;
+            html += `<td class="${colClass}"><input class="form-control" type="text" name="${fieldName}" placeholder="0" autocomplete="off"></td>`;
         } else if (column.key === 'tovar') {
             const fieldName = `tovary[${rowIndex}][naimenovanie_tovara]`;
             const hiddenName = `tovary[${rowIndex}][id_tovara]`;
@@ -150,12 +157,16 @@ function createRowTemplate(rowIndex, config = null) {
     }
     
     
-    const summaBefore = `tovary[${rowIndex}][summa_stavka]`;
-    const summaAfter = `tovary[${rowIndex}][summa]`;
-    html += `
-        <td class="col-summa-stavka"><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
-        <td class="col-summa"><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
-    `;
+    // Only add summa fields if they're in the config
+    const hasSummaFields = cfg.columns && cfg.columns.some(col => col.key === 'summa_stavka' || col.key === 'summa');
+    if (hasSummaFields) {
+        const summaBefore = `tovary[${rowIndex}][summa_stavka]`;
+        const summaAfter = `tovary[${rowIndex}][summa]`;
+        html += `
+            <td class="col-summa-stavka"><input class="form-control" type="text" name="${summaBefore}" placeholder="0" autocomplete="off" readonly></td>
+            <td class="col-summa"><input class="form-control" type="text" name="${summaAfter}" placeholder="0" autocomplete="off" readonly></td>
+        `;
+    }
     
     
     if (warehouseColumn) {
