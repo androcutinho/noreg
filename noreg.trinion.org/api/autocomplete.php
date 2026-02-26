@@ -6,7 +6,7 @@ if (!isset($mysqli)) {
     $mysqli = require __DIR__ . '/../config/database.php';
 }
 
-// Handle autocomplete search requests
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GET['table'])) {
     header('Content-Type: application/json');
     
@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
         $col = $_GET['col'] ?? 'naimenovanie';
         $id_col = $_GET['id'] ?? 'id';
         
-        // Validate table and column names (whitelist for safety)
+        
         $allowed_tables = ['sklady', 'kontragenti', 'organizacii', 'tovary_i_uslugi', 'serii', 'users', 'sotrudniki', 'raschetnye_scheta'];
         $allowed_cols = ['naimenovanie', 'user_name', 'id', 'user_id', 'nomer', 'fio'];
         
@@ -43,11 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['search']) && isset($_GE
             $search_param = $search . "%";
             
             
-            if ($table === 'serii') {
+        /*if ($table === 'serii') {
                 $sql .= " AND (id_tovary_i_uslugi IS NULL OR id_tovary_i_uslugi = 0)";
-            }
+            }*/
             
-            // Filter kontragenti by nash_kontragent flag (for organizations or vendors)
+            
             if ($table === 'kontragenti' && isset($_GET['nash_kontragent'])) {
                 $nash_val = $_GET['nash_kontragent'];
                 if ($nash_val == 1) {

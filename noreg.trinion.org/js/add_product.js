@@ -435,7 +435,7 @@ function initTableAutocomplete(row) {
 
             try {
                 const timestamp = new Date().getTime();
-                const url = `/api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=naimenovanie&id=id&t=${timestamp}`;
+                const url = `/api/autocomplete.php?search=${encodeURIComponent(query)}&table=serii&col=nomer&id=id&t=${timestamp}`;
 
                 const response = await fetch(url);
                 const results = await response.json();
