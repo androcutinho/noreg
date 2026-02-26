@@ -227,6 +227,20 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
         $mysqli->begin_transaction();
         
         
+        $document = getDokumentHeader($mysqli, $document_id);
+        if (!$document) {
+            throw new Exception("Документ не найден");
+        }
+        
+        $was_approved = $document['utverzhden'] == 1;
+        
+        if ($was_approved) {
+            $reverseResult = handleUtverzhdenChange($mysqli, $document_id, 0);
+            if (!$reverseResult['success']) {
+                throw new Exception($reverseResult['error']);
+            }
+        }
+        
         $sklad_id_input = isset($data['id_sklada']) ? $data['id_sklada'] : null;
         $naimenovanie_sklada_input = isset($data['naimenovanie_sklada']) ? $data['naimenovanie_sklada'] : null;
         $data['id_sklada'] = getOrCreateWarehouse($mysqli, $sklad_id_input, $naimenovanie_sklada_input);
@@ -366,6 +380,14 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
             }
         }
         
+        
+        if ($was_approved) {
+            $reapproveResult = handleUtverzhdenChange($mysqli, $document_id, 1);
+            if (!$reapproveResult['success']) {
+                throw new Exception($reapproveResult['error']);
+            }
+        }
+        
         $mysqli->commit();
         
         return [
@@ -448,6 +470,7 @@ function udalitPribytieDokument($mysqli, $document_id) {
 }
 
 
+
 function calculateTotals($line_items) {
     $subtotal = 0;
     $vat_total = 0;
@@ -469,4 +492,145 @@ function calculateTotals($line_items) {
     );
 }
 
+
+function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
+    try {
+        
+        $document = getDokumentHeader($mysqli, $document_id);
+        if (!$document) {
+            return [
+                'success' => false,
+                'error' => 'Документ не найден'
+            ];
+        }
+        
+        
+        $line_items = getStrokiDokumentovItems($mysqli, $document['id_index']);
+        $id_sklady = $document['id_sklada'];
+        
+        if ($new_utverzhden_value) {
+            
+            foreach ($line_items as $item) {
+                $product_id = $item['id_tovara'];
+                $series_id = $item['id_serii'];
+                $quantity = floatval($item['kolichestvo'] ?? 0);
+                
+                if (!$product_id || $quantity <= 0) {
+                    continue;
+                }
+                
+                
+                $check_sql = "
+                    SELECT id, ostatok 
+                    FROM ostatki_tovarov 
+                    WHERE id_tovary_i_uslugi = ? 
+                    AND id_sklady = ?
+                    AND (id_serii = ? OR (? IS NULL AND id_serii IS NULL))
+                ";
+                
+                $check_stmt = $mysqli->prepare($check_sql);
+                if (!$check_stmt) {
+                    return [
+                        'success' => false,
+                        'error' => 'Ошибка подготовки запроса проверки: ' . $mysqli->error
+                    ];
+                }
+                
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                $existingEntry = $check_result->fetch_assoc();
+                $check_stmt->close();
+                
+                if ($existingEntry) {
+                    
+                    $new_ostatok = floatval($existingEntry['ostatok']) + $quantity;
+                    $update_sql = "
+                        UPDATE ostatki_tovarov 
+                        SET ostatok = ? 
+                        WHERE id = ?
+                    ";
+                    $update_stmt = $mysqli->prepare($update_sql);
+                    $update_stmt->bind_param('di', $new_ostatok, $existingEntry['id']);
+                    if (!$update_stmt->execute()) {
+                        return [
+                            'success' => false,
+                            'error' => 'Ошибка при обновлении остатков: ' . $update_stmt->error
+                        ];
+                    }
+                    $update_stmt->close();
+                } else {
+                    
+                    $insert_sql = "
+                        INSERT INTO ostatki_tovarov 
+                        (id_tovary_i_uslugi, id_sklady, id_serii, ostatok)
+                        VALUES (?, ?, ?, ?)
+                    ";
+                    $insert_stmt = $mysqli->prepare($insert_sql);
+                    $insert_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $quantity);
+                    if (!$insert_stmt->execute()) {
+                        return [
+                            'success' => false,
+                            'error' => 'Ошибка при создании записи остатков: ' . $insert_stmt->error
+                        ];
+                    }
+                    $insert_stmt->close();
+                }
+            }
+        } else {
+            
+            foreach ($line_items as $item) {
+                $product_id = $item['id_tovara'];
+                $series_id = $item['id_serii'];
+                $quantity = floatval($item['kolichestvo'] ?? 0);
+                
+                if (!$product_id || $quantity <= 0) {
+                    continue;
+                }
+                
+                
+                $check_sql = "
+                    SELECT id, ostatok 
+                    FROM ostatki_tovarov 
+                    WHERE id_tovary_i_uslugi = ? 
+                    AND id_sklady = ?
+                    AND (id_serii = ? OR (? IS NULL AND id_serii IS NULL))
+                ";
+                
+                $check_stmt = $mysqli->prepare($check_sql);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                $existingEntry = $check_result->fetch_assoc();
+                $check_stmt->close();
+                
+                if ($existingEntry) {
+                    
+                    $new_ostatok = floatval($existingEntry['ostatok']) - $quantity;
+                    $update_sql = "
+                        UPDATE ostatki_tovarov 
+                        SET ostatok = ? 
+                        WHERE id = ?
+                    ";
+                    $update_stmt = $mysqli->prepare($update_sql);
+                    $update_stmt->bind_param('di', $new_ostatok, $existingEntry['id']);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                }
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => 'Статус документа обновлен'
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => 'Ошибка: ' . $e->getMessage()
+        ];
+    }
+}
+
 ?>
+
