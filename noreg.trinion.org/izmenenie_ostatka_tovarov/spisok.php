@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 $page_title = 'Изменение остатка товаров';
 
 $mysqli = require '../config/database.php';
-require '../queries/zakaz_pokupatelya_query.php';
+require '../queries/izmenenie_ostatka_tovarov_queries.php';
 
 $tekushchaya_stranitsa = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_na_stranitse = 8;
@@ -63,26 +63,24 @@ include '../header.php';
                   <tr>
                     <th>№</th>
                     <th>Дата</th>
-                    <th>Поставщик</th>
-                    <th>Организация</th>
+                    <th>Склад</th>
                     <th>Ответственный</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <?php if (!empty($zakazy)): ?>
-                    <?php foreach ($zakazy as $zakaz): ?>
+                  <?php if (!empty($dok_octatka)): ?>
+                    <?php foreach ($dok_octatka as $dok): ?>
                       <tr>
-                        <td><a href="prosmotr.php?zakaz_id=<?= htmlspecialchars($zakaz['id']) ?>" class="text-primary"><?= htmlspecialchars($zakaz['nomer']) ?></a></td>
-                        <td class="text-secondary"><?= htmlspecialchars($zakaz['data_dokumenta']) ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($zakaz['naimenovanie_postavschika'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($zakaz['naimenovanie_organizacii'] ?? 'N/A') ?></td>
-                        <td class="text-secondary"><?= htmlspecialchars($zakaz['naimenovanie_otvetstvennogo'] ?? 'N/A') ?></td>
+                        <td><a href="prosmotr.php?id=<?= htmlspecialchars($dok['id']) ?>" class="text-primary"><?= htmlspecialchars($dok['nomer']) ?></a></td>
+                        <td class="text-secondary"><?= htmlspecialchars($dok['data_dokumenta']) ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($dok['naimenovanie_sklada'] ?? 'N/A') ?></td>
+                        <td class="text-secondary"><?= htmlspecialchars($dok['naimenovanie_otvetstvennogo'] ?? 'N/A') ?></td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="5" class="text-center text-secondary p-4">
-                        Заказы еще не добавлены. <a href="redaktirovanie.php">Добавьте первый заказ</a>
+                      <td colspan="4" class="text-center text-secondary p-4">
+                        Документы еще не добавлены. <a href="redaktirovanie.php">Добавьте первый документ</a>
                       </td>
                     </tr>
                   <?php endif; ?>

@@ -72,9 +72,9 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
         }
         
         $sql = "UPDATE {$table_name} SET {$field_name} = ? WHERE id = ?";
-        $stmt = $mysqli->stmt_init();
+        $stmt = $mysqli->prepare($sql);
         
-        if (!$stmt->prepare($sql)) {
+        if (!$stmt) {
             return array(
                 'success' => false,
                 'message' => 'Ошибка подготовки запроса: ' . $mysqli->error
@@ -88,6 +88,14 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
                 'success' => false,
                 'message' => 'Ошибка обновления документа: ' . $stmt->error
             );
+        }
+        $stmt->close();
+        
+        // Special handling for izmenenie_ostatka_tovarov when changing utverzhden
+        if ($table_name === 'izmenenie_ostatka_tovarov' && $field_name === 'utverzhden') {
+            require_once __DIR__ . '/izmenenie_ostatka_tovarov_queries.php';
+            $result = handleUtverzhdenChange($mysqli, $document_id, $value);
+            return $result;
         }
         
         return array(
@@ -300,5 +308,7 @@ function getParentDocumentByIndexOsnovannyj($mysqli, $id_index) {
         return null;
     }
 }
+
+
 
 ?>

@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $mysqli = require '../config/database.php';
 require '../queries/database_queries.php';
+require '../queries/izmenenie_ostatka_tovarov_queries.php';
 
 
 
@@ -20,7 +21,6 @@ $id = $is_edit ? intval($_GET['id']) : null;
 $page_title = $is_edit ? 'Редактировать изменение остатка товаров' : 'Новое изменение остатка товаров';
 $data_vypuska = date('Y-m-d');
 $naimenovanie_tovara = '';
-$naimenovanie_edinitsii = '';
 $naimenovanie_sklada = '';
 $id_sklada = '';
 $naimenovanie_otvetstvennogo = '';
@@ -63,6 +63,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
     
+    
+    if ($is_edit && empty($_POST['id_otvetstvennogo']) && !empty($document['id_otvetstvennyj'])) {
+        $_POST['id_otvetstvennogo'] = $document['id_otvetstvennyj'];
+    }
    
     if (!$error && empty($_POST['id_otvetstvennogo'])) {
         $error = 'Пожалуйста, выберите ответственного из списка пользователей';
@@ -75,13 +79,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     if (!$error && !empty($_POST['tovary'])) {
         foreach ($_POST['tovary'] as $index => $tovar) {
-            if (!empty($tovar['naimenovanie_tovara']) || !empty($tovar['ostatok'])) {
+            if (!empty($tovar['naimenovanie_tovara']) || !empty($tovar['kolichestvo'])) {
                 if (empty($tovar['naimenovanie_tovara'])) {
                     $error = 'Строка ' . ($index + 1) . ': Требуется указать товар';
                     break;
                 }
-                if (empty($tovar['ostatok'])) {
+                if (empty($tovar['kolichestvo'])) {
                     $error = 'Строка ' . ($index + 1) . ': Требуется указать остаток';
+                    break;
+                }
+                
+                $ubavit_val = floatval($tovar['ubavit'] ?? 0);
+                $pribavit_val = floatval($tovar['pribavit'] ?? 0);
+                if ($ubavit_val > 0 && $pribavit_val > 0) {
+                    $error = 'Строка ' . ($index + 1) . ': Нельзя одновременно заполнять "Убавить" и "Прибавить"';
                     break;
                 }
             }
@@ -109,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = sozdatDokument($mysqli, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: spisok.php");
+                    header("Location: prosmotr.php?id=" . $result['id']);
                     exit;
                 } else {
                     $error = $result['error'];
@@ -246,7 +257,7 @@ include '../header.php';
                                     <input type="hidden" name="tovary[0][id_serii]" class="id-serii">
                                 </div>
                             </td>
-                            <td class="col-ostatok"><input class="form-control" type="text" name="tovary[0][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($volume) ?>"></td>
+                            <td class="col-ostatok"><input class="form-control" type="text" name="tovary[0][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($kolichestvo) ?>"></td>
                             <td class="col-ubavit"><input class="form-control" type="text" name="tovary[0][ubavit]" placeholder="0" autocomplete="off"></td>
                             <td class="col-pribavit"><input class="form-control" type="text" name="tovary[0][pribavit]" placeholder="0" autocomplete="off"></td>
                             <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
@@ -265,7 +276,7 @@ include '../header.php';
                         <button type="submit" class="btn btn-primary">
                             <?= $is_edit ? 'Сохранить' : 'Сохранить' ?>
                         </button>
-                        <a href="spisok.php" class="btn">Отмена</a>
+                        <a href="<?= $is_edit ? 'prosmotr.php?id=' . htmlspecialchars($id) : 'spisok.php' ?>" class="btn">Отмена</a>
                     </div>
                 </div>
             </form>
@@ -297,8 +308,9 @@ include '../header.php';
                     { key: 'ubavit', label: 'Убавить', type: 'text' },
                     { key: 'pribavit', label: 'Прибавить', type: 'text' }
                 ]
-            }; 
+            };
             
+       
         </script>
         <script src="../js/add_product.js"></script>
 </div>

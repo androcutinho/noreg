@@ -38,7 +38,8 @@ $allowed_tables = [
     'zakaz_postavschiku',
     'noreg_specifikacii_k_dogovoru',
     'zakazy_postavshchikam',
-    'otgruzki_tovarov_pokupatelyam'
+    'otgruzki_tovarov_pokupatelyam',
+    'izmenenie_ostatka_tovarov'
 ];
 
 if (!in_array($table_name, $allowed_tables)) {
@@ -51,7 +52,7 @@ $mysqli = require '../config/database.php';
 require '../queries/database_queries.php';
 
 // Update the field
-$result = updateDocumentField($mysqli, $table_name, $field_name, $document_id, $value);
+$result = ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $value);
 
 header('Content-Type: application/json');
 echo json_encode($result);

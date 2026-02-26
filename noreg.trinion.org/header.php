@@ -83,6 +83,7 @@ if (isset($_SESSION['user_id'])) {
                         <a class="dropdown-item" href="/schet_na_oplatu/spisok.php?type=postavschik">Счета на оплату поставщикам</a>
                         <a class="dropdown-item" href="/platezhi/spisok.php?type=iskhodyashchij">Исходящие платежи</a>
                         <a class="dropdown-item" href="/otgruzki_tovarov/spisok.php?type=postavschik">Отгрузки товаров поставщикам</a>
+                        <a class="dropdown-item" href="/izmenenie_ostatka_tovarov/spisok.php">Изменение остатка товаров</a>
                       </div>
                     </li>
                     <li class="nav-item dropdown">
