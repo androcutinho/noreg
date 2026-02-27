@@ -105,6 +105,13 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
             return $result;
         }
         
+        
+        if ($table_name === 'otgruzki_tovarov_pokupatelyam' && $field_name === 'utverzhden') {
+            require_once __DIR__ . '/otgruzki_tovarov_queries.php';
+            $result = handleUtverzhdenChange($mysqli, $document_id, $value);
+            return $result;
+        }
+        
         return array(
             'success' => true,
             'message' => 'Статус документа обновлен'

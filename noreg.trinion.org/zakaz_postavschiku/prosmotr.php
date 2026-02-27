@@ -48,7 +48,7 @@ $summa_nds = 0;
 $ispolzuemye_stavki_nds = [];
 
 foreach ($line_items as $item) {
-    $summa += floatval($item['summa'] ?? 0);
+    $podytog += floatval($item['summa'] ?? 0);
     $summa_nds += floatval($item['summa_nds'] ?? 0);
     if (!empty($item['stavka_nds'])) {
         $ispolzuemye_stavki_nds[] = $item['stavka_nds'];
@@ -247,7 +247,7 @@ include '../header.php';
                 
                 <div style="margin-bottom: 30px; text-align: right;">
                     <div style="margin-bottom: 10px;">
-                        <strong>Подытог:</strong> <span><?= number_format($summa, 2, '.', ' ') ?></span>
+                        <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
                     <div style="margin-bottom: 10px;">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>

@@ -72,7 +72,7 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="container-fluid">
+<div class="card-body">
         <div class="row mb-3 d-print-none" style="margin-top: 30px;">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
@@ -227,7 +227,7 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <?php if (!$otgruzki['ot_postavshchika']): ?>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['seria_name'] ?? '-') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '-') ?></td>
                                         <?php endif; ?>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
@@ -281,13 +281,17 @@ include '../header.php';
                         </div>
                     </div>
                 </div>
+                </div>
+                </div>
 
                 <!-- Related documents -->
                 <?php if (!empty($parent_doc)): ?>
-                <div style="margin-top: 30px;">
-                    <h4 style="margin-bottom: 15px;">Связанные документы</h4>
-                    <table class="table table-sm d-print-none" style="margin: 0;">
-                        <thead style="background-color: #f5f5f5;">
+                <div class="card d-print-none">
+                    <div class="card-body">
+                    <h4 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h4>
+                    <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
                             <tr>
                                 <th style="padding: 8px;">Тип документа</th>
                                 <th style="padding: 8px;">Номер</th>
@@ -302,7 +306,7 @@ include '../header.php';
                                 <td style="padding: 8px;">
                                     <?php 
                                         if ($parent_doc['document_type'] === 'Заказ') {
-                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id_index = ?";
+                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id = ?";
                                             $check_stmt = $mysqli->prepare($check_query);
                                             $check_stmt->bind_param('i', $parent_doc['id']);
                                             $check_stmt->execute();
@@ -310,9 +314,9 @@ include '../header.php';
                                             $check_stmt->close();
                                             
                                             if ($customer_order) {
-                                                $link = '../zakaz_pokupatelya/prosmotr.php?id=' . htmlspecialchars($parent_doc['id']);
+                                                $link = '../zakaz_pokupatelya/prosmotr.php?zakaz_id=' . htmlspecialchars($parent_doc['id']);
                                             } else {
-                                                $link = '../zakaz_postavschiku/prosmotr.php?id=' . htmlspecialchars($parent_doc['id']);
+                                                $link = '../zakaz_postavschiku/prosmotr.php?zakaz_id=' . htmlspecialchars($parent_doc['id']);
                                             }
                                         }
                                     ?>
@@ -330,13 +334,14 @@ include '../header.php';
                         </tbody>
                     </table>
                 </div>
+                </div>
+                </div>
                 <?php endif; ?>
 
                 
             </div>
         </div>
-    </div>
-</div>
+    
 
 <script>
 function redaktirovatDokument() {

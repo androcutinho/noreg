@@ -380,7 +380,7 @@ function obnovitPribytieDokument($mysqli, $document_id, $data) {
             }
         }
         
-        
+
         if ($was_approved) {
             $reapproveResult = handleUtverzhdenChange($mysqli, $document_id, 1);
             if (!$reapproveResult['success']) {
@@ -513,6 +513,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
             foreach ($line_items as $item) {
                 $product_id = $item['id_tovara'];
                 $series_id = $item['id_serii'];
+                $series_id_null_check = $series_id;
                 $quantity = floatval($item['kolichestvo'] ?? 0);
                 
                 if (!$product_id || $quantity <= 0) {
@@ -536,7 +537,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
                     ];
                 }
                 
-                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
                 $check_stmt->execute();
                 $check_result = $check_stmt->get_result();
                 $existingEntry = $check_result->fetch_assoc();
@@ -582,6 +583,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
             foreach ($line_items as $item) {
                 $product_id = $item['id_tovara'];
                 $series_id = $item['id_serii'];
+                $series_id_null_check = $series_id;
                 $quantity = floatval($item['kolichestvo'] ?? 0);
                 
                 if (!$product_id || $quantity <= 0) {
@@ -598,7 +600,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
                 ";
                 
                 $check_stmt = $mysqli->prepare($check_sql);
-                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
                 $check_stmt->execute();
                 $check_result = $check_stmt->get_result();
                 $existingEntry = $check_result->fetch_assoc();

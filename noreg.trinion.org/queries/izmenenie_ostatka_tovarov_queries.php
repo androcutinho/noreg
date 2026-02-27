@@ -359,6 +359,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
             foreach ($line_items as $item) {
                 $product_id = $item['id_tovary_i_uslugi'];
                 $series_id = $item['id_serii'];
+                $series_id_null_check = $series_id;
                 $id_sklady = $document['id_sklada'];
                 
                 if (!$product_id) {
@@ -392,7 +393,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
                     ];
                 }
                 
-                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
                 $check_stmt->execute();
                 $check_result = $check_stmt->get_result();
                 $existingEntry = $check_result->fetch_assoc();
@@ -438,6 +439,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
             foreach ($line_items as $item) {
                 $product_id = $item['id_tovary_i_uslugi'];
                 $series_id = $item['id_serii'];
+                $series_id_null_check = $series_id;
                 $id_sklady = $document['id_sklada'];
                 
                 if (!$product_id) {
@@ -464,7 +466,7 @@ function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
                 ";
                 
                 $check_stmt = $mysqli->prepare($check_sql);
-                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
                 $check_stmt->execute();
                 $check_result = $check_stmt->get_result();
                 $existingEntry = $check_result->fetch_assoc();

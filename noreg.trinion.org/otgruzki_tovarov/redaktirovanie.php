@@ -286,13 +286,13 @@ include '../header.php';
                                 <div class="search-container">
                                     <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($submitted_item['naimenovanie_tovara'] ?? '') ?>">
-                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id_tovara" value="<?= htmlspecialchars($submitted_item['id_tovara'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id-tovara" value="<?= htmlspecialchars($submitted_item['id_tovara'] ?? '') ?>">
                                 </div>
                             </td>
                             <td class="col-seria">
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($submitted_item['seria_name'] ?? '') ?>">
-                                    <input type="hidden" name="tovary[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($submitted_item['seria_id'] ?? '') ?>">
+                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_serii]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($submitted_item['naimenovanie_serii'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_serii]" class="id-serii" value="<?= htmlspecialchars($submitted_item['id_serii'] ?? '') ?>">
                                 </div>
                             </td>
                             <td class="col-edinitsa">
@@ -334,13 +334,13 @@ include '../header.php';
                                 <div class="search-container">
                                     <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?>">
-                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id_tovara" value="<?= htmlspecialchars($item['id_tovary_i_uslugi'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_tovara]" class="id-tovara" value="<?= htmlspecialchars($item['id_tovary_i_uslugi'] ?? '') ?>">
                                 </div>
                             </td>
                             <td class="col-seria">
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][seria_name]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($item['seria_name'] ?? '') ?>">
-                                    <input type="hidden" name="tovary[<?= $row_index ?>][seria_id]" class="seria-id" value="<?= htmlspecialchars($item['id_serii'] ?? '') ?>">
+                                    <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_serii]" placeholder="Введите серию..." autocomplete="off" value="<?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?>">
+                                    <input type="hidden" name="tovary[<?= $row_index ?>][id_serii]" class="id-serii" value="<?= htmlspecialchars($item['id_serii'] ?? '') ?>">
                                 </div>
                             </td>
                             <td class="col-edinitsa">
@@ -384,13 +384,13 @@ include '../header.php';
                             <td class="col-tovar">
                                 <div class="search-container" style="position: relative;">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off">
-                                    <input type="hidden" name="tovary[0][id_tovara]" class="id_tovara">
+                                    <input type="hidden" name="tovary[0][id_tovara]" class="id-tovara">
                                 </div>
                             </td>
                             <td class="col-seria">
                                 <div class="search-container" style="position: relative;">
-                                    <input class="form-control" type="text" name="tovary[0][seria_name]" placeholder="Введите серию..." autocomplete="off">
-                                    <input type="hidden" name="tovary[0][seria_id]" class="seria-id">
+                                    <input class="form-control" type="text" name="tovary[0][naimenovanie_serii]" placeholder="Введите серию..." autocomplete="off">
+                                    <input type="hidden" name="tovary[0][id_serii]" class="id-serii">
                                 </div>
                             </td>
                             <td class="col-edinitsa">
@@ -472,7 +472,7 @@ include '../header.php';
                 unitsData = <?= json_encode($units_data) ?>;
             <?php } ?>
         </script>
-        <script src="../js/schet.js"></script>
+    
         <script src="../js/add_product.js"></script>
 </div>
 <?php include '../footer.php'; ?>

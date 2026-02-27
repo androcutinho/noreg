@@ -183,7 +183,7 @@ function fetchOtgruzkiLineItems($mysqli, $id_index) {
             sd.id_tovary_i_uslugi,
             t.naimenovanie AS naimenovanie_tovara,
             sd.id_serii,
-            ser.nomer AS seria_name,
+            ser.nomer AS naimenovanie_serii,
             sd.id_edinicy_izmereniya,
             e.naimenovanie AS naimenovanie_edinitsii,
             sd.id_sklada AS id_sklada,
@@ -298,7 +298,7 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         $schet_id = $mysqli->insert_id;
         $stmt->close();
         
-        // Set nomer = id
+        
         $update_nomer_query = "UPDATE  otgruzki_tovarov_pokupatelyam SET nomer = id WHERE id = ?";
         $update_stmt = $mysqli->prepare($update_nomer_query);
         if (!$update_stmt) {
@@ -323,37 +323,37 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             
             $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
             $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
-            $seria_id = !empty($tovar['seria_id']) ? $tovar['seria_id'] : null;
-            $seria_name = !empty($tovar['seria_name']) ? $tovar['seria_name'] : null;
+            $id_serii = !empty($tovar['id_serii']) ? $tovar['id_serii'] : null;
+            $naimenovanie_serii = !empty($tovar['naimenovanie_serii']) ? $tovar['naimenovanie_serii'] : null;
             
            
-            if (!empty($seria_name) && $id_tovara) {
+            if (!empty($naimenovanie_serii) && $id_tovara) {
                
                 $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
                 $stmt_check = $mysqli->prepare($check_seria);
                 if ($stmt_check) {
-                    $stmt_check->bind_param('si', $seria_name, $id_tovara);
+                    $stmt_check->bind_param('si', $naimenovanie_serii, $id_tovara);
                     $stmt_check->execute();
                     $result_check = $stmt_check->get_result();
                     $existing_seria = $result_check->fetch_assoc();
                     $stmt_check->close();
                     
                     if ($existing_seria) {
-                        $seria_id = $existing_seria['id'];
+                        $id_serii = $existing_seria['id'];
                     } else {
                         $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
                         $stmt_seria = $mysqli->prepare($insert_seria);
                         if ($stmt_seria) {
-                            $stmt_seria->bind_param('si', $seria_name, $id_tovara);
+                            $stmt_seria->bind_param('si', $naimenovanie_serii, $id_tovara);
                             if ($stmt_seria->execute()) {
-                                $seria_id = $mysqli->insert_id;
+                                $id_serii = $mysqli->insert_id;
                             }
                             $stmt_seria->close();
                         }
                     }
                 }
-            } else if (empty($seria_name)) {
-                $seria_id = null;
+            } else if (empty($naimenovanie_serii)) {
+                $id_serii = null;
             }
             
             $line_query = "
@@ -382,7 +382,7 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
                 $schet_id,
                 $id_index,
                 $id_tovara,
-                $seria_id,
+                $id_serii,
                 $id_edinitsii,
                 $id_sklada,
                 $tovar['kolichestvo'],
@@ -429,6 +429,22 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
 function updateOtgruzkiDocument($mysqli, $id, $data) {
     try {
         $mysqli->begin_transaction();
+        
+    
+        $document = fetchOtgruzkiHeader($mysqli, $id);
+        if (!$document) {
+            throw new Exception('Документ не найден');
+        }
+        
+        $was_approved = $document['utverzhden'] == 1;
+        
+        
+        if ($was_approved) {
+            $reverseResult = handleUtverzhdenChange($mysqli, $id, 0);
+            if (!$reverseResult['success']) {
+                throw new Exception($reverseResult['error']);
+            }
+        }
         
         if (empty($data['otgruzki_date']) || empty($data['tovary'])) {
             throw new Exception('Недостаточно данных для обновления заказа');
@@ -491,8 +507,8 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
         
         $id_sklada = !empty($data['id_sklada']) ? $data['id_sklada'] : null;
         $zakaz_id = !empty($data['zakaz_id']) ? intval($data['zakaz_id']) : null;
-        $ot_postavshchika = !empty($data['ot_postavshchika']) ? 1 : 0;
-        $pokupatelya = !empty($data['pokupatelya']) ? 1 : 0;
+        $ot_postavshchika = !empty($data['ot_postavshchika']) ? 1 : $document['ot_postavshchika'];
+        $pokupatelya = !empty($data['pokupatelya']) ? 1 : $document['pokupatelya'];
         
         $stmt->bind_param(
             'siiiiiiii',
@@ -534,39 +550,39 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
             
             $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
             $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
-            $seria_id = !empty($tovar['seria_id']) ? $tovar['seria_id'] : null;
-            $seria_name = !empty($tovar['seria_name']) ? $tovar['seria_name'] : null;
+            $id_serii = !empty($tovar['id_serii']) ? $tovar['id_serii'] : null;
+            $naimenovanie_serii = !empty($tovar['naimenovanie_serii']) ? $tovar['naimenovanie_serii'] : null;
             
            
-            if (!empty($seria_name) && $id_tovara) {
+            if (!empty($naimenovanie_serii) && $id_tovara) {
                
                 $check_seria = "SELECT id FROM serii WHERE nomer = ? AND id_tovary_i_uslugi = ?";
                 $stmt_check = $mysqli->prepare($check_seria);
                 if ($stmt_check) {
-                    $stmt_check->bind_param('si', $seria_name, $id_tovara);
+                    $stmt_check->bind_param('si', $naimenovanie_serii, $id_tovara);
                     $stmt_check->execute();
                     $result_check = $stmt_check->get_result();
                     $existing_seria = $result_check->fetch_assoc();
                     $stmt_check->close();
                     
                     if ($existing_seria) {
-                        $seria_id = $existing_seria['id'];
+                        $id_serii = $existing_seria['id'];
                     } else {
                         
                         $insert_seria = "INSERT INTO serii (nomer, id_tovary_i_uslugi) VALUES (?, ?)";
                         $stmt_seria = $mysqli->prepare($insert_seria);
                         if ($stmt_seria) {
-                            $stmt_seria->bind_param('si', $seria_name, $id_tovara);
+                            $stmt_seria->bind_param('si', $naimenovanie_serii, $id_tovara);
                             if ($stmt_seria->execute()) {
-                                $seria_id = $mysqli->insert_id;
+                                $id_serii = $mysqli->insert_id;
                             }
                             $stmt_seria->close();
                         }
                     }
                 }
-            } else if (empty($seria_name)) {
+            } else if (empty($naimenovanie_serii)) {
                 
-                $seria_id = null;
+                $id_serii = null;
             }
             
             $line_query = "
@@ -595,7 +611,7 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
                 $id,
                 $id_index,
                 $id_tovara,
-                $seria_id,
+                $id_serii,
                 $id_edinitsii,
                 $id_sklada,
                 $tovar['kolichestvo'],
@@ -610,6 +626,14 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
             }
             
             $stmt->close();
+        }
+        
+        
+        if ($was_approved) {
+            $reapproveResult = handleUtverzhdenChange($mysqli, $id, 1);
+            if (!$reapproveResult['success']) {
+                throw new Exception($reapproveResult['error']);
+            }
         }
         
         $mysqli->commit();
@@ -698,5 +722,131 @@ function deleteOtgruzkiDocument($mysqli, $id) {
     }
 }
 
+
+function handleUtverzhdenChange($mysqli, $document_id, $new_utverzhden_value) {
+    try {
+        
+        $document = fetchOtgruzkiHeader($mysqli, $document_id);
+        if (!$document) {
+            return [
+                'success' => false,
+                'error' => 'Документ не найден'
+            ];
+        }
+        
+        
+        $line_items = fetchOtgruzkiLineItems($mysqli, $document['id_index']);
+        
+        if ($new_utverzhden_value) {
+            
+            foreach ($line_items as $item) {
+                $product_id = $item['id_tovary_i_uslugi'];
+                $series_id = $item['id_serii'];
+                $quantity = floatval($item['kolichestvo'] ?? 0);
+                $id_sklady = $item['id_sklada'];
+                $series_id_null_check = $series_id;
+                
+                if (!$product_id || $quantity <= 0) {
+                    continue;
+                }
+                
+                
+                $check_sql = "
+                    SELECT id, ostatok 
+                    FROM ostatki_tovarov 
+                    WHERE id_tovary_i_uslugi = ? 
+                    AND id_sklady = ?
+                    AND (id_serii = ? OR (? IS NULL AND id_serii IS NULL))
+                ";
+                
+                $check_stmt = $mysqli->prepare($check_sql);
+                if (!$check_stmt) {
+                    return [
+                        'success' => false,
+                        'error' => 'Ошибка подготовки запроса проверки: ' . $mysqli->error
+                    ];
+                }
+                
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                $existingEntry = $check_result->fetch_assoc();
+                $check_stmt->close();
+                
+                if ($existingEntry) {
+                    
+                    $new_ostatok = floatval($existingEntry['ostatok']) - $quantity;
+                    $update_sql = "
+                        UPDATE ostatki_tovarov 
+                        SET ostatok = ? 
+                        WHERE id = ?
+                    ";
+                    $update_stmt = $mysqli->prepare($update_sql);
+                    $update_stmt->bind_param('di', $new_ostatok, $existingEntry['id']);
+                    if (!$update_stmt->execute()) {
+                        return [
+                            'success' => false,
+                            'error' => 'Ошибка при обновлении остатков: ' . $update_stmt->error
+                        ];
+                    }
+                    $update_stmt->close();
+                }
+            }
+        } else {
+            
+            foreach ($line_items as $item) {
+                $product_id = $item['id_tovary_i_uslugi'];
+                $series_id = $item['id_serii'];
+                $quantity = floatval($item['kolichestvo'] ?? 0);
+                $id_sklady = $item['id_sklada'];
+                $series_id_null_check = $series_id;
+                
+                if (!$product_id || $quantity <= 0) {
+                    continue;
+                }
+                
+                
+                $check_sql = "
+                    SELECT id, ostatok 
+                    FROM ostatki_tovarov 
+                    WHERE id_tovary_i_uslugi = ? 
+                    AND id_sklady = ?
+                    AND (id_serii = ? OR (? IS NULL AND id_serii IS NULL))
+                ";
+                
+                $check_stmt = $mysqli->prepare($check_sql);
+                $check_stmt->bind_param('iiii', $product_id, $id_sklady, $series_id, $series_id_null_check);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                $existingEntry = $check_result->fetch_assoc();
+                $check_stmt->close();
+                
+                if ($existingEntry) {
+                    
+                    $new_ostatok = floatval($existingEntry['ostatok']) + $quantity;
+                    $update_sql = "
+                        UPDATE ostatki_tovarov 
+                        SET ostatok = ? 
+                        WHERE id = ?
+                    ";
+                    $update_stmt = $mysqli->prepare($update_sql);
+                    $update_stmt->bind_param('di', $new_ostatok, $existingEntry['id']);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                }
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => 'Статус документа обновлен'
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => 'Ошибка: ' . $e->getMessage()
+        ];
+    }
+}
 
 ?>

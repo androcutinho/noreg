@@ -438,7 +438,9 @@ include '../header.php';
                     { key: 'edinitsa', label: 'Ед', type: 'autocomplete' },
                     { key: 'kolichestvo', label: 'Кол-во', type: 'text' },
                     { key: 'cena', label: 'Цена', type: 'text' },
-                    { key: 'nds_id', label: 'НДС', type: 'select' }
+                    { key: 'nds_id', label: 'НДС', type: 'select' },
+                    { key: 'summa_stavka', label: 'Сумма НДС', type: 'readonly' },
+                    { key: 'summa', label: 'Сумма', type: 'readonly' }
                 ]
             };
             

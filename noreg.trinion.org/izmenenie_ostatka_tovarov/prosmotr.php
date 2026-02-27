@@ -150,6 +150,8 @@ include '../header.php';
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары</th>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Серия</th>
                                 <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Остаток</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Убавить</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Прибавить</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -161,6 +163,8 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['ubavit'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['pribavit'] ?? '') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
