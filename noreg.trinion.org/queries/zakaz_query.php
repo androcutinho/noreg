@@ -120,7 +120,7 @@ function getZakazStrokiItems($mysqli, $id_index) {
 }
 
 
-function sozdatDokumentZakaza($mysqli, $data, $document_id = null) {
+function sozdatDokumentZakaza($mysqli, $data) {
     try {
         $mysqli->begin_transaction();
         

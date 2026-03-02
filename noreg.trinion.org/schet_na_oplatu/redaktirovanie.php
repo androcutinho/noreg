@@ -215,8 +215,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = sozdatSchetDokument($mysqli, $_POST, $zakaz_id_for_create);
                 
                 if ($result['success']) {
-                    $redirect_type = isset($_POST['invoice_type']) && $_POST['invoice_type'] === 'buyer' ? 'pokupatel' : 'postavschik';
-                    header("Location: spisok.php?type=" . $redirect_type);
+                    header("Location: prosmotr.php?id=" . $result['id']);
                     exit;
                 } else {
                     $error = $result['error'];

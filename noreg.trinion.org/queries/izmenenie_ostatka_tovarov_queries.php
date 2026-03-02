@@ -47,11 +47,12 @@ function getStrokiDokumentovItems($mysqli, $id_index) {
             ti.naimenovanie as naimenovanie_tovara,
             sd.id_serii,
             s.nomer as naimenovanie_serii,
-            sd.kolichestvo,
             sd.ubavit,
-            sd.pribavit
+            sd.pribavit,
+            ot.ostatok
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
+        LEFT JOIN ostatki_tovarov ot ON sd.id_tovary_i_uslugi = ot.id_tovary_i_uslugi AND sd.id_serii = ot.id_serii
         LEFT JOIN serii s ON sd.id_serii = s.id
         WHERE sd.id_index = ?
         ORDER BY sd.id ASC
@@ -128,7 +129,7 @@ function sozdatDokument($mysqli, $post_data) {
 
         if (!empty($post_data['tovary']) && is_array($post_data['tovary'])) {
             foreach ($post_data['tovary'] as $tovar_data) {
-                if (empty($tovar_data['naimenovanie_tovara']) && empty($tovar_data['kolichestvo'])) {
+                if (empty($tovar_data['naimenovanie_tovara'])) {
                     continue;
                 }
                 
@@ -153,7 +154,6 @@ function sozdatDokument($mysqli, $post_data) {
                     );
                 }
                 
-                $kolichestvo = floatval($tovar_data['kolichestvo'] ?? 0);
                 $ubavit = floatval($tovar_data['ubavit'] ?? 0);
                 $pribavit = floatval($tovar_data['pribavit'] ?? 0);
                 
@@ -163,8 +163,8 @@ function sozdatDokument($mysqli, $post_data) {
                 
                 $line_insert_sql = "
                     INSERT INTO stroki_dokumentov 
-                    (id_index, id_tovary_i_uslugi, id_serii, kolichestvo, ubavit, pribavit)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    (id_index, id_tovary_i_uslugi, id_serii, ubavit, pribavit)
+                    VALUES (?, ?, ?, ?, ?)
                 ";
                 
                 $line_stmt = $mysqli->prepare($line_insert_sql);
@@ -173,11 +173,10 @@ function sozdatDokument($mysqli, $post_data) {
                 }
                 
                 $line_stmt->bind_param(
-                    'iiiddd',
+                    'iiidd',
                     $id_index,
                     $product_id,
                     $series_id,
-                    $kolichestvo,
                     $ubavit,
                     $pribavit
                 );
@@ -263,7 +262,7 @@ function obnovitDokument($mysqli, $id, $post_data) {
         
         if (!empty($post_data['tovary']) && is_array($post_data['tovary'])) {
             foreach ($post_data['tovary'] as $tovar_data) {
-                if (empty($tovar_data['naimenovanie_tovara']) && empty($tovar_data['kolichestvo'])) {
+                if (empty($tovar_data['naimenovanie_tovara'])) {
                     continue;
                 }
                 
@@ -288,15 +287,14 @@ function obnovitDokument($mysqli, $id, $post_data) {
                     );
                 }
                 
-                $kolichestvo = floatval($tovar_data['kolichestvo'] ?? 0);
                 $ubavit = floatval($tovar_data['ubavit'] ?? 0);
                 $pribavit = floatval($tovar_data['pribavit'] ?? 0);
                 
                 
                 $line_insert_sql = "
                     INSERT INTO stroki_dokumentov 
-                    (id_index, id_tovary_i_uslugi, id_serii, kolichestvo, ubavit, pribavit)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    (id_index, id_tovary_i_uslugi, id_serii, ubavit, pribavit)
+                    VALUES (?, ?, ?, ?, ?)
                 ";
                 
                 $line_stmt = $mysqli->prepare($line_insert_sql);
@@ -305,11 +303,10 @@ function obnovitDokument($mysqli, $id, $post_data) {
                 }
                 
                 $line_stmt->bind_param(
-                    'iiiddd',
+                    'iiidd',
                     $document['id_index'],
                     $product_id,
                     $series_id,
-                    $kolichestvo,
                     $ubavit,
                     $pribavit
                 );

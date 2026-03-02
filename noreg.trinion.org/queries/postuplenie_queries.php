@@ -101,7 +101,7 @@ function sozdatPribytieDokument($mysqli, $data) {
             }
             
             
-            $line_sql = "INSERT INTO stroki_dokumentov (id_dokumenta, id_index, id_tovary_i_uslugi, id_stavka_nds, cena, kolichestvo, summa, id, id_edinicy_izmereniya, summa_nds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $line_sql = "INSERT INTO stroki_dokumentov (id_dokumenta, id_index, id_tovary_i_uslugi, id_stavka_nds, cena, kolichestvo, summa, id_serii, id_edinicy_izmereniya, summa_nds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $line_stmt = $mysqli->stmt_init();
             
             if (!$line_stmt->prepare($line_sql)) {

@@ -222,8 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $error = $line_result['error'];
                 } else {
                     
-                    $redirect_url = $ot_postavshchika ? 'spisok.php?type=postavschik' : 'spisok.php?type=pokupatel';
-                    header('Location: ' . $redirect_url);
+                    header('Location: prosmotr.php?id=' . $doc_id);
                     exit;
                 }
             }

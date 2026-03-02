@@ -107,8 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = updatePaymentDocument($mysqli, $id, $_POST + ['schet_id' => $schet_id ?? null]);
                 
                 if ($result['success']) {
-                    $redirect_type = (!empty($_POST['iskhodyashchij']) && $_POST['iskhodyashchij'] == '1') ? 'iskhodyashchij' : 'vhodyashchij';
-                    header("Location: spisok.php?type=" . $redirect_type);
+                    header("Location: prosmotr.php?id=" . $id);
                     exit;
                 } else {
                     $error = $result['error'];
@@ -117,8 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = createPaymentDocument($mysqli, $_POST + ['schet_id' => $schet_id]);
                 
                 if ($result['success']) {
-                    $redirect_type = (!empty($_POST['iskhodyashchij']) && $_POST['iskhodyashchij'] == '1') ? 'iskhodyashchij' : 'vhodyashchij';
-                    header("Location: spisok.php?type=" . $redirect_type);
+                    header("Location: prosmotr.php?id=" . $result['id']);
                     exit;
                 } else {
                     $error = $result['error'];

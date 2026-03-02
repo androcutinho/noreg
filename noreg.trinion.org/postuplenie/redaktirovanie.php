@@ -167,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = sozdatPribytieDokument($mysqli, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: spisok.php");
+                    header("Location: prosmotr.php?id_tovara=" . $result['document_id']);
                     exit;
                 } else {
                     $error = $result['error'];

@@ -79,13 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     if (!$error && !empty($_POST['tovary'])) {
         foreach ($_POST['tovary'] as $index => $tovar) {
-            if (!empty($tovar['naimenovanie_tovara']) || !empty($tovar['kolichestvo'])) {
+            if (!empty($tovar['naimenovanie_tovara'])) {
                 if (empty($tovar['naimenovanie_tovara'])) {
                     $error = 'Строка ' . ($index + 1) . ': Требуется указать товар';
-                    break;
-                }
-                if (empty($tovar['kolichestvo'])) {
-                    $error = 'Строка ' . ($index + 1) . ': Требуется указать остаток';
                     break;
                 }
                 
@@ -207,7 +203,7 @@ include '../header.php';
                                     <input type="hidden" name="tovary[<?= $row_index ?>][id_serii]" class="id-serii" value="<?= htmlspecialchars($submitted_item['id_serii'] ?? '') ?>">
                                 </div>
                             </td>
-                            <td class="col-ostatok"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['kolichestvo'] ?? '') ?>"></td>
+                            <td class="col-ostatok"><input class="form-control" type="text" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['ostatok'] ?? '') ?>" readonly></td>
                             <td class="col-ubavit"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][ubavit]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['ubavit'] ?? '') ?>"></td>
                             <td class="col-pribavit"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][pribavit]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($submitted_item['pribavit'] ?? '') ?>"></td>
                             <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
@@ -233,7 +229,7 @@ include '../header.php';
                                     <input type="hidden" name="tovary[<?= $row_index ?>][id_serii]" class="id-serii" value="<?= htmlspecialchars($item['id_serii'] ?? '') ?>">
                                 </div>
                             </td>
-                            <td class="col-ostatok"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['kolichestvo'] ?? '') ?>"></td>
+                            <td class="col-ostatok"><input class="form-control" type="text" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['ostatok'] ?? '') ?>" readonly></td>
                             <td class="col-ubavit"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][ubavit]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['ubavit'] ?? '') ?>"></td>
                             <td class="col-pribavit"><input class="form-control" type="text" name="tovary[<?= $row_index ?>][pribavit]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($item['pribavit'] ?? '') ?>"></td>
                             <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
@@ -257,7 +253,7 @@ include '../header.php';
                                     <input type="hidden" name="tovary[0][id_serii]" class="id-serii">
                                 </div>
                             </td>
-                            <td class="col-ostatok"><input class="form-control" type="text" name="tovary[0][kolichestvo]" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($kolichestvo) ?>"></td>
+                            <td class="col-ostatok"><input class="form-control" type="text" placeholder="0" autocomplete="off" value="<?= htmlspecialchars($ostatok) ?>" readonly></td>
                             <td class="col-ubavit"><input class="form-control" type="text" name="tovary[0][ubavit]" placeholder="0" autocomplete="off"></td>
                             <td class="col-pribavit"><input class="form-control" type="text" name="tovary[0][pribavit]" placeholder="0" autocomplete="off"></td>
                             <td class="col-action"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash delete-row" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" onclick="deleteRow(this)"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 7l16 0"></path><path d="M10 11l0 6"></path><path d="M14 11l0 6"></path><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg></td>
@@ -299,6 +295,36 @@ include '../header.php';
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
         
         <script>
+            
+            function reinitializeTable() {
+                const rows = document.querySelectorAll('.tovar-row');
+                rows.forEach(row => {
+                    if (typeof initTableAutocomplete === 'function') {
+                        initTableAutocomplete(row);
+                    }
+                    if (typeof attachCalculationListeners === 'function') {
+                        attachCalculationListeners(row);
+                    }
+                });
+            }
+            
+            // Reinitialize JavaScript functionality after page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize table autocomplete for existing rows
+                reinitializeTable();
+                
+                // Reattach delete row handlers since they may be lost on error re-render
+                const deleteButtons = document.querySelectorAll('.delete-row');
+                deleteButtons.forEach(btn => {
+                    if (!btn.hasListener) {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            deleteRow(this);
+                        });
+                        btn.hasListener = true;
+                    }
+                });
+            });
            
             const formConfig = {
                 columns: [
@@ -309,8 +335,6 @@ include '../header.php';
                     { key: 'pribavit', label: 'Прибавить', type: 'text' }
                 ]
             };
-            
-       
         </script>
         <script src="../js/add_product.js"></script>
 </div>

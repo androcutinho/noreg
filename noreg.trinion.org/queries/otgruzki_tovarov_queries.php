@@ -310,6 +310,9 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
         }
         $update_stmt->close();
         
+        // Get main warehouse ID to use as fallback for line items
+        $main_sklada_id = !empty($data['id_sklada']) ? $data['id_sklada'] : null;
+        
         foreach ($data['tovary'] as $index => $tovar) {
             if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
@@ -319,7 +322,7 @@ function createOtgruzkiDocument($mysqli, $data, $zakaz_pokupatelya_id = null) {
             $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
             $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
-            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
+            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : $main_sklada_id;
             
             $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
             $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;
@@ -537,6 +540,9 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
         $stmt->close();
         
         
+        
+        $main_sklada_id = !empty($data['id_sklada']) ? $data['id_sklada'] : null;
+        
         foreach ($data['tovary'] as $index => $tovar) {
             if (empty($tovar['naimenovanie_tovara']) || empty($tovar['kolichestvo'])) {
                 continue;
@@ -546,7 +552,8 @@ function updateOtgruzkiDocument($mysqli, $id, $data) {
             $summa_nds = !empty($tovar['summa_stavka']) ? $tovar['summa_stavka'] : 0;
             $summa = !empty($tovar['summa']) ? $tovar['summa'] : 0;
             $ed_cena = !empty($tovar['cena']) ? $tovar['cena'] : 0;
-            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : null;
+            
+            $id_sklada = !empty($tovar['id_sklada']) ? $tovar['id_sklada'] : $main_sklada_id;
             
             $id_tovara = !empty($tovar['id_tovara']) ? $tovar['id_tovara'] : null;
             $id_edinitsii = !empty($tovar['id_edinitsii']) ? $tovar['id_edinitsii'] : null;

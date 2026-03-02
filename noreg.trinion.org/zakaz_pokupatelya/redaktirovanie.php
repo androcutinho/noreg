@@ -140,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $result = sozdatZakazDokument($mysqli, $_POST);
                 
                 if ($result['success']) {
-                    header("Location: spisok.php");
+                    header("Location: prosmotr.php?zakaz_id=" . $result['id']);
                     exit;
                 } else {
                     $error = $result['error'];

@@ -362,7 +362,7 @@ include '../header.php';
                                             $link = '../platezhi/prosmotr.php?id=' . htmlspecialchars($doc['id']);
                                         } elseif ($doc['document_type'] === 'Заказ') {
                                             
-                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id_index = ?";
+                                            $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id = ?";
                                             $check_stmt = $mysqli->prepare($check_query);
                                             $check_stmt->bind_param('i', $doc['id']);
                                             $check_stmt->execute();
@@ -370,9 +370,9 @@ include '../header.php';
                                             $check_stmt->close();
                                             
                                             if ($customer_order) {
-                                                $link = '../zakaz_pokupatelya/prosmotr.php?id=' . htmlspecialchars($doc['id']);
+                                                $link = '../zakaz_pokupatelya/prosmotr.php?zakaz_id=' . htmlspecialchars($doc['id']);
                                             } else {
-                                                $link = '../zakaz_postavschiku/prosmotr.php?id=' . htmlspecialchars($doc['id']);
+                                                $link = '../zakaz_postavschiku/prosmotr.php?zakaz_id=' . htmlspecialchars($doc['id']);
                                             }
                                         }
                                     ?>

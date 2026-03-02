@@ -21,10 +21,10 @@ $client = new nusoap_client('https://api.vetrf.ru/platform/services/2.1/Applicat
 	$client->soap_defencoding = 'UTF-8'; // Кодировка запроса
 	$client->decode_utf8 = false; // Кодировка ответа
 
-$soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentByUuidOperation';
+$soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentListOperation';
 $uuid_document = 'afb1a28e-58e2-428d-87a8-f3da047e5351';
 
-// Use the Ardon warehouse GUID instead of Maloe Karlino
+
 $enterprise_guid_ardon = '7b037904-4c8a-4226-9f3e-1f519789dc4c';
                    
                
@@ -32,8 +32,13 @@ $enterprise_guid_ardon = '7b037904-4c8a-4226-9f3e-1f519789dc4c';
 
 echo '<h2>STEP 1: Получение информации о документе по UUID</h2>';
 
-$request_xml_1 = '
- <SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+$request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" 
+        xmlns:bs="http://api.vetrf.ru/schema/cdm/base" 
+        xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" 
+        xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" 
+        xmlns:apl="http://api.vetrf.ru/schema/cdm/application" 
+        xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" 
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
   <SOAP-ENV:Header/>
   <SOAP-ENV:Body>
     <apldef:submitApplicationRequest>
@@ -43,14 +48,19 @@ $request_xml_1 = '
         <apl:issuerId>' . $vetis_issuerId . '</apl:issuerId>
         <apl:issueDate>' . date('Y-m-d\TH:i:s') . '</apl:issueDate>
         <apl:data>
-          <merc:getVetDocumentByUuidRequest>
+          <merc:getVetDocumentListRequest>
             <merc:localTransactionId>' . uniqid('TR') . '</merc:localTransactionId>
             <merc:initiator>
               <vd:login>' . $user_login . '</vd:login>
             </merc:initiator>
-            <bs:uuid>' . $uuid_document . '</bs:uuid>
+            <bs:listOptions>
+              <bs:count>1000</bs:count>
+              <bs:offset>0</bs:offset>
+            </bs:listOptions>
+			 <vd:vetDocumentType>TRANSPORT</vd:vetDocumentType>
+             <vd:vetDocumentStatus>CONFIRMED</vd:vetDocumentStatus>
             <dt:enterpriseGuid>' . $vetis_guid . '</dt:enterpriseGuid>
-          </merc:getVetDocumentByUuidRequest>
+          </merc:getVetDocumentListRequest>
         </apl:data>
       </apl:application>
     </apldef:submitApplicationRequest>
@@ -99,7 +109,7 @@ if ($applicationId) {
       <ws:receiveApplicationResultRequest>
          <ws:apiKey>' . $apikey . '</ws:apiKey>
          <ws:issuerId>' . $vetis_issuerId . '</ws:issuerId>
-         <ws:applicationId>' . $applicationId . '</ws:applicationId>
+         <ws:applicationId>'. $applicationId .'</ws:applicationId>
       </ws:receiveApplicationResultRequest>
    </soapenv:Body>
 </soapenv:Envelope>';

@@ -3,7 +3,7 @@
 require_once 'id_index_helper.php';
 
 function getKolichestvoZakazy($mysqli) {
-    $query = "SELECT COUNT(*) as total FROM zakazy_postavshchikam WHERE zakryt = 0 OR zakryt IS NULL";
+    $query = "SELECT COUNT(*) as total FROM zakazy_pokupatelei WHERE zakryt = 0 OR zakryt IS NULL";
     $result = $mysqli->query($query);
     if ($result) {
         $row = $result->fetch_assoc();

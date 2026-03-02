@@ -99,13 +99,6 @@ if (isset($_SESSION['user_id'])) {
                         <a class="dropdown-item" href="/kontragenti/spisok.php"> Список поставщиков</a>
                       </div>
                     </li>
-                    <li class="nav-item">
-                      <a class="nav-link" href="./">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-checklist"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" /><path d="M14 19l2 2l4 -4" /><path d="M9 8h4" /><path d="M9 12h2" /></svg></span>
-                        <span class="nav-link-title"> Задачи </span>
-                      </a>
-                    </li> 
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#navbar-form" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
@@ -117,7 +110,8 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Cкрипты </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="/poluchit_informaciyu_o_vsd/">Загрузить серию из Ветис</a>
+                        <a class="dropdown-item" href="/poluchit_informaciyu_o_vsd/">Загрузить серию из ВЕТИС</a>
+                        <a class="dropdown-item" href="/poluchit_ostatok_vsd/spisok.php">Остаток продукции из ВЕТИС</a>
                       </div>
                     </li>
       <!-- END NAVBAR  -->

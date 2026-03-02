@@ -196,7 +196,7 @@ function createPaymentDocument($mysqli, $data) {
         }
         
         $mysqli->commit();
-        return ['success' => true, 'document_id' => $document_id];
+        return ['success' => true, 'id' => $document_id];
         
     } catch (Exception $e) {
         $mysqli->rollback();

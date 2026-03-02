@@ -157,7 +157,7 @@ function createRowTemplate(rowIndex, config = null) {
     }
     
     
-    // Only add summa fields if they're in the config
+    
     const hasSummaFields = cfg.columns && cfg.columns.some(col => col.key === 'summa_stavka' || col.key === 'summa');
     if (hasSummaFields) {
         const summaBefore = `tovary[${rowIndex}][summa_stavka]`;

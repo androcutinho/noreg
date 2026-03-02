@@ -48,37 +48,31 @@ function fetchDocumentList($vetis_guid = null)
 
         date_default_timezone_set('Europe/Moscow');
 
-        $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetVetDocumentListOperation';
+        $soapaction = 'https://api.vetrf.ru/platform/services/2.1/ApplicationManagementService/GetStockEntryListOperation';
 
-        $request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" 
-        xmlns:bs="http://api.vetrf.ru/schema/cdm/base" 
-        xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" 
-        xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" 
-        xmlns:apl="http://api.vetrf.ru/schema/cdm/application" 
-        xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" 
-        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+        $request_xml_1 = '<SOAP-ENV:Envelope xmlns:dt="http://api.vetrf.ru/schema/cdm/dictionary/v2" xmlns:bs="http://api.vetrf.ru/schema/cdm/base" xmlns:merc="http://api.vetrf.ru/schema/cdm/mercury/g2b/applications/v2" xmlns:apldef="http://api.vetrf.ru/schema/cdm/application/ws-definitions" xmlns:apl="http://api.vetrf.ru/schema/cdm/application" xmlns:vd="http://api.vetrf.ru/schema/cdm/mercury/vet-document/v2" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
   <SOAP-ENV:Header/>
   <SOAP-ENV:Body>
     <apldef:submitApplicationRequest>
-      <apldef:apiKey>' . $apikey . '</apldef:apiKey>
+      <apldef:apiKey>'.$apikey.'</apldef:apiKey>
       <apl:application>
         <apl:serviceId>mercury-g2b.service:2.1</apl:serviceId>
-        <apl:issuerId>' . $vetis_issuerId . '</apl:issuerId>
+        <apl:issuerId>'.$vetis_issuerId.'</apl:issuerId>
         <apl:issueDate>' . date('Y-m-d\TH:i:s') . '</apl:issueDate>
         <apl:data>
-          <merc:getVetDocumentListRequest>
+          <merc:getStockEntryListRequest>
             <merc:localTransactionId>' . uniqid('TR') . '</merc:localTransactionId>
             <merc:initiator>
-              <vd:login>' . $user_login . '</vd:login>
+              <vd:login>'.$user_login.'</vd:login>
             </merc:initiator>
             <bs:listOptions>
-              <bs:count>1000</bs:count>
-              <bs:offset>0</bs:offset>
+            <bs:count>1000</bs:count>
             </bs:listOptions>
-             <vd:vetDocumentType>TRANSPORT</vd:vetDocumentType>
-             <vd:vetDocumentStatus>CONFIRMED</vd:vetDocumentStatus>
-            <dt:enterpriseGuid>' . $vetis_guid . '</dt:enterpriseGuid>
-          </merc:getVetDocumentListRequest>
+            <dt:enterpriseGuid>'.$vetis_guid.'</dt:enterpriseGuid>
+            <merc:searchPattern>
+              <vd:blankFilter>NOT_BLANK</vd:blankFilter>
+            </merc:searchPattern>
+          </merc:getStockEntryListRequest>
         </apl:data>
       </apl:application>
     </apldef:submitApplicationRequest>
@@ -179,67 +173,67 @@ function fetchDocumentList($vetis_guid = null)
             throw new Exception('Error Step 2: ' . $err);
         }
 
-        $vet_documents = $result_2['application']['result']['getVetDocumentListResponse']['vetDocumentList']['vetDocument'] ?? null;
+        $stock_entries = $result_2['application']['result']['getStockEntryListResponse']['stockEntryList']['stockEntry'] ?? null;
 
-        if (!$vet_documents) {
-            throw new Exception('Documents not found in API response');
+        if (!$stock_entries) {
+            throw new Exception('Stock entries not found in API response');
         }
 
-        if (!is_array($vet_documents) || !isset($vet_documents[0])) {
-            $vet_documents = [$vet_documents];
+        if (!is_array($stock_entries) || !isset($stock_entries[0])) {
+            $stock_entries = [$stock_entries];
+        }
+
+        
+        $enterprise_name = 'Не указано';
+        try {
+            $mysqli_ent = require(__DIR__ . '/../config/database.php');
+            $ent_sql = "SELECT naimenovaniye FROM vetis_predpriyatiya WHERE enterpriseGuid = ? LIMIT 1";
+            $ent_stmt = $mysqli_ent->stmt_init();
+            
+            if ($ent_stmt->prepare($ent_sql)) {
+                $ent_stmt->bind_param("s", $vetis_guid);
+                $ent_stmt->execute();
+                $ent_result = $ent_stmt->get_result();
+                
+                if ($ent_row = $ent_result->fetch_assoc()) {
+                    $enterprise_name = $ent_row['naimenovaniye'];
+                }
+                
+                $ent_stmt->close();
+            }
+        } catch (Exception $e) {
+            error_log("Error retrieving enterprise name: " . $e->getMessage());
         }
 
         $documents_data = [];
 
-        foreach ($vet_documents as $vet_doc) {
-            $doc_uuid = $vet_doc['uuid'] ?? '';
-            $issueNumber = $vet_doc['issueNumber'] ?? '';
-            $data_vypuska = $vet_doc['issueDate'] ?? '';
-            $type = $vet_doc['vetDType'] ?? '';
-            $status = $vet_doc['vetDStatus'] ?? '';
-            $last_update = $vet_doc['lastUpdateDate'] ?? '';
-            $enterprise_guid = $vet_doc['certifiedConsignment']['consignor']['enterprise']['guid'] ?? '';
-            $shipper_name = $vet_doc['certifiedConsignment']['consignor']['enterprise']['name'] ?? 'Не указано';
+        foreach ($stock_entries as $entry) {
+            $uuid = $entry['uuid'] ?? '';
+            $batch = $entry['batch'] ?? [];
+            $vet_document = $entry['vetDocument'] ?? [];
             
-            
-            
-            
-            $consignee_enterprise = $vet_doc['certifiedConsignment']['consignee']['enterprise'] ?? [];
-            $receiver_name = (!empty($consignee_enterprise) && isset($consignee_enterprise['name'])) 
-                ? $consignee_enterprise['name'] 
-                : 'Не указано';
-            
-            $batch = $vet_doc['certifiedConsignment']['batch'] ?? [];
             $product_name = '';
             if (!empty($batch['productItem']) && isset($batch['productItem']['name'])) {
                 $product_name = $batch['productItem']['name'];
             }
             
-            $prod_date = '';
-            if (isset($batch['dateOfProduction']['firstDate'])) {
-                $pd = $batch['dateOfProduction']['firstDate'];
-                $prod_date = $pd['year'] . '-' . str_pad($pd['month'], 2, '0', STR_PAD_LEFT) . '-' . str_pad($pd['day'], 2, '0', STR_PAD_LEFT);
+            $remaining_amount = $batch['volume'] ?? 0;
+            
+            $unit_name = '';
+            if (!empty($batch['unit']) && isset($batch['unit']['name'])) {
+                $unit_name = $batch['unit']['name'];
             }
-
-            $exp_date = '';
-            if (isset($batch['expiryDate']['firstDate'])) {
-                $ed = $batch['expiryDate']['firstDate'];
-                $exp_date = $ed['year'] . '-' . str_pad($ed['month'], 2, '0', STR_PAD_LEFT) . '-' . str_pad($ed['day'], 2, '0', STR_PAD_LEFT);
-            }
+            
+            $vsd_uuid = $vet_document['uuid'] ?? '';
 
             $documents_data[] = [
-                'uuid' => $doc_uuid,
-                'issueDate' => $data_vypuska,
-                'vetDType' => $type,
-                'vetDStatus' => $status,
-                'lastUpdateDate' => $last_update,
-                'issueNumber' => $issueNumber,
-                'dateOfProduction' => $prod_date,
-                'expiryDate' => $exp_date,
-                'enterprise' => $shipper_name,
-                'enterprise_guid' => $enterprise_guid,
-                'consignee' => $receiver_name,
-                'naimenovanie_tovara' => $product_name
+                'enterprise_name' => $enterprise_name,
+                'enterprise_guid' => $vetis_guid,
+                'product_name' => $product_name,
+                'remaining_amount' => $remaining_amount,
+                'unit' => $unit_name,
+                'uuid' => $uuid,
+                'vsd_uuid' => $vsd_uuid
             ];
         }
 

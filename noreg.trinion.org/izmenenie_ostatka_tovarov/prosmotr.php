@@ -162,7 +162,7 @@ include '../header.php';
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
                                         <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['ostatok'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['ubavit'] ?? '') ?></td>
                                         <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['pribavit'] ?? '') ?></td>
                                     </tr>
