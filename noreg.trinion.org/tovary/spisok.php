@@ -31,9 +31,8 @@ $products = fetchAllProductsWithSeries($mysqli, '', $items_per_page, $offset);
 
 include '../header.php';
 ?>
-      <div class="page-body">
-        <div class="container-fluid">
-          <div style="text-align: right; margin-bottom: 10px;">
+        <div class="container-fluid mt-5">
+          <div class="text-end mb-1">
             <a href="redaktirovanie.php" class="btn btn-primary">
                 Добавить
             </a>
@@ -139,7 +138,7 @@ include '../header.php';
             <?php endif; ?>
           </div>
         </div>
-      </div>
+      
 
 <?php include '../footer.php'; ?>
 

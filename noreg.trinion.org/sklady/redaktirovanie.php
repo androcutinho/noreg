@@ -84,8 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 include '../header.php';
 ?>
 
-<div class="page-body">
-    <div class="container-fluid">
+    <div class="container-fluid mt-5">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title mb-0"><?= $is_creating ? 'Создать склад' : 'Редактировать склад' ?></h3>
@@ -98,22 +97,22 @@ include '../header.php';
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" style="max-width: 500px;">
+                <form method="POST" class="mw-500px">
                     <div class="mb-3">
                         <label class="form-label" for="naimenovanie">Название склада</label>
                         <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($sklad['naimenovanie'] ?? '') ?>" placeholder="Введите название склада..." autocomplete="off">
                     </div>
 
-                    <div class="form-footer">
+                    <div class="form-footer btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
                             <?= $is_creating ? 'Создать' : 'Сохранить' ?>
                         </button>
-                        <button type="button" class="btn btn-secondary" onclick="history.back()">Отмена</button>
+                        <button type="button" class="btn" onclick="history.back()">Отмена</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
+
 
 <?php include '../footer.php'; ?>

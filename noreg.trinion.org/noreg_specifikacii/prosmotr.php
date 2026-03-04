@@ -35,8 +35,8 @@ $parent_doc = getParentDocumentByIndexOsnovannyj($mysqli, $spec_info['id_index']
 $page_title = 'Спецификации к заказу ' . htmlspecialchars($spec_info['nomer_dogovora']);
 include '../header.php';
 ?>
-<div class="container-fluid">
-    <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+<div class="container-fluid mt-3">
+    <div class="row mb-3 d-print-none mt-3">
         <div class="col-auto ms-auto">
             <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
@@ -114,33 +114,33 @@ include '../header.php';
         </div>
     </div>
 
-    <div class="card card-lg">
+    <div class="card card-lg mb-5">
         <div class="card-body">
-             <div style="font-family: 'Times New Roman', serif; line-height: 1.6; color: black; font-weight: bold; text-align: center; white-space: pre-wrap;">
+             <div class="lh-base text-black fw-bold text-center fs-2 mb-1">
                 <?php
                 
-                $preamble = "Спецификация №" . htmlspecialchars($spec_info['nomer_specifikacii']) . "\n\n";
-                $preamble .= "к заказу " . $order_type_text . " № " . htmlspecialchars($spec_info['nomer_dogovora']) . " от " . formatDateRussian($spec_info['data_dogovora'], $months_ru_simple) . "\n\n";
+                $preamble = "Спецификация №" . htmlspecialchars($spec_info['nomer_specifikacii']) . "<br><br>";
+                $preamble .="к заказу " . $order_type_text . " № " . htmlspecialchars($spec_info['nomer_dogovora']) . " от " . formatDateRussian($spec_info['data_dogovora'], $months_ru_simple) . "<br><br>";
                 
                 echo $preamble;
                 ?>
             </div>
-            <div style="position: absolute; right: 0px; top: 80px;">
+            <div class="position-absolute end-0 d-print-none mt-2">
                         <?php if ($spec_info['utverzhden']): ?>
                             <div class="ribbon bg-primary">Утвержден</div>
                         <?php else: ?>
                             <div class="ribbon bg-secondary">Черновик</div>
                         <?php endif; ?>
                     </div>
-            <div style="font-family: 'Times New Roman', serif; display: flex; justify-content: space-between; margin-bottom: 20px; margin-top: 20px;">
-                <div style="font-weight: bold;">
+            <div class="d-flex justify-content-between mb-5">
+                <div class="fw-bolder">
                     <?= htmlspecialchars($spec_info['gorod']) ?>
                 </div>
-                <div style="font-weight: bold;">
+                <div class="fw-bolder">
                     <?= formatDateFormalRussian($spec_info['data_dogovora']) ?>
                 </div>
             </div>
-            <div style="font-family: 'Times New Roman', serif; line-height: 1.6; white-space: pre-wrap; color: black; text-align: justify;">
+            <div class="text-wrap text-dark text-justify">
                 <?php
                 
                 $preamble = "";
@@ -151,16 +151,16 @@ include '../header.php';
                 echo $preamble;
                 ?>
             </div>
-            <table class="table table-bordered table-responsive" style="margin-top: 30px;">
+            <table class="table table-bordered table-responsive mt-4">
                 <thead>
                     <tr>
-                        <th style="width: 3%">N°</th>
-                        <th class="text-center" style="width: 32%">Наименование</th>
-                        <th style="width: 15%">Планируемая дата поставки</th>
-                        <th class="text-center" style="width: 10%">Количество</th>
-                        <th class="text-center" style="width: 5%">Ед.</th>
-                        <th class="text-center" style="width: 15%">Цена</th>
-                        <th class="text-center" style="width: 15%">Сумма</th>
+                        <th class="w-3">N°</th>
+                        <th class="text-center w-32">Наименование</th>
+                        <th class="text-center w-15">Планируемая дата поставки</th>
+                        <th class="text-center w-10">Количество</th>
+                        <th class="text-center w-5">Ед.</th>
+                        <th class="text-center w-15">Цена</th>
+                        <th class="text-center w-15">Сумма</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -246,38 +246,38 @@ include '../header.php';
             <table class="table table-bordered">
                 <tbody>
                     <tr>
-                        <td style="width: 20%; font-weight: bold;">Условия отгрузки:</td>
-                        <td><div style=" word-wrap: break-word;"><?= $spec_info['usloviya_otgruzki'] ?? '' ?></div></td>
+                        <td class="w-25 p-3 fw-bolder">Условия отгрузки:</td>
+                        <td><div class="text-justify"><?= $spec_info['usloviya_otgruzki'] ?? '' ?></div></td>
                     </tr>
                     <tr>
-                        <td style="font-weight: bold;">Условия оплаты:</td>
-                            <td><div style=" word-wrap: break-word;"><?= $spec_info['usloviya_oplaty'] ?? '' ?></div></td>
+                        <td class="fw-bolder">Условия оплаты:</td>
+                            <td><div class="text-justify"><?= $spec_info['usloviya_oplaty'] ?? '' ?></div></td>
                         </tr>
                     <tr>
-                        <td style="font-weight: bold;">Иные условия:</td>
-                        <td><div style=" word-wrap: break-word;"><?= $spec_info['inye_usloviya'] ?? '' ?></div></td>
+                        <td class="fw-bolder">Иные условия:</td>
+                        <td><div class="text-justify"><?= $spec_info['inye_usloviya'] ?? '' ?></div></td>
                     </tr>
                 </tbody>
             </table>
 
-            <div style="margin-top: 40px; font-family: 'Times New Roman', serif;">
-                <div style="display: flex; justify-content: space-between;">
-                    <div style="width: 45%; text-align: center;">
-                        <div style="border-bottom: 1px solid #000; min-height: 80px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;">
+            <div class="mt-5">
+                <div class="d-flex justify-content-between">
+                    <div class="w-40 text-center mt-5">
+                        <div class="border-bottom border-dark d-flex align-items-end justify-content-center pb-2">
                             <?php if ($spec_info && $spec_info['sotrudnik_dolgnost']): ?>
                                 <div>
                                     <?= htmlspecialchars($spec_info['sotrudnik_dolgnost']) ?> <?= htmlspecialchars($spec_info['org_sokrashchyonnoe_naimenovanie'] ?? '') ?>
                                 </div>
                             <?php endif; ?>
                         </div>
-                        <div style="margin-top: 5px;">
+                        <div class="mt-1">
                             <?php if ($spec_info && $spec_info['sotrudnik_familiya']): ?>
                                 <?= htmlspecialchars($spec_info['sotrudnik_familiya'] ?? '') ?> <?= htmlspecialchars($spec_info['sotrudnik_imya'] ?? '') ?> <?= htmlspecialchars($spec_info['sotrudnik_otchestvo'] ?? '') ?>
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div style="width: 45%; text-align: center;">
-                        <div style="border-bottom: 1px solid #000; min-height: 80px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;">
+                    <div class="w-40 text-center mt-4">
+                        <div class="border-bottom border-dark d-flex align-items-end justify-content-center pb-3" >
                             <?php if ($spec_info && $spec_info['podpisant_postavshchika_dolzhnost']): ?>
                                 <div>
                                     <?= htmlspecialchars($spec_info['podpisant_postavshchika_dolzhnost']) ?> <?= htmlspecialchars($spec_info['kon_sokrashchyonnoe_naimenovanie'] ?? '') ?>
@@ -298,9 +298,9 @@ include '../header.php';
     <?php if (!empty($parent_doc)): ?>
     <div class="card d-print-none" >
         <div class="card-body">
-            <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+            <h3 class="mb-2 fs-3 fw-bolder">Связанные документы</h3>
             <div class="table-responsive">
-                <table class="table table-vcenter card-table">
+                <table class="table border table-vcenter card-table">
                     <thead>
                         <tr>
                             <th>Тип документа</th>

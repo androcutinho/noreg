@@ -30,8 +30,7 @@ $zakazy = getVceZakazyPokupatieliu($mysqli, $items_na_stranitse, $offset);
 
 include '../header.php';
 ?>
-      <div class="page-body">
-        <div class="container-fluid">
+        <div class="container-fluid mt-5">
           <div class="card">
             <div class="card-header">
               <div class="row w-full">
@@ -132,7 +131,6 @@ include '../header.php';
             <?php endif; ?>
           </div>
         </div>
-      </div>
 
 <script>
 document.getElementById('advanced-table-search').addEventListener('keyup', function() {

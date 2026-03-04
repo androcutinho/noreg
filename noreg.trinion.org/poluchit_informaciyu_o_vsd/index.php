@@ -35,7 +35,7 @@ require_once '../header.php';
                             </form>
 
                             <!-- Error message display -->
-                            <div id="errorMessage" style="display: none; margin-top: 20px;">
+                            <div id="errorMessage" class="d-none mt-3">
                                 <div class="alert alert-danger" role="alert">
                                     <div class="d-flex">
                                         <div>

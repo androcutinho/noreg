@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit();
 }
 
-$page_title = 'Панель администратора';
+$page_title = 'Поступления товаров';
 
 $mysqli = require '../config/database.php';
 require '../queries/admin_queries.php';
@@ -33,8 +33,8 @@ $tovary = getBceTovary($mysqli, $vybrannyj_id_sklada, $items_na_stranitse, $offs
 
 include '../header.php';
 ?>
-      <div class="page-body">
-        <div class="card-body">
+    
+        <div class="container-fluid mt-5">
           <div class="card">
             <div class="card-header">
               <div class="row w-full">
@@ -159,7 +159,7 @@ include '../header.php';
             <?php endif; ?>
           </div>
         </div>
-      </div>
+    
 
 <script>
 document.getElementById('advanced-table-search').addEventListener('keyup', function() {

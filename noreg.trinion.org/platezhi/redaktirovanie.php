@@ -135,9 +135,8 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="page-body">
 <div class="container-fluid mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">
+    <h2 class="card-title fs-1 mt-2 mb-3">
         <?= htmlspecialchars($page_title) ?>
     </h2>
     <div class="card">
@@ -221,7 +220,7 @@ include '../header.php';
                         <tr class="tovar-row">
                             <td class="col-num">1</td>
                             <td class="col-tovar">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="tovary[0][id_tovara]" class="id_tovara">
                                 </div>
@@ -248,7 +247,7 @@ include '../header.php';
 
                 <button type="button" class="btn mt-3 btn-primary" onclick="addRow()">Добавить строку</button>
 
-                <div class="row" style="margin-top: 40px;">
+                <div class="row mt-5">
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
@@ -260,7 +259,7 @@ include '../header.php';
             </form>
         </div>
     </div>
-</div>
+
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
          <script>
             

@@ -27,8 +27,8 @@ $page_title = 'Документ поступлення';
 include '../header.php';
 ?>
 
-<div class="container-fluid">
-    <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+<div class="container-fluid mt-3">
+    <div class="row mb-3 d-print-none mt-3">
         <div class="col-auto ms-auto">
             <button type="button" class="btn btn-primary" onclick="window.location.href='../postuplenie/redaktirovanie.php?uuid=<?php echo $uuid; ?>'"> Создать поступление</button>
             <button type="button" class="btn btn-primary" onclick="window.print();">
@@ -101,7 +101,7 @@ include '../header.php';
                     <table class="table table-sm table-hover">
                         <tbody>
                             <tr>
-                                <td class="text-muted" style="width: 30%">UUID:</td>
+                                <td class="text-muted w-25">UUID:</td>
                                 <td><?= htmlspecialchars(substr($doc_uuid, 0, 36)) ?></td>
                             </tr>
                              <tr>
@@ -153,7 +153,7 @@ include '../header.php';
                     <table class="table table-sm table-hover">
                         <tbody>
                             <tr>
-                                <td class="text-muted" style="width: 30%">Номер автомашины:</td>
+                                <td class="text-muted w-25">Номер автомашины:</td>
                                 <td><?= htmlspecialchars($vehicle_number) ?></td>
                             </tr>
                             <tr>
@@ -186,7 +186,7 @@ include '../header.php';
                     <table class="table table-sm table-hover">
                         <tbody>
                             <tr>
-                                <td class="text-muted" style="width: 30%">Название продукции:</td>
+                                <td class="text-muted w-25">Название продукции:</td>
                                 <td><?= htmlspecialchars($naimenovanie_tovara) ?></td>
                             </tr>
                             <tr>
@@ -229,10 +229,10 @@ include '../header.php';
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th style="width: 20%">Статус</th>
-                                <th style="width: 25%">Дата и время</th>
-                                <th style="width: 25%">ФИО</th>
-                                <th style="width: 30%">Организация</th>
+                                <th class="w-25">Статус</th>
+                                <th class="w-25">Дата и время</th>
+                                <th class="w-25">ФИО</th>
+                                <th class="w-25">Организация</th>
                             </tr>
                         </thead>
                         <tbody>

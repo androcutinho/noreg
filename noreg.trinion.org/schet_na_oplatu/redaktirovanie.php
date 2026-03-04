@@ -234,9 +234,8 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="page-body">
 <div class="container-fluid mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">
+    <h2 class="card-title fs-1 mt-2 mb3">
         <?= htmlspecialchars($page_title) ?>
     </h2>
     <div class="card">
@@ -262,14 +261,14 @@ include '../header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_postavschika">Покупатель</label>
                         <input class="form-control" type="text" id="id_postavschika" name="naimenovanie_postavschika" placeholder="- Выберите поставщика -" autocomplete="off" 
                         value="<?= htmlspecialchars($_POST['naimenovanie_postavschika'] ?? $naimenovanie_postavschika) ?>">
                         <input type="hidden" name="id_postavschika" class="id-postavschika" value="<?= htmlspecialchars($_POST['id_postavschika'] ?? $id_postavschika) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_organizacii">Поставщик</label>
                         <input class="form-control" type="text" id="id_organizacii" name="naimenovanie_organizacii" placeholder="- Выберите организацию -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['naimenovanie_organizacii'] ?? $naimenovanie_organizacii) ?>">
@@ -278,14 +277,14 @@ include '../header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="schet_pokupatelya_id">Расчетный счет покупателя</label>
                         <input class="form-control" type="text" id="schet_pokupatelya_id" name="schet_pokupatelya_naimenovanie" placeholder="- Выберите расчетный счет покупателя -" autocomplete="off" 
                         value="<?= htmlspecialchars($_POST['schet_pokupatelya_naimenovanie'] ?? $schet_pokupatelya_naimenovanie) ?>">
                         <input type="hidden" name="schet_pokupatelya_id" class="schet-pokupatelya-id" value="<?= htmlspecialchars($_POST['schet_pokupatelya_id'] ?? $schet_pokupatelya_id) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="schet_postavschika_id">Расчетный счет поставщика</label>
                         <input class="form-control" type="text" id="schet_postavschika_id" name="schet_postavschika_naimenovanie" placeholder="- Выберите расчетный счет поставщика -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['schet_postavschika_naimenovanie'] ?? $schet_postavschika_naimenovanie) ?>">
@@ -294,17 +293,15 @@ include '../header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_otvetstvennogo">Ответственный</label>
                         <input type="text" class="form-control" id="id_otvetstvennogo" name="naimenovanie_otvetstvennogo" placeholder="- Выберите ответственного -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['naimenovanie_otvetstvennogo'] ?? $naimenovanie_otvetstvennogo) ?>">
                         <input type="hidden" name="id_otvetstvennogo" class="id-otvetstvennogo" value="<?= htmlspecialchars($_POST['id_otvetstvennogo'] ?? $id_otvetstvennogo) ?>">
                     </div>
                 </div>
-
-                <h2 style="margin-top: 30px;"></h2>
                 
-                <div class="card">
+                <div class="card mt-3">
                 <div class="table-responsive">
                 <table class="table table-vcenter card-table" id="tablitsaTovarov">
                     <thead>
@@ -393,13 +390,13 @@ include '../header.php';
                         <tr class="tovar-row">
                             <td class="col-num">1</td>
                             <td class="col-tovar">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off">
                                     <input type="hidden" name="tovary[0][id_tovara]" class="id_tovara">
                                 </div>
                             </td>
                             <td class="col-edinitsa">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off">
                                     <input type="hidden" name="tovary[0][id_edinitsii]" class="id-edinitsii">
                                 </div>
@@ -438,7 +435,6 @@ include '../header.php';
             </form>
         </div>
     </div>
-</div>
         <script src="https://cdn.jsdelivm.net/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
          <script>
             

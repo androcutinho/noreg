@@ -145,32 +145,32 @@ include '../header.php';
                 <div style="margin-bottom: 30px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                         <thead>
-                            <tr style="border: 1px solid #000;">
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Серия</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Остаток</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Убавить</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Прибавить</th>
+                            <tr class="border border-dark">
+                                <th class="border border-dark p-2 text-center fw-bold">№</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Товары</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Серия</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Остаток</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Убавить</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Прибавить</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($line_items)): ?>
                                 <?php $row_num = 1; ?>
                                 <?php foreach ($line_items as $item): ?>
-                                    <tr style="border: 1px solid #000;">
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['ostatok'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['ubavit'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['pribavit'] ?? '') ?></td>
+                                    <tr class="border border-dark">
+                                        <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
+                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['ostatok'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['ubavit'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['pribavit'] ?? '') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="4" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                    <td colspan="4" class="border border-dark p-2 text-center">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

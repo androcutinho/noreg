@@ -96,7 +96,7 @@ function fetchDocumentList($vetis_guid = null)
         }
 
         if (!$applicationId) {
-            throw new Exception('Failed to retrieve Application ID. Check UUID.');
+            throw new Exception('Не удалось получить ид приложения. Проверьте UUID.');
         }
 
         
@@ -119,13 +119,13 @@ function fetchDocumentList($vetis_guid = null)
                 );
                 
                 if (!$save_stmt->execute()) {
-                    error_log("Error saving VETIS request: " . $save_stmt->error);
+                    error_log("Ошибка при сохранении запроса ВЕТИС: " . $save_stmt->error);
                 }
                 
                 $save_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Database error in fetchDocumentList: " . $e->getMessage());
+            error_log("Ошибка базы данных в функции fetchDocumentList:" . $e->getMessage());
         }
          
         
@@ -147,7 +147,7 @@ function fetchDocumentList($vetis_guid = null)
                 $db_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Error retrieving applicationId from database: " . $e->getMessage());
+            error_log("Ошибка при получении applicationId из базы данных: " . $e->getMessage());
         }
          
         sleep(3);
@@ -176,7 +176,7 @@ function fetchDocumentList($vetis_guid = null)
         $stock_entries = $result_2['application']['result']['getStockEntryListResponse']['stockEntryList']['stockEntry'] ?? null;
 
         if (!$stock_entries) {
-            throw new Exception('Stock entries not found in API response');
+            throw new Exception('Записи о товарах на складе не найдены в ответе API.');
         }
 
         if (!is_array($stock_entries) || !isset($stock_entries[0])) {
@@ -184,10 +184,10 @@ function fetchDocumentList($vetis_guid = null)
         }
 
         
-        $enterprise_name = 'Не указано';
+        $id_predpriyatiya = null;
         try {
             $mysqli_ent = require(__DIR__ . '/../config/database.php');
-            $ent_sql = "SELECT naimenovaniye FROM vetis_predpriyatiya WHERE enterpriseGuid = ? LIMIT 1";
+            $ent_sql = "SELECT id FROM vetis_predpriyatiya WHERE enterpriseGuid = ? LIMIT 1";
             $ent_stmt = $mysqli_ent->stmt_init();
             
             if ($ent_stmt->prepare($ent_sql)) {
@@ -196,13 +196,13 @@ function fetchDocumentList($vetis_guid = null)
                 $ent_result = $ent_stmt->get_result();
                 
                 if ($ent_row = $ent_result->fetch_assoc()) {
-                    $enterprise_name = $ent_row['naimenovaniye'];
+                    $id_predpriyatiya = $ent_row['id'];
                 }
                 
                 $ent_stmt->close();
             }
         } catch (Exception $e) {
-            error_log("Error retrieving enterprise name: " . $e->getMessage());
+            error_log("Ошибка при получении ид предприятия: " . $e->getMessage());
         }
 
         $documents_data = [];
@@ -227,7 +227,7 @@ function fetchDocumentList($vetis_guid = null)
             $vsd_uuid = $vet_document['uuid'] ?? '';
 
             $documents_data[] = [
-                'enterprise_name' => $enterprise_name,
+                'id_predpriyatiya' => $id_predpriyatiya,
                 'enterprise_guid' => $vetis_guid,
                 'product_name' => $product_name,
                 'remaining_amount' => $remaining_amount,

@@ -98,7 +98,6 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
             return $result;
         }
         
-        
         if ($table_name === 'postupleniya_tovarov' && $field_name === 'utverzhden') {
             require_once __DIR__ . '/postuplenie_queries.php';
             $result = handleUtverzhdenChange($mysqli, $document_id, $value);

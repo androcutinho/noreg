@@ -93,8 +93,8 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="card-body">
-        <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+<div class="container-fluid mt-3">
+        <div class="row mb-3 d-print-none mt-3">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
@@ -179,51 +179,51 @@ include '../header.php';
                         </button>
                     </div>
                 </div>
-        <div class="card">
+        <div class="card mb-5">
             <div class="card-body">
-                <!-- Bank Account Info Table -->
-                <div style="margin-bottom: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                
+                <div class="mb-3">
+                    <table class="w-100 border-collapse fs-4">
                         <tbody>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 8px; width: 40%; vertical-align: top;">
-                                    <div style="margin-bottom: 4px;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['bank_name1'] : $schet['bank_name']) ?? '') ?></div>
-                                    <div style="font-size: 10px; color: #999;">Банк получателя</div>
+                                <td class="border border-dark p-3 w-40 align-top">
+                                    <div class="mb-3"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['bank_name1'] : $schet['bank_name']) ?? '') ?></div>
+                                    <div class="fs-4">Банк получателя</div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; width: 10%; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">БИК</div>
+                                <td class="border border-dark p-3 w-auto text-start align-middle">
+                                    <div class="fs-4">БИК</div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; width: 25%; text-align: left; vertical-align: middle;">
+                                <td class="border border-dark p-3 w-25 text-start align-middle">
                                     <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['bik_bank1'] : $schet['bik_bank']) ?? '') ?></div>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 0; width: 50%; vertical-align: middle;">
-                                    <div style="display: flex; height: 100%;">
-                                        <div style="flex: 1; padding: 8px; display: flex; align-items: center;">
+                                <td class="border border-dark w-50 align-middle">
+                                    <div class="d-flex h-100">
+                                        <div class="d-flex p-3 w-50 align-middle">
                                             <div >ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['inn_postavschika'] : $schet['inn_organizacii']) ?? '') ?></div>
                                         </div>
-                                        <div style="flex: 1; border-left: 1px solid #000; padding: 8px; display: flex; align-items: center;">
+                                        <div class="d-flex border-start border-dark p-3 w-50 align-middle">
                                             <div>КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['kpp_postavschika'] : $schet['kpp_organizacii']) ?? '') ?></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">Сч. №</div>
+                                <td class="border border-dark p-3 text-start align-middle">
+                                    <div class="fs-4">Сч. №</div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
+                                <td class="border border-dark p-3 text-start align-middle">
                                     <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['correspondent_account1'] : $schet['correspondent_account']) ?? '') ?></div>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="border: 1px solid #000; padding: 8px; vertical-align: top;">
-                                    <div style="margin-bottom: 4px;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_postavschika'] : $schet['naimenovanie_organizacii']) ?? '') ?></div>
-                                    <div style="font-size: 10px; color: #999;">Получатель</div>
+                                <td class="border border-dark p-3 align-top">
+                                    <div class="mt-2"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_postavschika'] : $schet['naimenovanie_organizacii']) ?? '') ?></div>
+                                    <div class="fs-4">Получатель</div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
-                                    <div style="font-size: 10px; color: #999;">Сч. №</div>
+                                <td class="border border-dark p-3 text-start align-middle">
+                                    <div class="fs-4">Сч. №</div>
                                 </td>
-                                <td style="border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle;">
+                                <td class="border border-dark p-3 text-start align-middle">
                                     <div><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['account_number1'] : $schet['account_number']) ?? '') ?></div>
                                 </td>
                             </tr>
@@ -231,7 +231,7 @@ include '../header.php';
                     </table>
                 </div>
 
-                <div style="position: absolute; right: 0px; top: 160px;">
+                <div  class="position-absolute end-0 d-print-none">
                         <?php if ($schet['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
@@ -239,69 +239,69 @@ include '../header.php';
                         <?php endif; ?>
                     </div>
 
-                <!-- Header -->
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
-                    <h2 style="margin: 0; font-weight: bold;">
+                
+                <div class="mb-3 border-bottom border-dark pb-2 mt-5">
+                    <h2 class="fw-bolder">
                         Счет на оплату № <?= htmlspecialchars($schet['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
                     </h2>
                 </div>
 
-                <!-- Organization and Vendor Info -->
-                <div style="margin-bottom: 30px;">
-                    <div style="margin-bottom: 15px;">
+                
+                <div class="mb-3">
+                    <div class="mb-3">
                         <span >Поставщик<br/>(Исполнитель):</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_postavschika'] : $schet['naimenovanie_organizacii']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['inn_postavschika'] : $schet['inn_organizacii']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['kpp_postavschika'] : $schet['kpp_organizacii']) ?? '') ?></span>
+                        <span class="fw-bolder"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_postavschika'] : $schet['naimenovanie_organizacii']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['inn_postavschika'] : $schet['inn_organizacii']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['kpp_postavschika'] : $schet['kpp_organizacii']) ?? '') ?></span>
                     </div>
                     <div>
                         <span>Покупатель<br/>(Заказчик):</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_organizacii'] : $schet['naimenovanie_postavschika']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['inn_organizacii'] : $schet['inn_postavschika']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['kpp_organizacii'] : $schet['kpp_postavschika']) ?? '') ?></span>
+                        <span class="fw-bolder"><?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['naimenovanie_organizacii'] : $schet['naimenovanie_postavschika']) ?? '') ?>, ИНН <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['inn_organizacii'] : $schet['inn_postavschika']) ?? '') ?>, КПП <?= htmlspecialchars((!empty($schet['ot_postavshchika']) ? $schet['kpp_organizacii'] : $schet['kpp_postavschika']) ?? '') ?></span>
                     </div>
                 </div>
 
                 
 
-                <!-- tovary Table -->
-                <div style="margin-bottom: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                
+                <div class="mb-3">
+                    <table class="w-100 border border-collapse fs-4">
                         <thead>
-                            <tr style="border: 1px solid #000;">
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары (работы, услуги)</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Кол-во</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Ед.</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Цена</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Сумма</th>
+                            <tr class="border border-dark">
+                                <th class="border border-dark p-2 text-center fw-bold">№</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Товары (работы, услуги)</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Кол-во</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Ед.</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Цена</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Сумма</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($line_items)): ?>
                                 <?php $row_num = 1; ?>
                                 <?php foreach ($line_items as $item): ?>
-                                    <tr style="border: 1px solid #000;">
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
+                                    <tr class="border border-dark">
+                                        <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
+                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                    <td colspan="6" class="border border-dark p-2 text-center">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Totals -->
-                <div style="margin-bottom: 30px; text-align: right;">
-                    <div style="margin-bottom: 10px;">
+               
+                <div class="mb-3 text-end">
+                    <div class="mt-1">
                         <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
-                    <div style="margin-bottom: 10px;">
+                    <div class="mt-1">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
                      <div>
@@ -309,37 +309,34 @@ include '../header.php';
                     </div>
                 </div>
 
-                <!-- Text representation of sum -->
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+    
+                <div class="mb-3 border-bottom border-dark p-2">
                     <p>
                         Всего наименований: <?= count($line_items) ?>, на сумму <?= number_format($obshchaya_summa, 2, ',', ' ') ?> руб.
                     </p>
                 </div>
 
-                <!-- Signature section -->
-                <div style="margin-bottom: 40px; padding: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-top: 40px;">
-                        <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Руководитель _______________________________________</p>
-                            <p style="margin: 0; margin-right: -90px;">м.п.</p>
+          
+                <div class="mb-4 p-2">
+                    <div class="d-flex justify-content-between mt-4">
+                        <div class="text-center">
+                            <p class="mt-3">Руководитель _______________________________________</p>
+                            <p>м.п.</p>
                         </div>
-                        <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Бухгалтер ______________________________________</p>
+                        <div class="text-center">
+                            <p class="mb-3">Бухгалтер ______________________________________</p>
                            
                         </div>
                     </div>
                 </div>
-
-                
-            </div>
         </div>
-
+            </div>
         <?php if (!empty($all_related_for_display)): ?>
         <div class="card d-print-none">
             <div class="card-body">
-                <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+                <h3 class="mb-2 fs-3 fw-bolder">Связанные документы</h3>
                 <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
+                    <table class="table border table-vcenter card-table">
                         <thead>
                             <tr>
                                 <th>Тип документа</th>
@@ -399,11 +396,11 @@ include '../header.php';
         </div>
         <?php endif; ?>
                 
-            </div>
+    
         </div>
     </div>
 </div>
-
+ </div>
 <script>
 function redaktirovatDokument() {
     const isClosed = <?= json_encode((bool)$schet['zakryt']) ?>;

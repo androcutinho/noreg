@@ -39,7 +39,8 @@ $allowed_tables = [
     'noreg_specifikacii_k_dogovoru',
     'zakazy_postavshchikam',
     'otgruzki_tovarov_pokupatelyam',
-    'izmenenie_ostatka_tovarov'
+    'izmenenie_ostatka_tovarov',
+    'vetis_vsd'
 ];
 
 if (!in_array($table_name, $allowed_tables)) {

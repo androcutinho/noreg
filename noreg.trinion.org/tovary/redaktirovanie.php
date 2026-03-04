@@ -93,8 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 include '../header.php';
 ?>
 
-<div class="page-body">
-    <div class="container-fluid">
+    <div class="container-fluid mt-5">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title mb-0"><?= $is_creating ? 'Создать товар' : 'Редактировать товар' ?></h3>
@@ -107,13 +106,13 @@ include '../header.php';
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" style="max-width: 500px;">
+                <form method="POST" class="mw-500px">
                     <div class="mb-3">
                         <label class="form-label" for="naimenovanie">Название товара</label>
                         <input class="form-control" type="text" id="naimenovanie" name="naimenovanie" value="<?= htmlspecialchars($tov_us['naimenovanie'] ?? '') ?>" placeholder="Введите название товара..." autocomplete="off">
                     </div>
 
-                      <div class="row" style="margin-top: 20px;">
+                      <div class="row mt-2">
                     <div class="col-12">
                         <label class="form-check">
                             <input class="form-check-input" type="checkbox" name="poserijnyj_uchet" value="1" <?= (isset($_POST['poserijnyj_uchet']) || (!$is_creating && $poserijnyj_uchet)) ? 'checked' : '' ?>>
@@ -132,6 +131,5 @@ include '../header.php';
             </div>
         </div>
     </div>
-</div>
 
 <?php include '../footer.php'; ?>

@@ -175,11 +175,11 @@ include '../header.php';
                                 </label>
                               </div>
 
-                    <div class="form-footer">
+                    <div class="form-footer btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
                             <?= $is_creating ? 'Создать' : 'Сохранить' ?>
                         </button>
-                        <button type="button" class="btn btn-secondary" onclick="history.back()">Отмена</button>
+                        <button type="button" class="btn" onclick="history.back()">Отмена</button>
                     </div>
                 </form>
             </div>

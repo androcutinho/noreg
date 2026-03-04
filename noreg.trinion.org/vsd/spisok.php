@@ -14,7 +14,7 @@ $page_title = 'Список ВСД';
 $mysqli = require '../config/database.php';
 require '../queries/vetis_vsd_queries.php';
 
-// Fetch enterprises from vetis_predpriyatiya
+
 $enterprises_sql = "SELECT DISTINCT enterpriseGuid, naimenovaniye FROM vetis_predpriyatiya WHERE enterpriseGuid IS NOT NULL AND enterpriseGuid != '' ORDER BY naimenovaniye";
 $enterprises_result = $mysqli->query($enterprises_sql);
 $enterprises = $enterprises_result ? $enterprises_result->fetch_all(MYSQLI_ASSOC) : [];
@@ -38,9 +38,8 @@ $documents = fetchAllDocuments($mysqli, $vybrannyj_enterprise_guid, $items_per_p
 
 include '../header.php';
 ?>
-      <div class="page-body">
-        <div class="container-fluid">
-          <div style="text-align: right; margin-bottom: 10px;">
+        <div class="container-fluid mt-5">
+          <div class="text-end mb-1">
             <button id="sync-vsd-btn" class="btn btn-primary">
                 <span id="sync-btn-text">Загрузить ВСД</span>
                 <span id="sync-btn-spinner" style="display: none; margin-left: 8px;">
@@ -114,7 +113,7 @@ include '../header.php';
                   <?php if (!empty($documents)): ?>
                     <?php foreach ($documents as $doc): ?>
                       <tr>
-                        <td class="text-secondary" style="font-size: 0.85em; word-break: break-all; max-width: 150px;">
+                        <td class="text-secondary fs-5 text-break mw-150px">
                           <?= htmlspecialchars($doc['uuid']) ?>
                         </td>
                         <td class="text-secondary"><?= htmlspecialchars($doc['issueDate']) ?></td>
@@ -135,6 +134,28 @@ include '../header.php';
                               Создать
                             </a>
                           <?php endif; ?>
+                          <?php if (!$doc['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta(<?= $doc['id'] ?>, 'zakryt', true);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                                <path d="M10.507 10.498l-1.507 1.502v3h3l1.493 -1.498m2 -2.01l4.89 -4.907a2.1 2.1 0 0 0 -2.97 -2.97l-4.913 4.896"></path>
+                                <path d="M16 5l3 3"></path>
+                                <path d="M3 3l18 18"></path>
+                              </svg>
+                            Закрыть
+                        </button>
+                        <?php endif; ?>
+                        <?php if ($doc['zakryt']): ?>
+                        <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta(<?= $doc['id'] ?>, 'zakryt', false);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
+                                <path d="M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0z"></path>
+                                <path d="M12.5 11.5l-4 4l1.5 1.5"></path>
+                                <path d="M12 15l-1.5 -1.5"></path>
+                              </svg>
+                            Открыть
+                        </button>
+                        <?php endif; ?>
                         </td>
                       </tr>
                     <?php endforeach; ?>
@@ -192,8 +213,28 @@ include '../header.php';
             <?php endif; ?>
           </div>
         </div>
-      </div>
+    
 
 <?php include '../footer.php'; ?>
-
+<script>
+function ObnovitPoleDokumenta(documentId, fieldName, value) {
+    const tableName = 'vetis_vsd';
+    
+    fetch('../api/toggle_field.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            table_name: tableName,
+            document_id: documentId,
+            field_name: fieldName,
+            value: value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+    })
+    .catch(error => console.error('Error:', error));
+}
+  </script>
 <script src="../js/sync_vsd.js"></script>

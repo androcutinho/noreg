@@ -72,8 +72,8 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="card-body">
-        <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+<div class="container-fluid mt-5">
+        <div class="row mb-3 d-print-none mt-3">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
@@ -149,9 +149,15 @@ include '../header.php';
                         </button>
                     </div>
                 </div>
-        <div class="card">
+        <div class="card mb-5">
             <div class="card-body">
-                <div style="position: absolute; right: 0px; top: 160px;">
+                <div class="mb-3 border-bottom border-dark pb-1">
+                    <h2 class="fw-bolder">
+                        Отгрузка № <?= htmlspecialchars($otgruzki['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
+                    </h2>
+                </div>
+
+                <div class="position-absolute end-0">
                         <?php if ($otgruzki['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
@@ -159,151 +165,147 @@ include '../header.php';
                         <?php endif; ?>
                     </div>
 
-                <!-- Header -->
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
-                    <h2 style="margin: 0; font-weight: bold;">
-                        Отгрузка № <?= htmlspecialchars($otgruzki['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
-                    </h2>
-                </div>
+            
+                
 
                 
-                <div style="margin-bottom: 30px;">
+                <div class="mb-3">
                     <?php if ($otgruzki['ot_postavshchika']): ?>
             
-                        <div style="margin-bottom: 15px;">
+                        <div class="mb-3">
                             <span>Поставщик<br/>(Исполнитель):</span>
-                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_organizacii'] ?? '') ?></span>
+                            <span class="fw-bolder"><?= htmlspecialchars($otgruzki['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_organizacii'] ?? '') ?></span>
                         </div>
-                        <div style="margin-bottom: 15px;">
+                        <div class="mb-3">
                             <span>Покупатель<br/>(Получатель):</span>
-                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_postavschika'] ?? '') ?></span>
+                            <span class="fw-bolder"><?= htmlspecialchars($otgruzki['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_postavschika'] ?? '') ?></span>
                         </div>
                     <?php else: ?>
-                        <div style="margin-bottom: 15px;">
+                        <div class="mb-3">
                             <span>Поставщик<br/>(Исполнитель):</span>
-                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_organizacii'] ?? '') ?></span>
+                            <span class="fw-bolder"><?= htmlspecialchars($otgruzki['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_organizacii'] ?? '') ?></span>
                         </div>
-                        <div style="margin-bottom: 15px;">
+                        <div class="mb-3">
                             <span>Покупатель<br/>(Получатель):</span>
-                            <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_postavschika'] ?? '') ?></span>
+                            <span class="fw-bolder"><?= htmlspecialchars($otgruzki['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($otgruzki['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($otgruzki['kpp_postavschika'] ?? '') ?></span>
                         </div>
                     <?php endif; ?>
-                    <div style="margin-bottom: 15px;">
+                    <div class="mb-3">
                         <span>Склад отгрузки:</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['naimenovanie_sklada'] ?? 'Не указан') ?></span>
+                        <span class="fw-bolder"><?= htmlspecialchars($otgruzki['naimenovanie_sklada'] ?? 'Не указан') ?></span>
                     </div>
                     <div>
                         <span><?= $otgruzki['ot_postavshchika'] ? 'Заказ поставщику' : 'Заказ покупателя' ?>:</span>
-                        <span style="font-weight: bold;"><?= htmlspecialchars($otgruzki['customer_order_nomer'] ?? 'Не указан') ?></span>
+                        <span class="fw-bolder"><?= htmlspecialchars($otgruzki['customer_order_nomer'] ?? 'Не указан') ?></span>
                     </div>
                 </div>
 
                 
 
                 
-                <div style="margin-bottom: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <div class="mb-3">
+                    <table class="w-100 border fs-4">
                         <thead>
-                            <tr style="border: 1px solid #000;">
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары (работы, услуги)</th>
+                            <tr class="border border-dark">
+                                <th class="border border-dark p-2 text-center fw-bold">№</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Товары (работы, услуги)</th>
                                 <?php if (!$otgruzki['ot_postavshchika']): ?>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Серия</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Серия</th>
                                 <?php endif; ?>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Кол-во</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Ед.</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Цена</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Кол-во</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Ед.</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Цена</th>
                                 <?php if (!$otgruzki['ot_postavshchika']): ?>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Склад</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Склад</th>
                                 <?php endif; ?>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Сумма</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Сумма</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($line_items)): ?>
                                 <?php $row_num = 1; ?>
                                 <?php foreach ($line_items as $item): ?>
-                                    <tr style="border: 1px solid #000;">
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                    <tr class="border border-dark">
+                                        <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
+                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <?php if (!$otgruzki['ot_postavshchika']): ?>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '-') ?></td>
+                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '-') ?></td>
                                         <?php endif; ?>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
                                         <?php if (!$otgruzki['ot_postavshchika']): ?>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_sklada'] ?? 'Не указан') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_sklada'] ?? 'Не указан') ?></td>
                                         <?php endif; ?>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="8" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                    <td colspan="8" class="border border-dark p-2 text-center">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Totals -->
-                <div style="margin-bottom: 30px; text-align: right;">
-                    <div style="margin-bottom: 10px;">
+            
+                <div class="mb-3 text-end">
+                    <div class="mb-2">
                         <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
-                    <div style="margin-bottom: 10px;">
+                    <div class="mb-2">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
-                        <div style="margin-bottom: 10px;">
+                        <div class="mb-2">
                         <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
                      </div>
                 </div>
 
-                <!-- Text representation of sum -->
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                
+                <div class="mb-3 border-bottom border-dark p-3">
                     <p>
                         Всего наименований: <?= count($line_items) ?>, на сумму <?= number_format($obshchaya_summa, 2, ',', ' ') ?> руб.
                     </p>
                 </div>
 
-                <!-- Signature section -->
-                <div style="margin-bottom: 40px; padding: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-top: 40px;">
-                        <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Поставащик _______________________________________</p>
-                            <p style="margin: 0; margin-right: -90px;">м.п.</p>
+               
+                <div class=" mb-4 p-2">
+                    <div class="d-flex justify-content-between mt-5">
+                        <div class="text-center">
+                            <pclass="mb-3">Поставащик _______________________________________</p>
+                            <p>м.п.</p>
                         </div>
-                        <div style="text-align: center;">
-                            <p style="margin-bottom: 30px;">Покупатель ______________________________________</p>
+                        <div class="text-center">
+                            <p class="mb-3">Покупатель ______________________________________</p>
                            
                         </div>
                     </div>
                 </div>
                 </div>
                 </div>
-
-                <!-- Related documents -->
+              
+           
                 <?php if (!empty($parent_doc)): ?>
                 <div class="card d-print-none">
                     <div class="card-body">
-                    <h4 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h4>
+                    <h4 class="mb-2 fs-3 fw-bolder">Связанные документы</h4>
                     <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
+                    <table class="table border table-vcenter card-table">
                         <thead>
                             <tr>
-                                <th style="padding: 8px;">Тип документа</th>
-                                <th style="padding: 8px;">Номер</th>
-                                <th style="padding: 8px;">Ответственный</th>
-                                <th style="padding: 8px;">Дата</th>
-                                <th style="padding: 8px;">Статус</th>
+                                <th>Тип документа</th>
+                                <th>Номер</th>
+                                <th>Ответственный</th>
+                                <th>Дата</th>
+                                <th>Утвержден</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="padding: 8px;"><?= htmlspecialchars($parent_doc['document_type']) ?></td>
-                                <td style="padding: 8px;">
+                                <td><?= htmlspecialchars($parent_doc['document_type']) ?></td>
+                                <td>
                                     <?php 
                                         if ($parent_doc['document_type'] === 'Заказ') {
                                             $check_query = "SELECT id FROM zakazy_pokupatelei WHERE id = ?";
@@ -322,14 +324,14 @@ include '../header.php';
                                     ?>
                                     <a href="<?= $link ?>"><?= htmlspecialchars($parent_doc['nomer']) ?></a>
                                 </td>
-                                <td style="padding: 8px;"><?= htmlspecialchars($parent_doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
-                                <td style="padding: 8px;">
+                                <td><?= htmlspecialchars($parent_doc['naimenovanie_otvetstvennogo'] ?? '') ?></td>
+                                <td>
                                     <?php 
                                         $doc_date = DateTime::createFromFormat('Y-m-d', $parent_doc['data_dokumenta']);
                                         echo $doc_date ? $doc_date->format('d.m.Y') : htmlspecialchars($parent_doc['data_dokumenta']);
                                     ?>
                                 </td>
-                                <td style="padding: 8px;"><?= $parent_doc['utverzhden'] ? 'Да' : 'Нет' ?></td>
+                                <td><?= $parent_doc['utverzhden'] ? 'Да' : 'Нет' ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -338,8 +340,8 @@ include '../header.php';
                 </div>
                 <?php endif; ?>
 
-                
-            </div>
+                 </div>
+           
         </div>
     
 

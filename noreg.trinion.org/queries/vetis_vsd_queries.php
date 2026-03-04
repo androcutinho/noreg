@@ -28,6 +28,7 @@ function getDocumentsCount($mysqli, $enterprise_guid = '') {
 
 function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset = 0) {
     $sql = "SELECT 
+        id,
         uuid,
         issueDate,
         vetDType,
@@ -37,11 +38,12 @@ function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset =
         expiryDate,
         enterprise,
         consignee,
-        id_tovary_i_uslugi
-    FROM vetis_vsd";
+        id_tovary_i_uslugi,
+        zakryt
+    FROM vetis_vsd WHERE zakryt=0 or zakryt IS NULL";
     
     if (!empty($enterprise_guid)) {
-        $sql .= " WHERE enterprise_guid = ?";
+        $sql .= " AND enterprise_guid = ?";
     }
     
     $sql .= " ORDER BY lastUpdateDate DESC LIMIT ? OFFSET ?";

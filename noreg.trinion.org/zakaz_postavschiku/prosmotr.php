@@ -73,8 +73,8 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="card-body">
-        <div class="row mb-3 d-print-none" style="margin-top: 30px;">
+<div class="container-fluid mt-5">
+        <div class="row mb-3 d-print-none mt-5">
                     <div class="col-auto ms-auto">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
@@ -177,16 +177,16 @@ include '../header.php';
                         </button>
                     </div>
                 </div>
-        <div class="card">
+        <div class="card mb-5">
             <div class="card-body">
-                <!-- Header -->
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
-                    <h2 style="margin: 0; font-weight: bold;">
+    
+                <div class="mb-3 border-bottom border-dark pb-1">
+                    <h2 class="fw-bolder">
                         Заказ поставщику № <?= htmlspecialchars($zakaz['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
                     </h2>
                 </div>
 
-                <div style="position: absolute; right: 0px;">
+                <div class="position-absolute end-0">
                         <?php if ($zakaz['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
@@ -195,49 +195,49 @@ include '../header.php';
                     </div>
 
                 
-                <div style="margin-bottom: 30px;">
-                    <div style="margin-bottom: 15px;">
-                        <span style="font-weight: bold;">Поставщик<br/>(Исполнитель):</span>
-                        <span><?= htmlspecialchars($zakaz['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_postavschika'] ?? '') ?></span>
+                <div class="mb-4">
+                    <div class="mb-3">
+                        <span>Поставщик<br/>(Исполнитель):</span>
+                        <span class="fw-bolder fs-4"><?= htmlspecialchars($zakaz['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_postavschika'] ?? '') ?></span>
                     </div>
                     <div>
-                        <span style="font-weight: bold;">Покупатель<br/>(Заказчик):</span>
-                        <span><?= htmlspecialchars($zakaz['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_organizacii'] ?? '') ?></span>
+                        <span>Покупатель<br/>(Заказчик):</span>
+                        <span class="fw-bolder fs-4"><?= htmlspecialchars($zakaz['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_organizacii'] ?? '') ?></span>
                     </div>
                 </div>
 
                 
 
             
-                <div style="margin-bottom: 30px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <div class="mb-3">
+                    <table class="w-100 border fs-4">
                         <thead>
-                            <tr style="border: 1px solid #000;">
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">№</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Товары (работы, услуги)</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Кол-во</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Ед.</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Цена</th>
-                                <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Сумма</th>
+                            <tr class="border border-dark">
+                                <th class="border border-dark p-2 text-center fw-bold">№</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Товары (работы, услуги)</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Кол-во</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Ед.</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Цена</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Сумма</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($line_items)): ?>
                                 <?php $row_num = 1; ?>
                                 <?php foreach ($line_items as $item): ?>
-                                    <tr style="border: 1px solid #000;">
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= $row_num ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px;"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
+                                    <tr class= "border border-dark">
+                                        <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
+                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" style="border: 1px solid #000; padding: 8px; text-align: center;">Товары не добавлены</td>
+                                    <td colspan="6" class="border border-dark p-2 text-center">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -245,11 +245,11 @@ include '../header.php';
                 </div>
 
                 
-                <div style="margin-bottom: 30px; text-align: right;">
-                    <div style="margin-bottom: 10px;">
+                <div class="mb-3 text-end">
+                    <div class="mb-2">
                         <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
                     </div>
-                    <div style="margin-bottom: 10px;">
+                    <div class="mb-2">
                         <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
                     </div>
                     <div>
@@ -258,14 +258,14 @@ include '../header.php';
                 </div>
 
                 
-                <div style="margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                <div class="mb-4 border-bottom border-dark p-3">
                     <p>
                         Всего наименований: <?= count($line_items) ?>, на сумму <?= number_format($obshchaya_summa, 2, ',', ' ') ?> RUB
                     </p>
                 </div>
 
                 
-                <div style="margin-bottom: 40px; padding: 15px;">
+                <div class="mb-3 p-3">
                     <p>
                         <strong>Ответственный:</strong> <?= htmlspecialchars($zakaz['naimenovanie_otvetstvennogo'] ?? '') ?>
                     </p>
@@ -280,9 +280,9 @@ include '../header.php';
         <?php if (!empty($svyazannye_dokumenty)): ?>
         <div class="card d-print-none" >
             <div class="card-body">    
-                <h3 style="margin-bottom: 20px; font-size: 16px; font-weight: bold;">Связанные документы</h3>
+                <h3 class="mb-2 fs-3 fw-bolder">Связанные документы</h3>
                 <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
+                    <table class="table border table-vcenter card-table">
                         <thead>
                             <tr>
                                 <th>Тип документа</th>

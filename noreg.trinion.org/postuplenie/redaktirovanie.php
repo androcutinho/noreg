@@ -192,9 +192,9 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="page-body">
+
 <div class="container-fluid mt-5">
-    <h2 class="card-title" style="font-size: 2rem; margin-top: 20px; margin-bottom: 30px;">
+    <h2 class="card-title mt-2 mb-3 fs-1">
         <?= htmlspecialchars($page_title) ?>
     </h2>
     <div class="card">
@@ -207,7 +207,7 @@ include '../header.php';
                         value="<?= htmlspecialchars($_POST['product_date'] ?? $data_vypuska) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_sklada">Склад</label>
                         <input type="text" class="form-control" id="id_sklada" name="naimenovanie_sklada" placeholder="- Выберите склад -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['naimenovanie_sklada'] ?? $naimenovanie_sklada) ?>">
@@ -216,14 +216,14 @@ include '../header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_postavschika">Поставщик</label>
                         <input class="form-control" type="text" id="id_postavschika" name="naimenovanie_postavschika" placeholder="- Выберите поставщика -" autocomplete="off" 
                         value="<?= htmlspecialchars($_POST['naimenovanie_postavschika'] ?? $naimenovanie_postavschika) ?>">
                         <input type="hidden" name="id_postavschika" class="id-postavschika" value="<?= htmlspecialchars($_POST['id_postavschika'] ?? $id_postavschika) ?>">
                     </div>
 
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_organizacii">Организация</label>
                         <input class="form-control" type="text" id="id_organizacii" name="naimenovanie_organizacii" placeholder="- Выберите организацию -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['naimenovanie_organizacii'] ?? $naimenovanie_organizacii) ?>">
@@ -232,7 +232,7 @@ include '../header.php';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label" for="id_otvetstvennogo">Ответственный</label>
                         <input type="text" class="form-control" id="id_otvetstvennogo" name="naimenovanie_otvetstvennogo" placeholder="- Выберите ответственного -" autocomplete="off"
                         value="<?= htmlspecialchars($_POST['naimenovanie_otvetstvennogo'] ?? $naimenovanie_otvetstvennogo) ?>">
@@ -240,9 +240,8 @@ include '../header.php';
                     </div>
                 </div>
 
-                <h2 style="margin-top: 30px;"></h2>
                 
-                <div class="card">
+                <div class="card mt-3">
                 <div class="table-responsive">
                 <table class="table table-vcenter card-table" id="tablitsaTovarov">
                     <thead>
@@ -321,7 +320,7 @@ include '../header.php';
                                 </div>
                             </td>
                             <td class="col-edinitsa">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[<?= $row_index ?>][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?>">
                                     <input type="hidden" name="tovary[<?= $row_index ?>][id_edinitsii]" class="id-edinitsii" value="<?= htmlspecialchars($item['id_edinitsii'] ?? '') ?>">
                                 </div>
@@ -346,21 +345,21 @@ include '../header.php';
                         <tr class="tovar-row">
                             <td class="col-num">1</td>
                             <td class="col-tovar">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_tovara]" placeholder="Введите товар..." autocomplete="off"
                                     value="<?= htmlspecialchars($naimenovanie_tovara) ?>">
                                     <input type="hidden" name="tovary[0][id_tovara]" class="id-tovara">
                                 </div>
                             </td>
                             <td class="col-seria">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_serii]" placeholder="Введите серию..." autocomplete="off"
                                     value="<?= htmlspecialchars($vetis_data_loaded ? substr($product_guid, 0, 36) : '') ?>">
                                     <input type="hidden" name="tovary[0][id_serii]" class="id-serii">
                                 </div>
                             </td>
                             <td class="col-edinitsa">
-                                <div class="search-container" style="position: relative;">
+                                <div class="search-container position-relative">
                                     <input class="form-control" type="text" name="tovary[0][naimenovanie_edinitsii]" placeholder="Введите ед." autocomplete="off" value="<?= htmlspecialchars($naimenovanie_edinitsii) ?>">
                                     <input type="hidden" name="tovary[0][id_edinitsii]" class="id-edinitsii">
                                 </div>
@@ -388,20 +387,20 @@ include '../header.php';
                 <button type="button" class="btn mt-3 btn-primary" onclick="addRow()">Добавить строку</button>
                 
                 <?php if ($vetis_data_loaded): ?>
-                    <div class="row" style="margin-top: 20px;">
-                        <div class="col-md-6 mb-3" style="position: relative;">
+                    <div class="row mt-2">
+                        <div class="col-md-6 mb-3 position-relative">
                             <label class="form-label" for="data_izgotovleniya">Дата изготовления</label>
                             <input class="form-control" type="date" id="data_izgotovleniya" name="data_izgotovleniya" autocomplete="off" value="<?= htmlspecialchars($prod_date) ?>">
                         </div>
 
-                        <div class="col-md-6 mb-3" style="position: relative;">
+                        <div class="col-md-6 mb-3 position-relative">
                             <label class="form-label" for="srok_godnosti">Срок годности</label>
                             <input class="form-control" type="date" id="srok_godnosti" name="srok_godnosti" autocomplete="off" value="<?= htmlspecialchars($exp_date) ?>">
                         </div>    
                     </div>
                 <?php endif; ?>
                 
-                <div class="row" style="margin-top: 20px;">
+                <div class="row mt-2">
                     <div class="col-12">
                          <div class="btn-group" role="group" aria-label="Basic example">
                         <button type="submit" class="btn btn-primary">
@@ -413,7 +412,7 @@ include '../header.php';
             </form>
         </div>
     </div>
-</div>
+
         <script>
             
             document.getElementById('documentForm').addEventListener('keypress', function(event) {

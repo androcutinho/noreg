@@ -39,6 +39,9 @@ if (isset($_SESSION['user_id'])) {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
          <style>
         th { text-transform: none !important; }
+        .text-justify { text-align: justify; }
+        .w-40 { width: 40%; }
+        .min-w-500 {min-width: 500px;}
       </style>
       </head>
     <body>
@@ -111,7 +114,7 @@ if (isset($_SESSION['user_id'])) {
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
                         <a class="dropdown-item" href="/poluchit_informaciyu_o_vsd/">Загрузить серию из ВЕТИС</a>
-                        <a class="dropdown-item" href="/poluchit_ostatok_vsd/spisok.php">Остаток продукции из ВЕТИС</a>
+                        <a class="dropdown-item" href="/poluchit_ostatok_vsd/spisok_po_vsd.php">Остаток продукции из ВЕТИС</a>
                       </div>
                     </li>
       <!-- END NAVBAR  -->
