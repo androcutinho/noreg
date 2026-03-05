@@ -149,7 +149,7 @@ try {
                         if ($unit_insert_stmt->execute()) {
                             $id_edinicy_izmereniya = $mysqli->insert_id;
                         } else {
-                            throw new Exception('Failed to insert unit: ' . $unit_insert_stmt->error);
+                            throw new Exception('Не удалось вставить устройство: ' . $unit_insert_stmt->error);
                         }
                         
                         $unit_insert_stmt->close();
@@ -194,7 +194,7 @@ try {
                         if ($update_stmt->execute()) {
                             $saved_count++;
                         } else {
-                            $save_errors[] = "Failed to update entry for product: " . $entry['product_name'];
+                            $save_errors[] = "Не удалось обновить запись для товара: " . $entry['product_name'];
                         }
                         
                         $update_stmt->close();
@@ -210,7 +210,7 @@ try {
                         if ($insert_stmt->execute()) {
                             $saved_count++;
                         } else {
-                            $save_errors[] = "Failed to insert entry for product: " . $entry['product_name'];
+                            $save_errors[] = "Не удалось добавить запись о товаре: " . $entry['product_name'];
                         }
                         
                         $insert_stmt->close();
@@ -218,7 +218,7 @@ try {
                 }
             }
         } catch (Exception $e) {
-            $save_errors[] = "Error processing product " . $entry['product_name'] . ": " . $e->getMessage();
+            $save_errors[] = "Ошибка обработки продукта " . $entry['product_name'] . ": " . $e->getMessage();
         }
     }
 

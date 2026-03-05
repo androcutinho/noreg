@@ -34,14 +34,14 @@ $tovary = [];
 foreach ($stock_data as $entry) {
     $tovar = $entry['naimenovanie_tovara'];
     $predpriyatie = $entry['predpriyataya_naimenovanie'];
-    $amount = $entry['summa_ostatok'];
+    $summa = $entry['summa_ostatok'];
     
     if (!isset($pivot_data[$tovar])) {
         $pivot_data[$tovar] = [];
         $tovary[] = $tovar;
     }
     
-    $pivot_data[$tovar][$predpriyatie] = $amount;
+    $pivot_data[$tovar][$predpriyatie] = $summa;
 }
 
 sort($tovary);
@@ -68,7 +68,7 @@ include '../header.php';
                     <h3 class="card-title mb-0">Остаток продукции из ВЕТИС</h3>
                     <p class="text-secondary m-0">Всего записей: <span id="total-records"><?= count($tovary) ?></span> штук.</p>
                   </div>
-                  <div class="d-flex">
+                  <div class="d-flex btn-group" role="group" aria-label="Basic example">
                     <a href="https://noreg.trinion.org/poluchit_ostatok_vsd/spisok_po_vsd.php" class="btn">
                       По ВСД
                     </a>
@@ -94,29 +94,44 @@ include '../header.php';
               <table class="table table-vcenter card-table">
                 <thead>
                   <tr>
-                    <th class="min-w-500">Товар</th>
+                    <th>№</th>
+                    <th class="min-w-500 text-center">Товар</th>
                     <?php foreach ($predpriyatiya as $predpriyatie): ?>
-                      <th><?php echo htmlspecialchars($predpriyatie); ?></th>
+                      <th class="min-w-100 text-wrap text-justify"><?php echo htmlspecialchars($predpriyatie); ?></th>
                     <?php endforeach; ?>
+                    <th>Итого</th>
                   </tr>
                 </thead>
                 <tbody id="stock-entries-tbody">
                   <?php if (!empty($tovary)): ?>
+                    <?php $row_num = 1; ?>
                     <?php foreach ($tovary as $tovar): ?>
                       <tr>
+                        <td class="text-secondary text-center fw-medium">
+                          <?= $row_num ?>
+                        </td>
                         <td class="text-secondary text-break fw-medium">
                           <?= htmlspecialchars($tovar) ?>
                         </td>
-                        <?php foreach ($predpriyatiya as $predpriyatie): ?>
-                          <td class="text-secondary text-center">
-                            <?= htmlspecialchars($pivot_data[$tovar][$predpriyatie] ?? 0) ?>
+                        <?php 
+                          $row_total = 0;
+                          foreach ($predpriyatiya as $predpriyatie): 
+                            $summa = $pivot_data[$tovar][$predpriyatie] ?? 0;
+                            $row_total += $summa;
+                        ?>
+                          <td class="text-secondary text-center text-wrap">
+                            <?= htmlspecialchars($summa) ?>
                           </td>
                         <?php endforeach; ?>
+                        <td class="text-secondary text-center fw-medium">
+                          <?= htmlspecialchars($row_total) ?>
+                        </td>
                       </tr>
+                      <?php $row_num++; ?>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="<?= count($predpriyatiya) + 1 ?>" class="text-center text-secondary p-4">
+                      <td colspan="<?= count($predpriyatiya) + 3 ?>" class="text-center text-secondary p-4">
                         Записи не найдены.
                       </td>
                     </tr>

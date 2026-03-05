@@ -43,11 +43,11 @@ include '../header.php';
             <button id="sync-vsd-btn" class="btn btn-primary">
                 <span id="sync-btn-text">Загрузить ВСД</span>
                 <span id="sync-btn-spinner" style="display: none; margin-left: 8px;">
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 </span>
             </button>
-        </div>
-          <div id="sync-message-container"></div>
+         </div>
+         <div id="sync-message-container"></div>
           
           <div class="card">
             <div class="card-header">
@@ -68,8 +68,8 @@ include '../header.php';
                       <input id="document-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
                       <span class="input-group-text">
                       </span>
-                      </div>
-                      <div class="dropdown">
+                    </div>
+                          <div class="dropdown">
                               <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                 <?php 
                                 if ($vybrannyj_enterprise_guid) {
@@ -87,8 +87,8 @@ include '../header.php';
                                   <a class="dropdown-item" href="?guid=<?= htmlspecialchars($enterprise['enterpriseGuid']) ?>"><?= htmlspecialchars($enterprise['naimenovaniye']) ?></a>
                                 <?php endforeach; ?>
                               </div>
-                            </div>
-                    </div>
+                         </div>
+                  
                   </div>
                 </div>
               </div>

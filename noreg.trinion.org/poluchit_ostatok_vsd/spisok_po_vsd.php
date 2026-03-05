@@ -39,7 +39,7 @@ include '../header.php';
                     <h3 class="card-title mb-0">Остаток продукции из ВЕТИС</h3>
                     <p class="text-secondary m-0">Всего записей: <span id="total-records"><?= count($documents) ?></span> штук.</p>
                   </div>
-                  <div class="d-flex">
+                  <div class="d-flex btn-group" role="group" aria-label="Basic example">
                     <a href="https://noreg.trinion.org/poluchit_ostatok_vsd/spisok_po_vsd.php" class="btn btn-primary">
                       По ВСД
                     </a>
