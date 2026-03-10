@@ -112,7 +112,7 @@ $error = '';
 $success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Validation
+    
     $validations = array(
         'otgruzki_date' => 'Требуется дата',
         'naimenovanie_organizacii' => 'Требуется указать поставщик',

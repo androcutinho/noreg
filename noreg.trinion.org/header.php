@@ -46,20 +46,17 @@ if (isset($_SESSION['user_id'])) {
       </head>
     <body>
         <script src="./dist/js/tabler-theme.min.js?1752393271"></script>
-    <!-- END GLOBAL THEME SCRIPT -->
     <div class="page">
-      <!-- BEGIN NAVBAR  -->
        <header class="navbar-expand-md">
         <div class="collapse navbar-collapse" id="navbar-menu">
           <div class="navbar">
             <div class="container-fluid">
               <div class="row flex-column flex-md-row flex-fill align-items-center">
                 <div class="col">
-                  <!-- BEGIN NAVBAR MENU -->
                   <ul class="navbar-nav">
                     <li class="nav-item">
                       <a class="nav-link" href="https://noreg.trinion.org/postuplenie/spisok.php">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                             <path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
                             <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path>
@@ -75,7 +72,6 @@ if (isset($_SESSION['user_id'])) {
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
                         <a class="dropdown-item" href="/postuplenie/spisok.php">Поступление товаров</a>
-                        <a class="dropdown-item" href="./">Перемещение товаров</a>
                         <a class="dropdown-item" href="/zakaz_pokupatelya/spisok.php">Заказы покупателей</a>
                         <a class="dropdown-item" href="/noreg_specifikacii/spisok.php?type=pokupatelya">Спецификации покупателей</a>
                         <a class="dropdown-item" href="/schet_na_oplatu/spisok.php?type=pokupatel">Счета на оплату покупателям</a>
@@ -87,11 +83,13 @@ if (isset($_SESSION['user_id'])) {
                         <a class="dropdown-item" href="/platezhi/spisok.php?type=iskhodyashchij">Исходящие платежи</a>
                         <a class="dropdown-item" href="/otgruzki_tovarov/spisok.php?type=postavschik">Отгрузки товаров поставщикам</a>
                         <a class="dropdown-item" href="/izmenenie_ostatka_tovarov/spisok.php">Изменение остатка товаров</a>
+                        <a class="dropdown-item" href="/peremeshchenie_tovara_mezhdu_skladami/spisok.php?tip_dokumenta=postuplenie">Перемещения товара между складами поступление</a>
+                        <a class="dropdown-item" href="/peremeshchenie_tovara_mezhdu_skladami/spisok.php?tip_dokumenta=otgruzka">Перемещения товара между складами отгрузка</a>
                       </div>
                     </li>
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#navbar-form" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/home -->
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-id"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -10" /><path d="M7 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 8l2 0" /><path d="M15 12l2 0" /><path d="M7 16l10 0" /></svg></span>
                         <span class="nav-link-title"> Справочники </span>
                       </a>
@@ -115,6 +113,7 @@ if (isset($_SESSION['user_id'])) {
                       <div class="dropdown-menu" data-bs-popper="static">
                         <a class="dropdown-item" href="/poluchit_informaciyu_o_vsd/">Загрузить серию из ВЕТИС</a>
                         <a class="dropdown-item" href="/poluchit_ostatok_vsd/spisok_po_vsd.php">Остаток продукции из ВЕТИС</a>
+                        <a class="dropdown-item" href="/sravnenie_ostatkov_vetis_i_uchyotnoj_sistemy/tablitsa.php">Сравнение остатков ветис и учётной системы </a>
                       </div>
                     </li>
       <!-- END NAVBAR  -->

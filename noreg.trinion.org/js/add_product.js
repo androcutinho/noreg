@@ -1,5 +1,7 @@
 
 const autocompleteFields = [
+    { inputId: 'id_sklada_poluchatel', table: 'sklady', col: 'naimenovanie' },
+    { inputId: 'id_sklada_postavshchik', table: 'sklady', col: 'naimenovanie' },
     { inputId: 'id_sklada', table: 'sklady', col: 'naimenovanie' },
     { inputId: 'id_postavschika', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 0 },
     { inputId: 'id_organizacii', table: 'kontragenti', col: 'naimenovanie', nash_kontragent: 1 },

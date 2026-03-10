@@ -30,6 +30,7 @@ $stock_data = $result['success'] ? $result['data'] : [];
 
 $pivot_data = [];
 $tovary = [];
+$product_ids = [];
 
 foreach ($stock_data as $entry) {
     $tovar = $entry['naimenovanie_tovara'];
@@ -39,6 +40,7 @@ foreach ($stock_data as $entry) {
     if (!isset($pivot_data[$tovar])) {
         $pivot_data[$tovar] = [];
         $tovary[] = $tovar;
+        $product_ids[$tovar] = $entry['id'];
     }
     
     $pivot_data[$tovar][$predpriyatie] = $summa;
@@ -104,11 +106,10 @@ include '../header.php';
                 </thead>
                 <tbody id="stock-entries-tbody">
                   <?php if (!empty($tovary)): ?>
-                    <?php $row_num = 1; ?>
                     <?php foreach ($tovary as $tovar): ?>
                       <tr>
                         <td class="text-secondary text-center fw-medium">
-                          <?= $row_num ?>
+                          <?= htmlspecialchars($product_ids[$tovar]) ?>
                         </td>
                         <td class="text-secondary text-break fw-medium">
                           <?= htmlspecialchars($tovar) ?>
@@ -127,7 +128,6 @@ include '../header.php';
                           <?= htmlspecialchars($row_total) ?>
                         </td>
                       </tr>
-                      <?php $row_num++; ?>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>

@@ -50,13 +50,14 @@ function getStockEntriesByProduct($mysqli)
 {
     try {
         $sql = "SELECT 
+                    tu.id,
                     tu.naimenovanie AS naimenovanie_tovara,
                     vp.naimenovaniye AS predpriyataya_naimenovanie,
                     SUM(vo.ostatok) AS summa_ostatok
                 FROM vetis_ostatki vo
                 LEFT JOIN vetis_predpriyatiya vp ON vo.id_predpriyatiya = vp.id
                 LEFT JOIN tovary_i_uslugi tu ON vo.id_tovary_i_uslugi = tu.id
-                GROUP BY tu.naimenovanie, vp.naimenovaniye
+                GROUP BY tu.id, tu.naimenovanie, vp.naimenovaniye
                 ORDER BY tu.naimenovanie, vp.naimenovaniye";
         
         $result = $mysqli->query($sql);
@@ -68,6 +69,7 @@ function getStockEntriesByProduct($mysqli)
         $entries = [];
         while ($row = $result->fetch_assoc()) {
             $entries[] = [
+                'id' => $row['id'],
                 'naimenovanie_tovara' => $row['naimenovanie_tovara'] ?? 'Не указано',
                 'predpriyataya_naimenovanie' => $row['predpriyataya_naimenovanie'] ?? 'Не указано',
                 'summa_ostatok' => $row['summa_ostatok'] ?? 0

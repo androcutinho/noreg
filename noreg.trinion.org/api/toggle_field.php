@@ -40,7 +40,8 @@ $allowed_tables = [
     'zakazy_postavshchikam',
     'otgruzki_tovarov_pokupatelyam',
     'izmenenie_ostatka_tovarov',
-    'vetis_vsd'
+    'vetis_vsd',
+    'peremeshchenie_tovara_mezhdu_skladami'
 ];
 
 if (!in_array($table_name, $allowed_tables)) {
@@ -52,7 +53,7 @@ if (!in_array($table_name, $allowed_tables)) {
 $mysqli = require '../config/database.php';
 require '../queries/database_queries.php';
 
-// Update the field
+
 $result = ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $value);
 
 header('Content-Type: application/json');

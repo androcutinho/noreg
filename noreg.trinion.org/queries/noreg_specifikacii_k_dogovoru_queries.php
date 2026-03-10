@@ -60,7 +60,7 @@ if ($spec_id) {
     $stmt_spec->close();
 }
 
-// Fetch data
+
 $stmt = $mysqli->prepare("
     SELECT
         sd.id AS line_id,

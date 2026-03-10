@@ -21,12 +21,12 @@ $enterprises = $enterprises_result ? $enterprises_result->fetch_all(MYSQLI_ASSOC
 
 
 $vybrannyj_enterprise_guid = isset($_GET['guid']) ? htmlspecialchars($_GET['guid']) : null;
-
+$selected_doc_type = isset($_GET['type']) ? htmlspecialchars($_GET['type']) : null;
 
 $current_page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $items_per_page = 8;
 
-$total_documents = getDocumentsCount($mysqli, $vybrannyj_enterprise_guid);
+$total_documents = getDocumentsCount($mysqli, $vybrannyj_enterprise_guid, $selected_doc_type);
 $total_pages = ceil($total_documents / $items_per_page);
 
 if ($current_page < 1) $current_page = 1;
@@ -34,67 +34,41 @@ if ($current_page > $total_pages && $total_pages > 0) $current_page = $total_pag
 
 $offset = ($current_page - 1) * $items_per_page;
 
-$documents = fetchAllDocuments($mysqli, $vybrannyj_enterprise_guid, $items_per_page, $offset);
+$documents = fetchAllDocuments($mysqli, $vybrannyj_enterprise_guid, $items_per_page, $offset, $selected_doc_type);
 
 include '../header.php';
 ?>
         <div class="container-fluid mt-5">
-          <div class="text-end mb-1">
+          <div class="text-end mb-3">
             <button id="sync-vsd-btn" class="btn btn-primary">
                 <span id="sync-btn-text">Загрузить ВСД</span>
                 <span id="sync-btn-spinner" style="display: none; margin-left: 8px;">
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 </span>
             </button>
-         </div>
+          </div>
          <div id="sync-message-container"></div>
-          
           <div class="card">
             <div class="card-header">
-              <div class="row w-full">
-                <div class="col">
-                  <h3 class="card-title mb-0">Список документов ВСД</h3>
-                  <p class="text-secondary m-0">Всего документов: <?= $total_documents ?> штук.</p>
-                </div>
-                <div class="col-md-auto col-sm-12">
-                  <div class="ms-auto d-flex flex-wrap btn-list">
-                    <div class="input-group input-group-flat w-auto">
-                      <span class="input-group-text">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                          <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
-                          <path d="M21 21l-6 -6"></path>
-                        </svg>
-                      </span>
-                      <input id="document-table-search" type="text" class="form-control" autocomplete="off" placeholder="Поиск...">
-                      <span class="input-group-text">
-                      </span>
-                    </div>
-                          <div class="dropdown">
-                              <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <?php 
-                                if ($vybrannyj_enterprise_guid) {
-                                    $selected = array_filter($enterprises, fn($e) => $e['enterpriseGuid'] == $vybrannyj_enterprise_guid);
-                                    $naimenovanie_enterprise = !empty($selected) ? reset($selected)['naimenovaniye'] : 'Предприятие';
-                                    echo htmlspecialchars($naimenovanie_enterprise);
-                                } else {
-                                    echo 'Предприятия';
-                                }
-                                ?>
-                              </a>
-                              <div class="dropdown-menu" style="">
-                                <a class="dropdown-item" href="?">Все предприятия</a>
-                                <?php foreach ($enterprises as $enterprise): ?>
-                                  <a class="dropdown-item" href="?guid=<?= htmlspecialchars($enterprise['enterpriseGuid']) ?>"><?= htmlspecialchars($enterprise['naimenovaniye']) ?></a>
-                                <?php endforeach; ?>
-                              </div>
-                         </div>
-                  
-                  </div>
-                </div>
-              </div>
+                          <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
+                    <li class="nav-item">
+                      <a class="nav-link <?= $selected_doc_type === 'INCOMING' ? 'active' : '' ?>" href="?type=INCOMING<?= $vybrannyj_enterprise_guid ? '&guid=' . htmlspecialchars($vybrannyj_enterprise_guid) : '' ?>">Входящий</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link <?= $selected_doc_type === 'OUTGOING' ? 'active' : '' ?>" href="?type=OUTGOING<?= $vybrannyj_enterprise_guid ? '&guid=' . htmlspecialchars($vybrannyj_enterprise_guid) : '' ?>">Исходящий</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link <?= $selected_doc_type === 'TRANSPORT' ? 'active' : '' ?>" href="?type=TRANSPORT<?= $vybrannyj_enterprise_guid ? '&guid=' . htmlspecialchars($vybrannyj_enterprise_guid) : '' ?>">Транспортный</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link <?= $selected_doc_type === 'RETURNABLE' ? 'active' : '' ?>" href="?type=RETURNABLE<?= $vybrannyj_enterprise_guid ? '&guid=' . htmlspecialchars($vybrannyj_enterprise_guid) : '' ?>">Возвратный</a>
+                    </li>
+              </ul>
             </div>
+            <div class="card-body">
+                    <div class="tab-content">
             <div class="table-responsive">
-              <table class="table table-vcenter card-table">
+              <table class="table table-vcenter border card-table">
                 <thead>
                   <tr>
                     <th>UUID</th>
@@ -169,6 +143,8 @@ include '../header.php';
                 </tbody>
               </table>
             </div>
+                  </div>
+                  </div>
             <?php if ($total_pages > 0): ?>
             <div class="card-footer">
               <div class="row g-2 justify-content-center justify-content-sm-between align-items-center">
@@ -179,7 +155,13 @@ include '../header.php';
                 <div class="col-auto">
                   <ul class="pagination m-0 ms-auto">
                     <?php 
-                    $url_params = "?" . ($vybrannyj_enterprise_guid ? "guid=" . htmlspecialchars($vybrannyj_enterprise_guid) . "&" : "");
+                    $url_params = "?";
+                    if ($vybrannyj_enterprise_guid) {
+                        $url_params .= "guid=" . htmlspecialchars($vybrannyj_enterprise_guid) . "&";
+                    }
+                    if ($selected_doc_type) {
+                        $url_params .= "type=" . htmlspecialchars($selected_doc_type) . "&";
+                    }
                     ?>
                     <li class="page-item <?= ($current_page == 1) ? 'disabled' : '' ?>">
                       <a class="page-link" href="<?= $url_params ?>page=<?= max(1, $current_page - 1) ?>" <?= ($current_page == 1) ? 'tabindex="-1" aria-disabled="true"' : '' ?>>
@@ -212,6 +194,7 @@ include '../header.php';
             </div>
             <?php endif; ?>
           </div>
+        </div>
         </div>
     
 

@@ -52,7 +52,7 @@ function getStrokiDokumentovItems($mysqli, $id_index) {
             ot.ostatok
         FROM stroki_dokumentov sd
         LEFT JOIN tovary_i_uslugi ti ON sd.id_tovary_i_uslugi = ti.id
-        LEFT JOIN ostatki_tovarov ot ON sd.id_tovary_i_uslugi = ot.id_tovary_i_uslugi AND sd.id_serii = ot.id_serii
+        LEFT JOIN ostatki_tovarov ot ON sd.id_tovary_i_uslugi = ot.id_tovary_i_uslugi AND sd.id_serii = ot.id_serii AND ot.id_sklady = sd.id_sklada
         LEFT JOIN serii s ON sd.id_serii = s.id
         WHERE sd.id_index = ?
         ORDER BY sd.id ASC
@@ -163,8 +163,8 @@ function sozdatDokument($mysqli, $post_data) {
                 
                 $line_insert_sql = "
                     INSERT INTO stroki_dokumentov 
-                    (id_index, id_tovary_i_uslugi, id_serii, ubavit, pribavit)
-                    VALUES (?, ?, ?, ?, ?)
+                    (id_index, id_tovary_i_uslugi, id_serii, id_sklada, ubavit, pribavit)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 ";
                 
                 $line_stmt = $mysqli->prepare($line_insert_sql);
@@ -173,10 +173,11 @@ function sozdatDokument($mysqli, $post_data) {
                 }
                 
                 $line_stmt->bind_param(
-                    'iiidd',
+                    'iiiidd',
                     $id_index,
                     $product_id,
                     $series_id,
+                    $id_sklada,
                     $ubavit,
                     $pribavit
                 );
@@ -293,8 +294,8 @@ function obnovitDokument($mysqli, $id, $post_data) {
                 
                 $line_insert_sql = "
                     INSERT INTO stroki_dokumentov 
-                    (id_index, id_tovary_i_uslugi, id_serii, ubavit, pribavit)
-                    VALUES (?, ?, ?, ?, ?)
+                    (id_index, id_tovary_i_uslugi, id_serii, id_sklada, ubavit, pribavit)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 ";
                 
                 $line_stmt = $mysqli->prepare($line_insert_sql);
@@ -303,10 +304,11 @@ function obnovitDokument($mysqli, $id, $post_data) {
                 }
                 
                 $line_stmt->bind_param(
-                    'iiidd',
+                    'iiiidd',
                     $document['id_index'],
                     $product_id,
                     $series_id,
+                    $id_sklada,
                     $ubavit,
                     $pribavit
                 );

@@ -226,7 +226,7 @@ include '../header.php';
                                 <?php foreach ($line_items as $item): ?>
                                     <tr class= "border border-dark">
                                         <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
-                                        <td class="border border-dark"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                        <td class="border border-dark ps-3"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
                                         <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
                                         <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>

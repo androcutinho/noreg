@@ -62,7 +62,7 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
         $field_value = $value ? 1 : 0;
         $document_id = intval($document_id);
         
-        // Validate field name to prevent SQL injection
+        
         $allowed_fields = ['utverzhden', 'zakryt'];
         if (!in_array($field_name, $allowed_fields)) {
             return array(
@@ -107,6 +107,12 @@ function ObnovitPoleDokumenta($mysqli, $table_name, $field_name, $document_id, $
         
         if ($table_name === 'otgruzki_tovarov_pokupatelyam' && $field_name === 'utverzhden') {
             require_once __DIR__ . '/otgruzki_tovarov_queries.php';
+            $result = handleUtverzhdenChange($mysqli, $document_id, $value);
+            return $result;
+        }
+
+        if ($table_name === 'peremeshchenie_tovara_mezhdu_skladami' && $field_name === 'utverzhden') {
+            require_once __DIR__ . '/peremeshchenie_tovara_mezhdu_skladami_queries.php';
             $result = handleUtverzhdenChange($mysqli, $document_id, $value);
             return $result;
         }
@@ -263,6 +269,20 @@ function getParentDocumentByIndexOsnovannyj($mysqli, $id_index) {
         }
         
         if (!$parent_table) {
+            $check_query = "SELECT id FROM peremeshchenie_tovara_mezhdu_skladami WHERE id_index = ? AND postuplenie = 1 LIMIT 1";
+            $check_stmt = $mysqli->prepare($check_query);
+            if ($check_stmt) {
+                $check_stmt->bind_param('i', $parent_index);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                if ($check_result->num_rows > 0) {
+                    $parent_table = 'peremeshchenie_tovara_mezhdu_skladami';
+                }
+                $check_stmt->close();
+            }
+        }
+        
+        if (!$parent_table) {
             return null;
         }
         
@@ -272,6 +292,11 @@ function getParentDocumentByIndexOsnovannyj($mysqli, $id_index) {
         $has_utverzhden = true;
         
         if ($parent_table === 'zakazy_pokupatelei' || $parent_table === 'zakazy_postavshchikam') {
+            $nomer_column = 'nomer';
+            $date_column = 'data_dokumenta';
+            $employee_column = 'id_otvetstvennyj';
+            $has_utverzhden = true;
+        } elseif ($parent_table === 'peremeshchenie_tovara_mezhdu_skladami') {
             $nomer_column = 'nomer';
             $date_column = 'data_dokumenta';
             $employee_column = 'id_otvetstvennyj';
@@ -311,7 +336,11 @@ function getParentDocumentByIndexOsnovannyj($mysqli, $id_index) {
         $doc_stmt->close();
         
         if ($doc) {
-            $doc['document_type'] = 'Заказ';
+            if ($parent_table === 'peremeshchenie_tovara_mezhdu_skladami') {
+                $doc['document_type'] = 'Перемещение товара (Поступление)';
+            } else {
+                $doc['document_type'] = 'Заказ';
+            }
             $doc['naimenovanie_otvetstvennogo'] = trim($doc['naimenovanie_otvetstvennogo'] ?? '');
         }
         
@@ -319,6 +348,103 @@ function getParentDocumentByIndexOsnovannyj($mysqli, $id_index) {
     } catch (Exception $e) {
         error_log('Error in getParentDocumentByIndexOsnovannyj: ' . $e->getMessage());
         return null;
+    }
+}
+
+function getRelatedDocumentsByIndexOsnovanie($mysqli, $id_index) {
+    try {
+        $query = "
+            SELECT 
+                sd.index_osnovannyj,
+                sd.id_index_tablic
+            FROM svyazi_dokumentov sd
+            WHERE sd.index_osnovanie = ?
+        ";
+        
+        $stmt = $mysqli->prepare($query);
+        if (!$stmt) {
+            error_log('Failed to prepare related documents query: ' . $mysqli->error);
+            return [];
+        }
+        
+        $stmt->bind_param('i', $id_index);
+        if (!$stmt->execute()) {
+            error_log('Failed to execute related documents query: ' . $stmt->error);
+            $stmt->close();
+            return [];
+        }
+        
+        $result = $stmt->get_result();
+        $relationships = [];
+        
+        while ($relationship = $result->fetch_assoc()) {
+            $relationships[] = $relationship;
+        }
+        $stmt->close();
+        
+        if (empty($relationships)) {
+            return [];
+        }
+        
+        $related_documents = [];
+        
+        foreach ($relationships as $relationship) {
+            $child_index = $relationship['index_osnovannyj'];
+            
+            
+            $check_query = "SELECT id FROM peremeshchenie_tovara_mezhdu_skladami WHERE id_index = ? AND otgruzka = 1 LIMIT 1";
+            $check_stmt = $mysqli->prepare($check_query);
+            if ($check_stmt) {
+                $check_stmt->bind_param('i', $child_index);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                if ($check_result->num_rows > 0) {
+                    $child_row = $check_result->fetch_assoc();
+                    $child_id = $child_row['id'];
+                    $child_table = 'peremeshchenie_tovara_mezhdu_skladami';
+                    $check_stmt->close();
+                } else {
+                    $child_table = null;
+                }
+                if (!isset($child_table)) {
+                    $check_stmt->close();
+                }
+            }
+            
+            if (isset($child_table) && $child_table) {
+                $doc_query = "
+                    SELECT 
+                        doc.id,
+                        doc.nomer,
+                        doc.data_dokumenta,
+                        COALESCE(doc.utverzhden, 0) as utverzhden,
+                        CONCAT(COALESCE(s.familiya, ''), ' ', COALESCE(s.imya, ''), ' ', COALESCE(s.otchestvo, '')) AS naimenovanie_otvetstvennogo
+                    FROM peremeshchenie_tovara_mezhdu_skladami doc
+                    LEFT JOIN sotrudniki s ON doc.id_otvetstvennyj = s.id
+                    WHERE doc.id_index = ?
+                ";
+                
+                $doc_stmt = $mysqli->prepare($doc_query);
+                if ($doc_stmt) {
+                    $doc_stmt->bind_param('i', $child_index);
+                    $doc_stmt->execute();
+                    $doc_result = $doc_stmt->get_result();
+                    $doc = $doc_result->fetch_assoc();
+                    $doc_stmt->close();
+                    
+                    if ($doc) {
+                        $doc['document_type'] = 'Перемещение товара (Отгрузка)';
+                        $doc['naimenovanie_otvetstvennogo'] = trim($doc['naimenovanie_otvetstvennogo'] ?? '');
+                        $related_documents[] = $doc;
+                    }
+                }
+            }
+        }
+        
+        return $related_documents;
+    } catch (Exception $e) {
+        error_log('Error in getRelatedDocumentsByIndexOsnovanie: ' . $e->getMessage());
+        return [];
     }
 }
 

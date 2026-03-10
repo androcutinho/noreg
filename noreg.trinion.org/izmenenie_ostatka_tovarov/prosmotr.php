@@ -129,7 +129,7 @@ include '../header.php';
                         <?php endif; ?>
                     </div>
 
-                <!-- Organization and sklad Info -->
+                
                 <div style="margin-bottom: 30px;">
                     <div>
                         <span>Склад:</span>
@@ -141,7 +141,7 @@ include '../header.php';
                     </div>
                 </div>
 
-                <!-- tovary Table -->
+                
                 <div style="margin-bottom: 30px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                         <thead>

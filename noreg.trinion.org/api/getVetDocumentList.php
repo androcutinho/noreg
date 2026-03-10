@@ -75,7 +75,6 @@ function fetchDocumentList($vetis_guid = null)
               <bs:count>1000</bs:count>
               <bs:offset>0</bs:offset>
             </bs:listOptions>
-             <vd:vetDocumentType>TRANSPORT</vd:vetDocumentType>
              <vd:vetDocumentStatus>CONFIRMED</vd:vetDocumentStatus>
             <dt:enterpriseGuid>' . $vetis_guid . '</dt:enterpriseGuid>
           </merc:getVetDocumentListRequest>

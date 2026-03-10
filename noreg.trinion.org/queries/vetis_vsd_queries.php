@@ -1,17 +1,30 @@
  <?php
 
-function getDocumentsCount($mysqli, $enterprise_guid = '') {
-    $sql = "SELECT COUNT(*) as count FROM vetis_vsd";
+function getDocumentsCount($mysqli, $enterprise_guid = '', $document_type = '') {
+    $sql = "SELECT COUNT(*) as count FROM vetis_vsd WHERE (zakryt=0 OR zakryt IS NULL)";
+    $types = [];
+    $values = [];
     
     if (!empty($enterprise_guid)) {
-        $sql .= " WHERE enterprise_guid = ?";
-        
+        $sql .= " AND enterprise_guid = ?";
+        $types[] = "s";
+        $values[] = $enterprise_guid;
+    }
+    
+    if (!empty($document_type)) {
+        $sql .= " AND vetDType = ?";
+        $types[] = "s";
+        $values[] = $document_type;
+    }
+    
+    if (!empty($types)) {
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             die("SQL error: " . $mysqli->error);
         }
         
-        $stmt->bind_param("s", $enterprise_guid);
+        $type_string = implode('', $types);
+        $stmt->bind_param($type_string, ...$values);
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
@@ -26,7 +39,7 @@ function getDocumentsCount($mysqli, $enterprise_guid = '') {
     return $row['count'];
 }
 
-function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset = 0) {
+function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset = 0, $document_type = '') {
     $sql = "SELECT 
         id,
         uuid,
@@ -40,24 +53,36 @@ function fetchAllDocuments($mysqli, $enterprise_guid = '', $limit = 8, $offset =
         consignee,
         id_tovary_i_uslugi,
         zakryt
-    FROM vetis_vsd WHERE zakryt=0 or zakryt IS NULL";
+    FROM vetis_vsd WHERE (zakryt=0 OR zakryt IS NULL)";
+    
+    $types = [];
+    $values = [];
     
     if (!empty($enterprise_guid)) {
         $sql .= " AND enterprise_guid = ?";
+        $types[] = "s";
+        $values[] = $enterprise_guid;
+    }
+    
+    if (!empty($document_type)) {
+        $sql .= " AND vetDType = ?";
+        $types[] = "s";
+        $values[] = $document_type;
     }
     
     $sql .= " ORDER BY lastUpdateDate DESC LIMIT ? OFFSET ?";
+    $types[] = "i";
+    $types[] = "i";
+    $values[] = $limit;
+    $values[] = $offset;
     
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         die("SQL error: " . $mysqli->error);
     }
     
-    if (!empty($enterprise_guid)) {
-        $stmt->bind_param("sii", $enterprise_guid, $limit, $offset);
-    } else {
-        $stmt->bind_param("ii", $limit, $offset);
-    }
+    $type_string = implode('', $types);
+    $stmt->bind_param($type_string, ...$values);
     
     $stmt->execute();
     $result = $stmt->get_result();

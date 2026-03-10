@@ -255,7 +255,7 @@ include '../header.php';
                                 </label>
                                 <label class="form-check form-check-inline">
                                   <input class="form-check-input" type="radio" name="invoice_type" value="buyer" <?= ($invoice_type === 'buyer') ? 'checked' : '' ?>>
-                                  <span class="form-check-label">Покупателя</span>
+                                  <span class="form-check-label">Полупателя</span>
                                 </label>
                               </div>
                 </div>

@@ -109,7 +109,7 @@ include '../header.php';
                                                             <td class="border border-dark p-2 text-center"></td>
                                                             <td class="border border-dark p-2 text-center"><?= htmlspecialchars($total_vetis) ?></td>
                                                             <td class="border border-dark p-2 text-center"><?= htmlspecialchars($total_1s) ?></td>
-                                                            <td class="border border-dark p-2 text-center"><?= htmlspecialchars($total_vetis-$total_1s) ?></td>
+                                                            <td class="border border-dark p-2 text-center"><?= htmlspecialchars(abs($total_vetis-$total_1s)) ?></td>
                                                         </tr>
                                                     <?php else: ?>
                                                         <tr>

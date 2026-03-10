@@ -8,8 +8,9 @@ function getSravnenieVsekhTovarov($mysqli) {
             t.naimenovanie as naimenovanie_tovara
         FROM tovary_i_uslugi t
         LEFT JOIN vetis_ostatki v ON v.id_tovary_i_uslugi = t.id
-        LEFT JOIN noreg_unf_nomenklatura n ON n.id_tovary_i_uslugi = t.id
-        WHERE v.id_tovary_i_uslugi IS NOT NULL OR n.id_tovary_i_uslugi IS NOT NULL
+        LEFT JOIN vetis_tovary_i_uslugi vto ON vto.id_tovary_i_uslugi = t.id
+        LEFT JOIN noreg_unf_nomenklatura n ON n.id_vetis = vto.vetis_guid
+        WHERE v.id_tovary_i_uslugi IS NOT NULL OR n.id_vetis IS NOT NULL
         ORDER BY t.id
     ";
     
@@ -87,7 +88,8 @@ function getRasnitsaItems($mysqli, $id_tovara) {
             o.ostatok as ostatok_1s
         FROM noreg_unf_nomenklatura n
         LEFT JOIN noreg_unf_ostatki o ON o.guid_1c = n.guid_1c
-        WHERE n.id_tovary_i_uslugi = ?
+        LEFT JOIN vetis_tovary_i_uslugi vto ON vto.vetis_guid = n.id_vetis
+        WHERE vto.id_tovary_i_uslugi = ?
     ";
     
     $stmt_noreg = $mysqli->prepare($noreg_unf_query);

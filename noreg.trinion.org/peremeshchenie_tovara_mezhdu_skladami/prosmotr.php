@@ -8,61 +8,68 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $mysqli = require '../config/database.php';
-require '../queries/zakaz_query.php';
-require '../queries/zakaz_pokupatelya_query.php';
-require '../queries/schet_na_oplatu_query.php';
-require '../queries/otgruzki_tovarov_queries.php';
-require '../queries/zosdat_edit_specifikatsiu.php';
+require '../queries/peremeshchenie_tovara_mezhdu_skladami_queries.php';
 
-$zakaz_id = isset($_GET['zakaz_id']) ? intval($_GET['zakaz_id']) : null;
+$id = isset($_GET['id']) ? intval($_GET['id']) : null;
 $error = '';
 
-if (!$zakaz_id) {
-    die("Заказ не найден.");
+$document = getDokumentHeader($mysqli, $id);
+
+if (!$id) {
+    die("Документ не найден.");
 }
 
-$page_title='Заказ поставщику';
+if (!$document) {
+    die("Документ не найден.");
+}
 
 
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    $result = deleteZakazDocument($mysqli, $zakaz_id);
+    $result = udalitPeremeshchenieDokument($mysqli, $id);
     if ($result['success']) {
-        header('Location: spisok.php');
+        $type = $document['postuplenie'] ? 'postuplenie' : 'otgruzka';
+        header('Location: spisok.php?type=' . htmlspecialchars($type));
         exit;
     } else {
-        $error = $result['error'];
+        $error = $result['message'];
     }
 }
 
-$zakaz = fetchZakazHeader($mysqli, $zakaz_id);
 
-if (!$zakaz) {
-    die("Заказ не найден.");
+if($document['postuplenie']){
+    $page_title = 'Перемещение товара между складами ПОСТУПЛЕНИЕ';
 }
+else{
+    $page_title = 'Перемещение товара между складами ОТГРУЗКА';
 
-$line_items = getZakazStrokiItems($mysqli, $zakaz['id_index']);
 
 
-$obshchaya_summa = 0;
-$summa_nds = 0;
-$ispolzuemye_stavki_nds = [];
-
-foreach ($line_items as $item) {
-    $podytog += floatval($item['summa'] ?? 0);
-    $summa_nds += floatval($item['summa_nds'] ?? 0);
-    if (!empty($item['stavka_nds'])) {
-        $ispolzuemye_stavki_nds[] = $item['stavka_nds'];
-    }
 }
+$line_items = getStrokiDokumentovItems($mysqli, $document['id_index']);
 
-$obshchaya_summa = $podytog + $summa_nds;
-
-$ispolzuemye_stavki_nds = array_unique($ispolzuemye_stavki_nds);
-$stavka_nds_tekst = !empty($ispolzuemye_stavki_nds) ? implode(', ', $ispolzuemye_stavki_nds) : '0%';
 
 $mecyats_na_russkom = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-$date = DateTime::createFromFormat('Y-m-d', $zakaz['data_dokumenta']);
-$formatted_date = $date ? $date->format('j') . ' ' . $mecyats_na_russkom[(int)$date->format('n')] . ' ' . $date->format('Y') . ' г.' : $zakaz['data_dokumenta'];
+$date = DateTime::createFromFormat('Y-m-d', $document['data_dokumenta']);
+$formatted_date = $date ? $date->format('j') . ' ' . $mecyats_na_russkom[(int)$date->format('n')] . ' ' . $date->format('Y') . ' г.' : $document['data_dokumenta'];
+
+
+require_once '../queries/database_queries.php';
+$all_related_for_display = [];
+
+
+if ($document['otgruzka']) {
+    $parent = getParentDocumentByIndexOsnovannyj($mysqli, $document['id_index']);
+    if ($parent) {
+        $all_related_for_display[] = $parent;
+    }
+}
+
+if ($document['postuplenie']) {
+    $children = getRelatedDocumentsByIndexOsnovanie($mysqli, $document['id_index']);
+    if (!empty($children)) {
+        $all_related_for_display = array_merge($all_related_for_display, $children);
+    }
+}
 
 include '../header.php';
 ?>
@@ -73,9 +80,14 @@ include '../header.php';
     </div>
 <?php endif; ?>
 
-<div class="container-fluid mt-5">
-        <div class="row mb-3 d-print-none mt-5">
+<div class="container-fluid">
+        <div class="row mb-3 d-print-none mt-3">
                     <div class="col-auto ms-auto">
+                        <?php if ($document['postuplenie']): ?>
+                         <button class="btn btn-primary" onclick="sozdatOtgruzkaIzPostuplenie(<?= $document['id'] ?>)">
+                          Создать документ ОТГРУЗКА
+                         </button>
+                         <?php endif; ?>
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"></path>
@@ -84,34 +96,7 @@ include '../header.php';
                             </svg>
                             Печать
                         </button>
-                          <button type="button" class="btn btn-primary" onclick="window.location.href='../noreg_specifikacii/redaktirovanie.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&ot_postavshchika=1';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
-                                <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
-                                <path d="M7 8h10"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M7 16h10"></path>
-                              </svg>
-                            Создать спецификацию
-                        </button>
-                         <button type="button" class="btn btn-primary" onclick="window.location.href='../otgruzki_tovarov/redaktirovanie.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&ot_postavshchika=1';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
-                                <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
-                                <path d="M7 8h10"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M7 16h10"></path>
-                              </svg>
-                            Отгрузить товары
-                        </button>
-                         <button type="button" class="btn btn-primary" onclick="window.location.href='../schet_na_oplatu/redaktirovanie.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>';">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
-                                <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
-                                <path d="M7 8h10"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M7 16h10"></path>
-                              </svg>
-                            Создать счет
-                        </button>
-                         <?php if (!$zakaz['utverzhden']): ?>
+                         <?php if (!$document['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta('utverzhden', true)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-4 4"></path>
@@ -121,7 +106,7 @@ include '../header.php';
                             Утвердить
                         </button>
                         <?php endif; ?>
-                        <?php if ($zakaz['utverzhden']): ?>
+                        <?php if ($document['utverzhden']): ?>
                         <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta('utverzhden', false)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 6l7 7l-2 2"></path>
@@ -142,7 +127,7 @@ include '../header.php';
                             </svg>
                             Редактировать
                         </button>
-                       <?php if (!$zakaz['zakryt']): ?>
+                       <?php if (!$document['zakryt']): ?>
                         <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta('zakryt', true);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
@@ -153,7 +138,7 @@ include '../header.php';
                             Закрыть
                         </button>
                         <?php endif; ?>
-                        <?php if ($zakaz['zakryt']): ?>
+                        <?php if ($document['zakryt']): ?>
                         <button type="button" class="btn btn-primary" onclick="ObnovitPoleDokumenta('zakryt', false);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
                                 <path d="M14 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
@@ -164,7 +149,7 @@ include '../header.php';
                             Открыть
                         </button>
                         <?php endif; ?>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены? Этот заказ будет удален.')) window.location.href='prosmotr.php?zakaz_id=<?= htmlspecialchars($zakaz_id) ?>&action=delete';">
+                        <button type="button" class="btn btn-danger" onclick="if(confirm('Вы уверены?')) window.location.href='prosmotr.php?id=<?= htmlspecialchars($id) ?>&action=delete';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M4 7l16 0"></path>
@@ -177,17 +162,17 @@ include '../header.php';
                         </button>
                     </div>
                 </div>
-        <div class="card mb-5">
+        <div class="card">
             <div class="card-body">
-    
+                
                 <div class="mb-3 border-bottom border-dark pb-1">
                     <h2 class="fw-bolder">
-                        Заказ поставщику № <?= htmlspecialchars($zakaz['nomer']) ?> от <?= htmlspecialchars($formatted_date) ?>
+                        <?= htmlspecialchars($page_title) ?> № <?= htmlspecialchars($id) ?> от <?= htmlspecialchars($formatted_date) ?>
                     </h2>
                 </div>
 
-                <div class="position-absolute end-0">
-                        <?php if ($zakaz['utverzhden']): ?>
+                <div  class="position-absolute end-0">
+                        <?php if ($document['utverzhden']): ?>
                             <div class="ribbon bg-red">Утвержден</div>
                         <?php else: ?>
                             <div class="ribbon bg-secondary">Черновик</div>
@@ -197,28 +182,29 @@ include '../header.php';
                 
                 <div class="mb-4">
                     <div class="mb-3">
-                        <span>Поставщик<br/>(Исполнитель):</span>
-                        <span class="fw-bolder fs-4"><?= htmlspecialchars($zakaz['naimenovanie_postavschika'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_postavschika'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_postavschika'] ?? '') ?></span>
+                        <span>Склад получатель:</span>
+                        <span class="fw-bolder fs-4"><?= htmlspecialchars($document['naimenovanie_sklada_poluchatel'] ?? '') ?></span>
+                    </div>
+                    <div class="mb-3">
+                        <span>Склад поставщик:</span>
+                        <span class="fw-bolder fs-4"><?= htmlspecialchars($document['naimenovanie_sklada_postavshchik'] ?? '') ?></span>
                     </div>
                     <div>
-                        <span>Покупатель<br/>(Заказчик):</span>
-                        <span class="fw-bolder fs-4"><?= htmlspecialchars($zakaz['naimenovanie_organizacii'] ?? '') ?>, ИНН <?= htmlspecialchars($zakaz['inn_organizacii'] ?? '') ?>, КПП <?= htmlspecialchars($zakaz['kpp_organizacii'] ?? '') ?></span>
+                        <span>Ответственный</span>
+                        <span class="fw-bolder fs-4"><?= htmlspecialchars($document['naimenovanie_otvetstvennogo'] ?? '') ?></span>
                     </div>
                 </div>
 
                 
-
-            
                 <div class="mb-3">
                     <table class="w-100 border fs-4">
                         <thead>
                             <tr class="border border-dark">
                                 <th class="border border-dark p-2 text-center fw-bold">№</th>
-                                <th class="border border-dark p-2 text-center fw-bold">Товары (работы, услуги)</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Товары</th>
+                                <th class="border border-dark p-2 text-center fw-bold">Серия</th>
                                 <th class="border border-dark p-2 text-center fw-bold">Кол-во</th>
                                 <th class="border border-dark p-2 text-center fw-bold">Ед.</th>
-                                <th class="border border-dark p-2 text-center fw-bold">Цена</th>
-                                <th class="border border-dark p-2 text-center fw-bold">Сумма</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -228,58 +214,44 @@ include '../header.php';
                                     <tr class= "border border-dark">
                                         <td class="border border-dark p-2 text-center"><?= $row_num ?></td>
                                         <td class="border border-dark ps-3"><?= htmlspecialchars($item['naimenovanie_tovara'] ?? '') ?></td>
+                                        <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_serii'] ?? '') ?></td>
                                         <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['kolichestvo'] ?? '') ?></td>
                                         <td class="border border-dark p-2 text-center"><?= htmlspecialchars($item['naimenovanie_edinitsii'] ?? '') ?></td>
-                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['ed_cena'] ?? 0), 2, '.', ' ') ?></td>
-                                        <td class="border border-dark p-2 text-center"><?= number_format(floatval($item['summa'] ?? 0), 2, '.', ' ') ?></td>
                                     </tr>
                                     <?php $row_num++; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="border border-dark p-2 text-center">Товары не добавлены</td>
+                                    <td colspan="7" class=" border border-dark p-3 text-center">Товары не добавлены</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
 
+             
                 
-                <div class="mb-3 text-end">
-                    <div class="mb-2">
-                        <strong>Подытог:</strong> <span><?= number_format($podytog, 2, '.', ' ') ?></span>
-                    </div>
-                    <div class="mb-2">
-                        <strong>НДС (<?= htmlspecialchars($stavka_nds_tekst) ?>):</strong> <span><?= number_format($summa_nds, 2, '.', ' ') ?></span>
-                    </div>
-                    <div>
-                        <strong>Итого:</strong> <span><?= number_format($obshchaya_summa, 2, '.', ' ') ?></span>
-                    </div>
+
+                <div class="mb-3 border-bottom border-dark p-3">
                 </div>
 
-                
-                <div class="mb-4 border-bottom border-dark p-3">
-                    <p>
-                        Всего наименований: <?= count($line_items) ?>, на сумму <?= number_format($obshchaya_summa, 2, ',', ' ') ?> RUB
-                    </p>
-                </div>
-
-                
-                <div class="mb-3 p-3">
-                    <p>
-                        <strong>Ответственный:</strong> <?= htmlspecialchars($zakaz['naimenovanie_otvetstvennogo'] ?? '') ?>
-                    </p>
+                <div class="mb-3 p-1">
+                    <div class="d-flex justify-content-between mt-5">
+                        <div class="text-center">
+                            <p class="mb-3">Поставщик _______________________________________</p>
+                            <p>м.п.</p>
+                        </div>
+                         <div class="text-center">
+                            <p class="mb-3">Получатель ______________________________________</p>
+                           
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <?php 
-        $svyazannye_dokumenty = getRelatedDocumentsByIndexOsnovanie($mysqli, $zakaz['id_index']);
-        ?>
-        
-        <?php if (!empty($svyazannye_dokumenty)): ?>
-        <div class="card d-print-none" >
-            <div class="card-body">    
+        <?php if (!empty($all_related_for_display)): ?>
+        <div class="card d-print-none mt-5">
+            <div class="card-body">
                 <h3 class="mb-2 fs-3 fw-bolder">Связанные документы</h3>
                 <div class="table-responsive">
                     <table class="table border table-vcenter card-table">
@@ -293,23 +265,13 @@ include '../header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($svyazannye_dokumenty as $doc): ?>
+                            <?php foreach ($all_related_for_display as $doc): ?>
                             <tr>
                                 <td>
                                     <?= htmlspecialchars($doc['document_type']) ?>
                                 </td>
                                 <td>
-                                    <?php 
-                                    
-                                    if (stripos($doc['document_type'], 'Отгрузк') !== false) {
-                                        $link = "../otgruzki_tovarov/prosmotr.php?id=";
-                                    } elseif (stripos($doc['document_type'], 'Спецификац') !== false) {
-                                        $link = "../noreg_specifikacii/prosmotr.php?id=";
-                                    } else {
-                                        $link = "../schet_na_oplatu/prosmotr.php?id=";
-                                    }
-                                    ?>
-                                    <a href="<?= $link . htmlspecialchars($doc['id']) ?>" class="text-primary">
+                                    <a href="prosmotr.php?id=<?= htmlspecialchars($doc['id']) ?>" class="text-primary">
                                         <?= htmlspecialchars($doc['nomer'] ?? '') ?>
                                     </a>
                                 </td>
@@ -335,24 +297,26 @@ include '../header.php';
 </div>
 
 <script>
+function sozdatOtgruzkaIzPostuplenie(id) {
+    window.location.href = 'redaktirovanie.php?source_postuplenie_id=' + id;
+}
+
 function redaktirovatDokument() {
-    const isClosed = <?= json_encode((bool)$zakaz['zakryt']) ?>;
+    const isClosed = <?= json_encode((bool)$document['zakryt']) ?>;
     if (isClosed) {
         alert('Этот документ закрыт и не может быть отредактирован.');
         return;
     }
-    window.location.href = 'redaktirovanie.php?zakaz_id=<?= json_encode($zakaz_id) ?>';
+    window.location.href = 'redaktirovanie.php?id=<?= json_encode($id) ?>';
 }
 
 function ObnovitPoleDokumenta(fieldName, value) {
-    const documentId = <?= json_encode($zakaz_id) ?>;
-    const tableName = 'zakazy_postavshchikam';
+    const documentId = <?= json_encode($id) ?>;
+    const tableName = 'peremeshchenie_tovara_mezhdu_skladami';
     
     fetch('../api/toggle_field.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             table_name: tableName,
             document_id: documentId,
@@ -362,13 +326,9 @@ function ObnovitPoleDokumenta(fieldName, value) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            location.reload();
-        }
+        if (data.success) location.reload();
     })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+    .catch(error => console.error('Error:', error));
 }
 </script>
 
