@@ -1,9 +1,9 @@
 <?php
-require 'vendor/autoload.php';
 
-require_once('vendor/econea/nusoap/src/nusoap.php'); // Подключение библиотеки NuSOAP
 
-// Load shared environment helper
+require_once('vendor/econea/nusoap/src/nusoap.php'); 
+
+
 require_once(__DIR__ . '/config/env_helper.php');
 
 // Load .env file

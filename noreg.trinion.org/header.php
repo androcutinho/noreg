@@ -94,7 +94,7 @@ if (isset($_SESSION['user_id'])) {
                         <span class="nav-link-title"> Справочники </span>
                       </a>
                       <div class="dropdown-menu" data-bs-popper="static">
-                        <a class="dropdown-item" href="/vsd/spisok.php"> Список ВСД </a>
+                        <a class="dropdown-item" href="/spisok_vsd/spisok.php"> Список ВСД </a>
                         <a class="dropdown-item" href="/tovary/spisok.php"> Список товары </a>
                         <a class="dropdown-item" href="/sklady/spisok.php"> Список складов </a>
                         <a class="dropdown-item" href="/kontragenti/spisok.php"> Список поставщиков</a>
@@ -114,6 +114,22 @@ if (isset($_SESSION['user_id'])) {
                         <a class="dropdown-item" href="/poluchit_informaciyu_o_vsd/">Загрузить серию из ВЕТИС</a>
                         <a class="dropdown-item" href="/poluchit_ostatok_vsd/spisok_po_vsd.php">Остаток продукции из ВЕТИС</a>
                         <a class="dropdown-item" href="/sravnenie_ostatkov_vetis_i_uchyotnoj_sistemy/tablitsa.php">Сравнение остатков ветис и учётной системы </a>
+                      </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#navbar-form" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                                <path d="M4 20h16"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M4 4h16"></path>
+                              </svg></span>
+                        <span class="nav-link-title"> Отчеты </span>
+                      </a>
+                      <div class="dropdown-menu" data-bs-popper="static">
+                        <a class="dropdown-item" href="/ostatki_tovarov/tablitsa.php">Остатки товаров </a>
+                        <a class="dropdown-item" href="/dvizhenie_tovarov/tablitsa.php">Движения товаров</a>
+                        <a class="dropdown-item" href="/dokumenty_po_kontragentu/tablitsa.php">Документы по конрагенту </a>
                       </div>
                     </li>
       <!-- END NAVBAR  -->

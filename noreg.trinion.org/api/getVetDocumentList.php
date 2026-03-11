@@ -75,7 +75,7 @@ function fetchDocumentList($vetis_guid = null)
               <bs:count>1000</bs:count>
               <bs:offset>0</bs:offset>
             </bs:listOptions>
-             <vd:vetDocumentStatus>CONFIRMED</vd:vetDocumentStatus>
+            <vd:vetDocumentStatus>CONFIRMED</vd:vetDocumentStatus>
             <dt:enterpriseGuid>' . $vetis_guid . '</dt:enterpriseGuid>
           </merc:getVetDocumentListRequest>
         </apl:data>
@@ -192,14 +192,12 @@ function fetchDocumentList($vetis_guid = null)
 
         foreach ($vet_documents as $vet_doc) {
             $doc_uuid = $vet_doc['uuid'] ?? '';
-            $issueNumber = $vet_doc['issueNumber'] ?? '';
             $data_vypuska = $vet_doc['issueDate'] ?? '';
             $type = $vet_doc['vetDType'] ?? '';
             $status = $vet_doc['vetDStatus'] ?? '';
             $last_update = $vet_doc['lastUpdateDate'] ?? '';
-            $enterprise_guid = $vet_doc['certifiedConsignment']['consignor']['enterprise']['guid'] ?? '';
+            $issue_number = $vet_doc['referencedDocument']['issueNumber'] ?? '';
             $shipper_name = $vet_doc['certifiedConsignment']['consignor']['enterprise']['name'] ?? 'Не указано';
-            
             
             
             
@@ -232,11 +230,10 @@ function fetchDocumentList($vetis_guid = null)
                 'vetDType' => $type,
                 'vetDStatus' => $status,
                 'lastUpdateDate' => $last_update,
-                'issueNumber' => $issueNumber,
+                'issueNumber' => $issue_number,
                 'dateOfProduction' => $prod_date,
                 'expiryDate' => $exp_date,
                 'enterprise' => $shipper_name,
-                'enterprise_guid' => $enterprise_guid,
                 'consignee' => $receiver_name,
                 'naimenovanie_tovara' => $product_name
             ];

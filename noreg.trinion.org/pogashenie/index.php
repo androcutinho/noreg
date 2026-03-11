@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    header('Location: /../log_in.php');
+    exit();
+}
+
 $page_title = 'Poгашение ВСД';
 require_once '../header.php';
 ?>

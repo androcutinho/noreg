@@ -1,5 +1,4 @@
 <?php
-require 'vendor/autoload.php';
 require_once('vendor/econea/nusoap/src/nusoap.php'); // Подключение библиотеки NuSOAP
 
 // Load shared environment helper
@@ -30,7 +29,7 @@ $client = new nusoap_client('https://api.vetrf.ru/platform/services/2.1/Applicat
       <ws:receiveApplicationResultRequest>
          <ws:apiKey>' . $apikey . '</ws:apiKey>
          <ws:issuerId>' . $vetis_issuerId . '</ws:issuerId>
-         <ws:applicationId>6a2d7f08-008c-4a34-ae67-3a744543dd0d</ws:applicationId>
+         <ws:applicationId>60a7f4d4-7f17-42dd-bf20-ea1d13527c72</ws:applicationId>
       </ws:receiveApplicationResultRequest>
    </soapenv:Body>
 </soapenv:Envelope>'; // XML код запроса

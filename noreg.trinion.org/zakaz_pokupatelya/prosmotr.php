@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $mysqli = require '../config/database.php';
+require '../queries/database_queries.php';
 require '../queries/zakaz_pokupatelya_query.php';
 require '../queries/schet_na_oplatu_query.php';
 require '../queries/otgruzki_tovarov_queries.php';
